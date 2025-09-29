@@ -1,18 +1,14 @@
-import { AiOutlineLogin } from "react-icons/ai";
-import { AiOutlineShoppingCart } from "react-icons/ai";
+import { AiOutlineShoppingCart, AiOutlineMessage, AiOutlineSetting, AiOutlineBell } from "react-icons/ai";
 import { HiMenu } from "react-icons/hi";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { FaSignInAlt } from "react-icons/fa"; // Login icon
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-
   const [token, setToken] = useState(localStorage.getItem("token"));
 
   useEffect(() => {
-    // If there's a token, fetch user data from localStorage
     if (token) {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
@@ -22,80 +18,103 @@ export default function Header() {
   }, [token]);
 
   return (
-    <header className="w-full h-[80px] shadow-xl flex justify-between items-center px-4 md:px-8 bg-gradient-to-r from-gray-900 to-primary relative">
+    <header className="w-full h-[70px] shadow-lg flex justify-between items-center px-4 md:px-6 bg-gradient-to-r from-[#32CD32] to-[#93DC5C] relative">
       {/* Logo */}
       <div className="flex items-center">
         <img
           src="/logo.png"
           alt="logo"
-          className="w-28  object-cover"
+          className="w-24 object-cover"
         />
       </div>
 
       {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center space-x-6 text-secondary">
-        <Link to="/" className="text-[18px] hover:text-gray-400">
-          Home
+      <div className="hidden md:flex items-center space-x-6 text-white">
+        <Link to="/item" className="flex items-center gap-2 text-[16px] hover:text-gray-200 font-medium">
+          <AiOutlineShoppingCart className="text-xl" />
+          Products
         </Link>
-        <Link to="/contact" className="text-[18px] hover:text-gray-400">
-          Contact
+        <Link to="/cart" className="flex items-center gap-2 text-[16px] hover:text-gray-200 font-medium">
+          <AiOutlineShoppingCart className="text-xl" />
+          Cart
         </Link>
-        <Link to="/restaurant" className="text-[18px] hover:text-gray-400">
-          Restaurants
+        <Link to="/notifications" className="flex items-center gap-2 text-[16px] hover:text-gray-200 font-medium">
+          <AiOutlineBell className="text-xl" />
+          Notifications
         </Link>
-        <Link to="/item" className="text-[18px] hover:text-gray-400">
-          Items
+        <Link to="/messages" className="flex items-center gap-2 text-[16px] hover:text-gray-200 font-medium">
+          <AiOutlineMessage className="text-xl" />
+          Messages
+        </Link>
+        <Link to="/settings" className="flex items-center gap-2 text-[16px] hover:text-gray-200 font-medium">
+          <AiOutlineSetting className="text-xl" />
+          Settings
         </Link>
       </div>
 
       {/* Icons and User Info */}
       <div className="flex items-center space-x-4 text-white">
-        {/* Display user info if logged in */}
+        {/* Mobile Icons */}
+        <div className="flex items-center space-x-3 md:hidden">
+          <Link to="/cart">
+            <AiOutlineShoppingCart className="text-[24px] hover:text-gray-200" />
+          </Link>
+          <Link to="/notifications">
+            <AiOutlineBell className="text-[24px] hover:text-gray-200" />
+          </Link>
+          <Link to="/messages">
+            <AiOutlineMessage className="text-[24px] hover:text-gray-200" />
+          </Link>
+        </div>
+
+        {/* User Profile or Settings Link */}
         {user ? (
-          <div className="flex items-center space-x-2">
-            <span className="text-[16px] text-lg hidden md:inline">
+          <Link to="/settings" className="flex items-center space-x-2">
+            <span className="text-[14px] hidden md:inline font-medium">
               {user.firstName}
             </span>
-            <Link to="/profile">
-              <img
-                src={user.image || "/default-profile.png"}
-                alt="profile"
-                className="w-14 h-14 rounded-full object-cover border border-white"
-              />
-            </Link>
-          </div>
+            <img
+              src={user.image || "/default-profile.png"}
+              alt="profile"
+              className="w-10 h-10 rounded-full object-cover border-2 border-white"
+            />
+          </Link>
         ) : (
-          // Show login icon/link if no user is logged in
-          <Link to="/login" className="text-[30px] hover:text-gray-400">
-            <AiOutlineLogin />
+          <Link to="/login" className="flex items-center gap-2 text-[14px] font-medium hover:text-gray-200">
+            <AiOutlineSetting className="text-[20px]" />
+            <span className="hidden md:inline">Login</span>
           </Link>
         )}
 
-        <Link to="/cart">
-          <AiOutlineShoppingCart className="text-[30px] hover:text-gray-400" />
-        </Link>
-
         {/* Mobile Menu Button */}
         <HiMenu
-          className="text-[30px] md:hidden cursor-pointer hover:text-gray-400"
+          className="text-[26px] md:hidden cursor-pointer hover:text-gray-200"
           onClick={() => setMenuOpen(!menuOpen)}
         />
       </div>
 
       {/* Mobile Navigation */}
       {menuOpen && (
-        <div className="absolute top-[80px] left-0 w-full bg-primary shadow-md flex flex-col items-center py-4 space-y-4 text-white">
-          <Link to="/" className="text-[18px] hover:text-gray-400">
-            Home
+        <div className="absolute top-[70px] left-0 w-full bg-gradient-to-r from-[#32CD32] to-[#93DC5C] shadow-lg flex flex-col items-center py-4 space-y-4 text-white z-50">
+          <Link to="/item" className="flex items-center gap-3 text-[16px] hover:text-gray-200 font-medium w-full justify-center">
+            <AiOutlineShoppingCart className="text-xl" />
+            Products
           </Link>
-          <Link to="/contact" className="text-[18px] hover:text-gray-400">
-            Contact
+          <Link to="/cart" className="flex items-center gap-3 text-[16px] hover:text-gray-200 font-medium w-full justify-center">
+            <AiOutlineShoppingCart className="text-xl" />
+            Cart
           </Link>
-          <Link to="/gallery" className="text-[18px] hover:text-gray-400">
-            Gallery
+          <Link to="/notifications" className="flex items-center gap-3 text-[16px] hover:text-gray-200 font-medium w-full justify-center">
+            <AiOutlineBell className="text-xl" />
+            Notifications
           </Link>
-          <Link to="/item" className="text-[18px] hover:text-gray-400">
-            Items
+          <Link to="/messages" className="flex items-center gap-3 text-[16px] hover:text-gray-200 font-medium w-full justify-center">
+            <AiOutlineMessage className="text-xl" />
+            Messages
+          </Link>
+          <Link to="/settings" className="flex items-center gap-3 text-[16px] hover:text-gray-200 font-medium w-full justify-center">
+            <AiOutlineSetting className="text-xl" />
+            Settings
           </Link>
         </div>
       )}

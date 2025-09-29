@@ -1,73 +1,77 @@
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-export default function RestaurantDetails() {
-  const location = useLocation();
-  const id = location.state?.packageDetails?._id;
-  console.log(id);
+export default function ShopDetails() {
+
+   const { id } = useParams();
+  console.log("hisaddddddddddd", id);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  const [restaurant, setRestaurant] = useState(null);
+  const [shop, setShop] = useState(null);
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    const fetchRestaurant = async () => {
+    const fetchShop = async () => {
       if (!id) return setLoading(false);
 
       try {
-        const res = await axios.get(`http://localhost:3000/api/v1/restaurant/getOne/${id}`);
-        setRestaurant(res.data);
+        const res = await axios.get(
+          `http://localhost:3000/api/v1/owner/getOne/${id}`
+        );
+        setShop(res.data);
         console.log(res.data);
 
-        const collRes = await axios.get(`http://localhost:3000/api/v1/collection/getAll/${id}`);
+        const collRes = await axios.get(
+          `http://localhost:3000/api/v1/collection/getAll/${id}`
+        );
         setCollections(collRes.data || []);
         console.log(collRes);
       } catch (err) {
         console.error("Error fetching data:", err);
-        toast.error("Failed to load restaurant or collections.");
+        toast.error("Failed to load shop or collections.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRestaurant();
+    fetchShop();
   }, [id]);
 
   useEffect(() => {
-    if (!restaurant?.images?.length) return;
+    if (!shop?.images?.length) return;
 
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) =>
-        prevIndex === restaurant.images.length - 1 ? 0 : prevIndex + 1
+        prevIndex === shop.images.length - 1 ? 0 : prevIndex + 1
       );
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [restaurant]);
+  }, [shop]);
 
   if (loading) return <p className="text-center mt-10">Loading...</p>;
-  if (!restaurant)
-    return <p className="text-center mt-10 text-red-500">Restaurant not found.</p>;
+  if (!shop)
+    return <p className="text-center mt-10 text-red-500">shop not found.</p>;
 
   return (
     <div className="min-h-screen bg-primary text-primary py-12 px-4">
       <div className="max-w-5xl mx-auto">
-        {/* Restaurant Info */}
+        {/* shop Info */}
         <div className="flex flex-col md:flex-row items-center gap-6 bg-gray-100 p-6 rounded-xl shadow-md mb-8">
           <div className="relative w-full md:w-[400px] h-[400px] overflow-hidden rounded-lg">
             <img
-              src={restaurant.images?.[currentImageIndex] || "/default-restaurant.jpg"}
-              alt={restaurant.name}
+              src={shop.images?.[currentImageIndex] || "/default-shop.jpg"}
+              alt={shop.name}
               className="w-full h-full object-cover transition-opacity duration-1000"
             />
-            {restaurant.images?.length > 1 && (
+            {shop.images?.length > 1 && (
               <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
-                {restaurant.images.map((_, idx) => (
+                {shop.images.map((_, idx) => (
                   <span
                     key={idx}
                     className={`h-2 w-2 rounded-full ${
@@ -80,14 +84,13 @@ export default function RestaurantDetails() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold">{restaurant.name}</h1>
-            <p className="text-sm">Owned by: <strong>{restaurant.ownerName}</strong></p>
-            <p className="text-sm">📍 {restaurant.address}</p>
-            <p className="text-sm">📞 {restaurant.phone}</p>
-            <p>{restaurant.description}</p>
-            <span className={`inline-block w-fit px-3 py-1 rounded-full text-sm font-semibold mt-2 ${restaurant.isOpen ? "bg-green-200 text-green-800" : "bg-red-200 text-red-800"}`}>
-              {restaurant.isOpen ? "Open" : "Closed"}
-            </span>
+            <h1 className="text-3xl font-bold">{shop.name}</h1>
+            <p className="text-sm">
+              Owned by: <strong>{shop.ownerName}</strong>
+            </p>
+            <p className="text-sm">📍 {shop.address}</p>
+            <p className="text-sm">📞 {shop.phone}</p>
+            <p>{shop.description}</p>
           </div>
         </div>
 
@@ -105,8 +108,12 @@ export default function RestaurantDetails() {
                       className="w-full h-48 object-cover"
                     />
                     <div className="p-4">
-                      <h3 className="text-lg font-semibold text-primary">{item.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                      <h3 className="text-lg font-semibold text-primary">
+                        {item.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {item.description}
+                      </p>
                       <p className="text-sm font-medium mt-2 text-primary">
                         Price: ₹{parseFloat(item.price).toFixed(2)}
                       </p>
@@ -126,7 +133,7 @@ export default function RestaurantDetails() {
             </div>
           </div>
         ) : (
-          <p className="text-gray-500">No food items found for this restaurant.</p>
+          <p className="text-gray-500">No food items found for this shop.</p>
         )}
       </div>
     </div>

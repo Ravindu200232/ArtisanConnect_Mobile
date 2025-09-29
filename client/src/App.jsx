@@ -10,10 +10,9 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import VerifyEmail from "./pages/verifyEmail/verifyEmail";
 import { Payment } from "./pages/home/payment";
 import BookingConfirmation from "./pages/home/bookingConfirmation";
-import RestaurantPage from "./pages/restaurantant/restaurantPage";
-import RestaurantRegister from "./pages/restaurant signup/resregister";
 import DriverRegister from "./pages/driver signup/drregister";
 import DriverPage from "./pages/driver/driverPage";
+import Shop from "./pages/shop/shop";
 
 
 function App() {
@@ -29,8 +28,7 @@ function App() {
           <Route path="/register/*" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/payment" element={<Payment />} />
-          <Route path="restaurantC/*" element={<RestaurantPage/>}/>
-          <Route path="/restaurant-signup" element={<RestaurantRegister />} />
+          <Route path="shopC/*" element={<Shop/>}/>
           <Route path="/driver-signup" element={<DriverRegister/>}/>
           <Route path="driver/*" element={<DriverPage/>}/>
 

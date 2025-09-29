@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import mediaUpload from "../../utils/mediaUpload";
+
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -19,11 +20,7 @@ export function Profile() {
   const [passwords, setPasswords] = useState({ oldPassword: "", newPassword: "" });
   const [activeTab, setActiveTab] = useState("profile");
   const [deliveries, setDeliveries] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [deliveriesLoading, setDeliveriesLoading] = useState(true);
-  const [ordersLoading, setOrdersLoading] = useState(true);
-  const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [expandedDeliveryId, setExpandedDeliveryId] = useState(null);
   const mapRefs = useRef({});
 
@@ -44,56 +41,22 @@ export function Profile() {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      fetchDeliveries();
-      fetchOrders();
-      fetchNotifications();
-    }
+    const fetchDeliveries = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`http://localhost:3000/api/v1/delivery`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const userDeliveries = response.data.filter(d => d.customerEmail === user?.email);
+        setDeliveries(userDeliveries);
+      } catch (err) {
+        Swal.fire("Error", "Could not fetch delivery history.", "error");
+      } finally {
+        setDeliveriesLoading(false);
+      }
+    };
+    if (user) fetchDeliveries();
   }, [user]);
-
-  const fetchDeliveries = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:3000/api/v1/delivery`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const userDeliveries = response.data.filter(d => d.customerEmail === user?.email);
-      setDeliveries(userDeliveries);
-    } catch (err) {
-      console.error("Error fetching deliveries:", err);
-    } finally {
-      setDeliveriesLoading(false);
-    }
-  };
-
-  const fetchOrders = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:3000/api/v1/orders`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const userOrders = response.data.filter(order => order.email === user?.email);
-      setOrders(userOrders);
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-    } finally {
-      setOrdersLoading(false);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:3000/api/v1/notification/user`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setNotifications(response.data);
-    } catch (err) {
-      console.error("Error fetching notifications:", err);
-    } finally {
-      setNotificationsLoading(false);
-    }
-  };
 
   const handleDriverLocation = async (deliveryId) => {
     try {
@@ -214,20 +177,6 @@ export function Profile() {
     }
   };
 
-  const markNotificationAsRead = async (notificationId) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.put(`http://localhost:3000/api/v1/notification/${notificationId}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setNotifications(prev => prev.map(n => 
-        n._id === notificationId ? { ...n, read: true } : n
-      ));
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-    }
-  };
-
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'delivered': return 'bg-[#32CD32]';
@@ -247,7 +196,7 @@ export function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] p-4 pt-20">
+    <div className="min-h-screen bg-[#DBF3C9] p-4">
       {/* Header Section */}
       <div className="text-center mb-6">
         <div className="relative inline-block">
@@ -286,16 +235,6 @@ export function Profile() {
           Profile
         </button>
         <button
-          onClick={() => setActiveTab("orders")}
-          className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-            activeTab === "orders" 
-              ? "bg-[#32CD32] text-white shadow-md" 
-              : "text-gray-600 hover:text-[#32CD32]"
-          }`}
-        >
-          Orders
-        </button>
-        <button
           onClick={() => setActiveTab("deliveries")}
           className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
             activeTab === "deliveries" 
@@ -306,14 +245,14 @@ export function Profile() {
           Deliveries
         </button>
         <button
-          onClick={() => setActiveTab("notifications")}
+          onClick={() => setActiveTab("security")}
           className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-            activeTab === "notifications" 
+            activeTab === "security" 
               ? "bg-[#32CD32] text-white shadow-md" 
               : "text-gray-600 hover:text-[#32CD32]"
           }`}
         >
-          🔔
+          Security
         </button>
       </div>
 
@@ -406,63 +345,6 @@ export function Profile() {
         </div>
       )}
 
-      {/* Orders Tab */}
-      {activeTab === "orders" && (
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Order History</h2>
-          {ordersLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="w-8 h-8 border-2 border-[#32CD32] border-dashed rounded-full animate-spin"></div>
-            </div>
-          ) : orders.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-[#93DC5C] text-6xl mb-4">📦</div>
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No orders yet</h3>
-              <p className="text-gray-500">Your order history will appear here</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {orders.map((order) => (
-                <div key={order._id} className="border border-[#B7E892] rounded-xl p-4 bg-[#DBF3C9]/30">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-bold text-gray-800">Order #{order.orderId}</h3>
-                      <p className="text-sm text-gray-600">{order.Item_name}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <div>
-                      <span className="text-gray-500">Amount:</span>
-                      <p className="font-semibold text-[#32CD32]">Rs.{order.totalAmount}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Date:</span>
-                      <p>{new Date(order.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Quantity:</span>
-                      <p>{order.quantity}</p>
-                    </div>
-                  </div>
-
-                  {order.image && (
-                    <img
-                      src={order.image}
-                      alt={order.Item_name}
-                      className="w-16 h-16 object-cover rounded-lg border border-[#93DC5C]"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Deliveries Tab */}
       {activeTab === "deliveries" && (
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
@@ -524,48 +406,56 @@ export function Profile() {
         </div>
       )}
 
-      {/* Notifications Tab */}
-      {activeTab === "notifications" && (
+      {/* Security Tab */}
+      {activeTab === "security" && (
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Notifications</h2>
-          {notificationsLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="w-8 h-8 border-2 border-[#32CD32] border-dashed rounded-full animate-spin"></div>
+          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Security Settings</h2>
+          
+          <div className="space-y-4 mb-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">Current Password</label>
+              <input 
+                type="password"
+                name="oldPassword"
+                value={passwords.oldPassword}
+                onChange={handlePasswordChange}
+                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
+                placeholder="Enter current password"
+              />
             </div>
-          ) : notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-[#93DC5C] text-6xl mb-4">🔔</div>
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No notifications</h3>
-              <p className="text-gray-500">You're all caught up!</p>
+            
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">New Password</label>
+              <input 
+                type="password"
+                name="newPassword"
+                value={passwords.newPassword}
+                onChange={handlePasswordChange}
+                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
+                placeholder="Enter new password"
+              />
             </div>
-          ) : (
-            <div className="space-y-3">
-              {notifications.map((notification) => (
-                <div
-                  key={notification._id}
-                  className={`p-4 rounded-xl border ${
-                    notification.read 
-                      ? 'bg-gray-50 border-gray-200' 
-                      : 'bg-[#DBF3C9]/30 border-[#B7E892]'
-                  }`}
-                  onClick={() => !notification.read && markNotificationAsRead(notification._id)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800">{notification.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {new Date(notification.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    {!notification.read && (
-                      <span className="w-3 h-3 bg-[#32CD32] rounded-full ml-2"></span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+
+            <button 
+              onClick={handleChangePassword}
+              className="w-full bg-[#32CD32] hover:bg-[#2DB82D] text-white py-3 px-6 rounded-xl font-semibold transition-all shadow-md"
+            >
+              Change Password
+            </button>
+          </div>
+
+          <div className="border-t border-[#B7E892] pt-4">
+            <h3 className="text-lg font-semibold text-red-600 mb-3">Danger Zone</h3>
+            <button 
+              onClick={handleDelete}
+              className="w-full bg-red-500 hover:bg-red-600 text-white py-3 px-6 rounded-xl font-semibold transition-all shadow-md"
+            >
+              Delete Account
+            </button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Once you delete your account, there is no going back. Please be certain.
+            </p>
+          </div>
         </div>
       )}
     </div>
