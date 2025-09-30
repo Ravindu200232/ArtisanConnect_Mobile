@@ -19,20 +19,22 @@ export default function ArtisanItemOverview() {
   const [userComment, setUserComment] = useState("");
   const [refresh, setRefresh] = useState(false);
 
+  // Calculate average rating from reviews
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
+
   useEffect(() => {
-    // Fetch artisan item details
     axios
       .get(`http://localhost:3000/api/v1/collection/getOne/${key}`)
       .then((res) => {
         setArtisanItem(res.data);
         setLoadingStatus("Loaded");
-        console.log(res.data.shopId)
 
         if (res.data.shopId) {
           axios
-            .get(
-              `http://localhost:3000/api/v1/owner/getOne/${res.data.shopId}`
-            )
+            .get(`http://localhost:3000/api/v1/owner/getOne/${res.data.shopId}`)
             .then((shopRes) => setShop(shopRes.data))
             .catch((err) => console.error("Failed to load shop", err));
         }
@@ -42,17 +44,15 @@ export default function ArtisanItemOverview() {
         setLoadingStatus("error");
       });
 
-    // Fetch reviews
     axios
       .get(`http://localhost:3000/api/v1/reviews/${key}`)
       .then((res) => {
         setReviews(res.data);
-        console.log(res.data)
       })
       .catch((err) => {
         console.error(err);
       });
-  }, [refresh]);
+  }, [refresh, key]);
 
   const handleAddReview = async () => {
     setRefresh(false);
@@ -61,8 +61,6 @@ export default function ArtisanItemOverview() {
       toast.error("Please log in to submit a review.");
       return;
     }
-
-    console.log(key, userRating, userComment, shop?.ownerId, shop?.name, artisanItem?.name,token);
 
     try {
       const response = await axios.post(
@@ -73,7 +71,7 @@ export default function ArtisanItemOverview() {
           comment: userComment,
           ownerId: shop.ownerId,
           shopName: shop.name,
-          itemName: artisanItem.name
+          itemName: artisanItem.name,
         },
         {
           headers: {
@@ -95,22 +93,24 @@ export default function ArtisanItemOverview() {
 
   if (loadingStatus === "loading") {
     return (
-      <div className="min-h-screen bg-[#DBF3C9] flex justify-center items-center pt-16">
-        <div className="w-16 h-16 border-4 border-[#32CD32] border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#F5F5F5] flex justify-center items-center">
+        <div className="w-16 h-16 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (loadingStatus === "error") {
     return (
-      <div className="min-h-screen bg-[#DBF3C9] flex justify-center items-center px-4 pt-16">
-        <div className="text-center bg-white rounded-2xl p-8 border border-[#B7E892] shadow-lg">
-          <div className="text-[#93DC5C] text-6xl mb-4">😔</div>
-          <h2 className="text-xl font-bold text-gray-700 mb-2">Item Not Found</h2>
-          <p className="text-gray-500 mb-4">Failed to load item details. Please try again later.</p>
+      <div className="min-h-screen bg-[#F5F5F5] flex justify-center items-center px-4">
+        <div className="text-center bg-white rounded-lg p-8 shadow-lg">
+          <div className="text-[#F85606] text-6xl mb-4">😔</div>
+          <h2 className="text-xl font-bold text-[#212121] mb-2">
+            Item Not Found
+          </h2>
+          <p className="text-[#757575] mb-4">Failed to load item details.</p>
           <button
             onClick={() => navigate(-1)}
-            className="bg-[#32CD32] hover:bg-[#2DB82D] text-white px-6 py-2 rounded-xl font-semibold transition-colors"
+            className="bg-[#F85606] hover:bg-[#E85000] text-white px-6 py-2 rounded font-semibold"
           >
             Go Back
           </button>
@@ -120,212 +120,368 @@ export default function ArtisanItemOverview() {
   }
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] pb-20 pt-4">
-      {/* Top Spacing */}
-      <div className="h-4"></div>
-
-      {/* Product Details Section */}
-      <div className="bg-white rounded-3xl shadow-lg mx-4 mb-6 overflow-hidden">
-        {/* Image Slider with proper spacing */}
-        <div className="relative">
-          <div className="p-2"> {/* Added padding around image */}
-            <ImageSlider images={artisanItem.images} />
-          </div>
-          {/* Back Button */}
+    <div className="min-h-screen bg-[#F5F5F5] pb-32">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-white shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="absolute top-6 left-6 w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg border border-gray-200"
+            className="w-9 h-9 flex items-center justify-center"
           >
-            <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-6 h-6 text-[#212121]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <div className="flex items-center gap-3">
+            <button className="w-9 h-9 flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-[#212121]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                />
+              </svg>
+            </button>
+            <button className="w-9 h-9 flex items-center justify-center relative">
+              <svg
+                className="w-6 h-6 text-[#212121]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F85606] text-white text-xs rounded-full flex items-center justify-center font-bold">
+                0
+              </span>
+            </button>
+            <button className="w-9 h-9 flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-[#212121]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Image Slider */}
+      <div className="bg-white">
+        <ImageSlider images={artisanItem.images} />
+      </div>
+
+      {/* Product Info */}
+      <div className="bg-white px-4 py-4 mb-2">
+        <div className="flex items-start justify-between mb-3">
+          <h1 className="text-lg font-semibold text-[#212121] flex-1 pr-3 leading-tight">
+            {artisanItem.name}
+          </h1>
+          <button className="flex-shrink-0">
+            <svg
+              className="w-6 h-6 text-[#757575]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
             </svg>
           </button>
         </div>
 
-        {/* Product Info with better spacing */}
-        <div className="p-6 pt-4">
-          <div className="flex justify-between items-start mb-4">
-            <h1 className="text-2xl font-bold text-gray-800 flex-1 pr-3 leading-tight">
-              {artisanItem.name}
-            </h1>
-            <span className={`px-3 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${
-              artisanItem.available 
-                ? "bg-[#93DC5C] text-white" 
-                : "bg-red-100 text-red-600"
-            }`}>
+        {/* Average Rating Display */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-1">
+            <Rating style={{ maxWidth: 80 }} value={averageRating} readOnly />
+          </div>
+          <span className="text-sm font-semibold text-[#F85606]">
+            {averageRating.toFixed(1)}
+          </span>
+          <span className="text-sm text-[#757575]">
+            ({reviews.length} {reviews.length === 1 ? "review" : "reviews"})
+          </span>
+        </div>
+
+        {/* Price Section */}
+        <div className="flex items-baseline gap-2 mb-4">
+          <span className="text-2xl font-bold text-[#F85606]">
+            Rs.{parseFloat(artisanItem.price).toFixed(2)}
+          </span>
+          <span className="text-sm text-[#9E9E9E] line-through">
+            Rs.{(parseFloat(artisanItem.price) * 1.2).toFixed(2)}
+          </span>
+          <span className="bg-[#FFE5DB] text-[#F85606] px-2 py-0.5 rounded text-xs font-bold">
+            -17%
+          </span>
+        </div>
+
+        {artisanItem.category && (
+          <div className="inline-block bg-[#F9F9F9] border border-[#E0E0E0] px-3 py-1 rounded text-sm text-[#757575]">
+            {artisanItem.category}
+          </div>
+        )}
+      </div>
+
+      {/* Vouchers Section with Add to Cart */}
+      <div className="bg-white px-4 py-3 mb-2">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="bg-[#FFC839] w-8 h-8 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-sm">V</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#212121]">Vouchers</p>
+              <p className="text-xs text-[#757575]">Collect vouchers</p>
+            </div>
+          </div>
+          <button className="bg-[#F85606] text-white px-4 py-1.5 rounded text-sm font-semibold">
+            Collect
+          </button>
+        </div>
+
+        {/* Add to Cart Button */}
+        <button
+          className="w-full bg-[#F85606] hover:bg-[#E85000] text-white py-3 rounded font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={() => {
+            if (artisanItem.available) {
+              addToCart(artisanItem._id, 1);
+              toast.success("Added to Cart!");
+              console.log(LoadCart());
+            }
+          }}
+          disabled={!artisanItem.available}
+        >
+          {artisanItem.available ? "Add to Cart" : "Out of Stock"}
+        </button>
+      </div>
+
+      {/* Product Details */}
+      <div className="bg-white px-4 py-4 mb-2">
+        <h3 className="text-base font-bold text-[#212121] mb-3">
+          Product Details
+        </h3>
+        <div className="space-y-3">
+          <div className="flex">
+            <span className="text-sm text-[#757575] w-28 flex-shrink-0">
+              Category
+            </span>
+            <span className="text-sm text-[#212121] font-medium">
+              {artisanItem.category || "General"}
+            </span>
+          </div>
+          <div className="flex">
+            <span className="text-sm text-[#757575] w-28 flex-shrink-0">
+              Stock
+            </span>
+            <span
+              className={`text-sm font-medium ${
+                artisanItem.available ? "text-[#0ABF53]" : "text-[#D0011B]"
+              }`}
+            >
               {artisanItem.available ? "In Stock" : "Out of Stock"}
             </span>
           </div>
-
-          <div className="mb-5">
-            <p className="text-3xl font-bold text-[#32CD32] mb-2">
-              Rs.{parseFloat(artisanItem.price).toFixed(2)}
-            </p>
-
-            {artisanItem.category && (
-              <div className="mb-3">
-                <span className="bg-[#DBF3C9] text-[#32CD32] px-3 py-1 rounded-full text-sm font-semibold">
-                  {artisanItem.category}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <p className="text-gray-600 leading-relaxed mb-6 text-sm">
-            {artisanItem.description}
-          </p>
-
-          <button
-            className="w-full bg-[#32CD32] hover:bg-[#2DB82D] text-white py-4 rounded-xl font-bold text-lg transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
-            onClick={() => {
-              if (artisanItem.available) {
-                addToCart(artisanItem._id, 1);
-                toast.success("Added to Cart!");
-                console.log(LoadCart());
-              }
-            }}
-            disabled={!artisanItem.available}
-          >
-            {artisanItem.available ? "Add to Cart" : "Out of Stock"}
-          </button>
         </div>
+      </div>
+
+      {/* Description */}
+      <div className="bg-white px-4 py-4 mb-2">
+        <h3 className="text-base font-bold text-[#212121] mb-2">Description</h3>
+        <p className="text-sm text-[#757575] leading-relaxed">
+          {artisanItem.description}
+        </p>
       </div>
 
       {/* Shop Information */}
       {shop && (
-        <div className="mx-4 mb-6 bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Shop Information</h2>
-          
-          <div className="flex items-center gap-4 mb-4">
+        <div className="bg-white px-4 py-4 mb-2">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-bold text-[#212121]">Sold by</h3>
+            <button
+              onClick={() => {
+                if (shop?._id) {
+                  navigate(`/shop/${shop._id}`, {
+                    state: { packageDetails: shop },
+                  });
+                }
+              }}
+              className="text-[#F85606] text-sm font-semibold"
+            >
+              Visit Store
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 mb-3">
             {shop.images?.[0] && (
-              <div className="flex-shrink-0">
-                <img
-                  src={shop.images[0]}
-                  alt={shop.name}
-                  className="w-16 h-16 rounded-xl object-cover border-2 border-[#93DC5C]"
-                />
-              </div>
+              <img
+                src={shop.images[0]}
+                alt={shop.name}
+                className="w-12 h-12 rounded-lg object-cover border border-[#E0E0E0]"
+              />
             )}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-gray-800 text-lg truncate">{shop.name}</h3>
-              <p className="text-gray-600 text-sm">{shop.ownerName}</p>
+            <div className="flex-1">
+              <h4 className="font-semibold text-[#212121] text-sm">
+                {shop.name}
+              </h4>
+              <p className="text-xs text-[#757575]">{shop.ownerName}</p>
             </div>
           </div>
 
-          <div className="space-y-3 text-sm text-gray-600 mb-5">
-            <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 text-[#32CD32] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <div className="flex items-center gap-4 text-xs text-[#757575]">
+            <div className="flex items-center gap-1">
+              <svg
+                className="w-4 h-4 text-[#FFC839]"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
-              <span className="flex-1">{shop.address}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-[#32CD32] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-              <span>{shop.phone}</span>
+              <span className="font-semibold text-[#212121]">92%</span>
+              <span>Positive Ratings</span>
             </div>
           </div>
-
-          <button
-            className="w-full bg-[#93DC5C] hover:bg-[#7ED048] text-white py-3 rounded-xl font-semibold transition-colors transform hover:scale-[1.02] active:scale-[0.98]"
-            onClick={() => {
-              if (shop?._id) {
-                navigate(`/shop/${shop._id}`, {
-                  state: { packageDetails: shop },
-                });
-              } else {
-                toast.error("Shop details are not available.");
-              }
-            }}
-          >
-            Visit Shop
-          </button>
         </div>
       )}
 
-      {/* Reviews Section */}
-      <div className="mx-4 mb-6 bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-[#32CD32]">Customer Reviews</h2>
-          <span className="bg-[#DBF3C9] text-[#32CD32] px-3 py-1 rounded-full text-sm font-semibold">
-            {reviews.length} reviews
-          </span>
-        </div>
-
-        {/* Existing Reviews */}
-        <div className="space-y-4 mb-8">
-          {reviews.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-[#93DC5C] text-4xl mb-3">💬</div>
-              <p className="text-gray-500 text-sm">No reviews yet. Be the first to review!</p>
-            </div>
-          ) : (
-            reviews.map((review) => (
-              <div
-                key={review._id}
-                className="border border-[#B7E892] rounded-xl p-4 bg-[#DBF3C9]/20"
+      {/* Ratings & Reviews */}
+      <div className="bg-white px-4 py-4 mb-2">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-bold text-[#212121]">
+            Ratings & Reviews ({reviews.length})
+          </h3>
+          {averageRating > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-lg font-bold text-[#212121]">
+                {averageRating.toFixed(1)}
+              </span>
+              <svg
+                className="w-5 h-5 text-[#FFC839]"
+                fill="currentColor"
+                viewBox="0 0 20 20"
               >
-                <div className="flex items-start gap-3 mb-3">
-                  <img
-                    src={review.profilePicture}
-                    alt={review.name}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-[#93DC5C] flex-shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <p className="font-semibold text-gray-800 text-sm truncate">{review.name}</p>
-                      <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                        {new Date(review.data).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="mt-2">
-                      <Rating
-                        style={{ maxWidth: 80 }}
-                        value={review.rating}
-                        readOnly
-                      />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-700 text-sm leading-relaxed">{review.comment}</p>
-              </div>
-            ))
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
           )}
         </div>
 
-        {/* Write Review Section */}
-        <div className="border-t border-[#B7E892] pt-6">
-          <h3 className="text-lg font-bold text-[#32CD32] mb-4">Write a Review</h3>
-          
-          <div className="mb-4">
-            <Rating
-              style={{ maxWidth: 120 }}
-              value={userRating}
-              onChange={setUserRating}
-            />
+        {reviews.length === 0 ? (
+          <div className="text-center py-6 bg-[#F9F9F9] rounded">
+            <p className="text-sm text-[#757575]">
+              No reviews yet. Be the first to review!
+            </p>
           </div>
-          
-          <textarea
-            className="w-full border border-[#93DC5C] p-3 rounded-xl mb-4 text-gray-700 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#32CD32] focus:border-transparent"
-            rows="4"
-            placeholder="Share your experience with this product..."
-            value={userComment}
-            onChange={(e) => setUserComment(e.target.value)}
-          />
-          
-          <button
-            className="w-full bg-[#32CD32] hover:bg-[#2DB82D] text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
-            onClick={handleAddReview}
-            disabled={!userRating}
-          >
-            Submit Review
+        ) : (
+          <div className="space-y-3">
+            {reviews.slice(0, 3).map((review) => (
+              <div
+                key={review._id}
+                className="border-b border-[#E0E0E0] pb-3 last:border-0"
+              >
+                <div className="flex items-start gap-3">
+                  <img
+                    src={review.profilePicture}
+                    alt={review.name}
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-semibold text-[#212121] text-sm">
+                        {review.name}
+                      </p>
+                      <p className="text-xs text-[#9E9E9E]">
+                        {new Date(review.data).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Rating
+                      style={{ maxWidth: 70 }}
+                      value={review.rating}
+                      readOnly
+                    />
+                    <p className="text-sm text-[#757575] mt-2 leading-relaxed">
+                      {review.comment}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {reviews.length > 3 && (
+          <button className="w-full mt-4 text-[#F85606] text-sm font-semibold py-2 border border-[#F85606] rounded">
+            View All {reviews.length} Reviews
           </button>
-        </div>
+        )}
       </div>
 
-      {/* Bottom spacing for navigation */}
-      <div className="h-4"></div>
+      {/* Write Review */}
+      <div className="bg-white px-4 py-4 mb-2">
+        <h3 className="text-base font-bold text-[#212121] mb-3">
+          Write a Review
+        </h3>
+
+        <div className="mb-3">
+          <Rating
+            style={{ maxWidth: 100 }}
+            value={userRating}
+            onChange={setUserRating}
+          />
+        </div>
+
+        <textarea
+          className="w-full border border-[#E0E0E0] p-3 rounded text-sm resize-none focus:outline-none focus:border-[#F85606]"
+          rows="4"
+          placeholder="Share your experience..."
+          value={userComment}
+          onChange={(e) => setUserComment(e.target.value)}
+        />
+
+        <button
+          className="w-full bg-[#F85606] hover:bg-[#E85000] text-white py-3 rounded font-semibold mt-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleAddReview}
+          disabled={!userRating}
+        >
+          Submit Review
+        </button>
+      </div>
+
+      
+      
     </div>
   );
 }

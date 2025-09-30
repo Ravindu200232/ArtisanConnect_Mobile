@@ -1,11 +1,9 @@
 import { MdDeleteForever } from "react-icons/md";
-import { AiFillDownSquare, AiFillUpSquare } from "react-icons/ai";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { addToCart, removeFromCart } from "../utils/card";
 
-export default function BookingItem({ itemKey, qty, refresh }) {
-  console.log("itemkey", itemKey);
+export default function BookingItem({ itemKey, qty, refresh, isSelected, onSelectChange }) {
   const [item, setItem] = useState(null);
   const [status, setStatus] = useState("loading");
   const [updating, setUpdating] = useState(false);
@@ -17,7 +15,6 @@ export default function BookingItem({ itemKey, qty, refresh }) {
         .then((res) => {
           setItem(res.data);
           setStatus("success");
-          console.log(res.data);
         })
         .catch((err) => {
           console.log(err);
@@ -64,112 +61,127 @@ export default function BookingItem({ itemKey, qty, refresh }) {
     }, 300);
   };
 
+  const handleCheckboxChange = (e) => {
+    onSelectChange(itemKey, e.target.checked);
+  };
+
   if (status === "loading") {
     return (
-      <div className="flex items-center p-4 bg-white rounded-2xl border border-[#B7E892] animate-pulse">
-        <div className="w-16 h-16 bg-gray-200 rounded-xl"></div>
-        <div className="ml-4 flex-1">
+      <div className="flex items-start p-4 bg-white animate-pulse">
+        <div className="flex-shrink-0">
+          <input type="checkbox" className="w-5 h-5 mt-2" disabled />
+        </div>
+        <div className="w-20 h-20 bg-gray-200 rounded ml-3"></div>
+        <div className="ml-3 flex-1">
           <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
         </div>
       </div>
     );
   }
 
   if (status === "error") {
-    return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-200 text-center">
-        Failed to load item.
-      </div>
-    );
+    return null;
   }
 
+  const originalPrice = (item?.price * 1.25).toFixed(2);
+  const discount = Math.round(((originalPrice - item?.price) / originalPrice) * 100);
+
   return (
-    <div className="flex items-center p-4 bg-white rounded-2xl shadow-lg border border-[#B7E892] hover:shadow-xl transition-all duration-300">
+    <div className="flex items-start p-4 bg-white">
+      {/* Checkbox */}
+      <div className="flex-shrink-0">
+        <input 
+          type="checkbox" 
+          className="w-5 h-5 accent-[#F85606] mt-2"
+          checked={isSelected}
+          onChange={handleCheckboxChange}
+        />
+      </div>
+
       {/* Product Image */}
-      <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-[#93DC5C]">
+      <div className="flex-shrink-0 w-20 h-20 ml-3 rounded overflow-hidden border border-[#E0E0E0]">
         <img
-          src={item?.images?.[0] || "/default-food.jpg"}
+          src={item?.images?.[0] || "/default-product.jpg"}
           alt={item?.name}
           className="w-full h-full object-cover"
         />
       </div>
 
       {/* Product Info */}
-      <div className="flex-1 ml-4 min-w-0">
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-gray-800 truncate">{item?.name}</h3>
-            <p className="text-sm text-gray-600 line-clamp-2 mt-1">{item?.description}</p>
+      <div className="flex-1 ml-3 min-w-0">
+        {/* Product Name */}
+        <h3 className="text-sm font-medium text-[#212121] line-clamp-2 mb-1">
+          {item?.name}
+        </h3>
+
+        {/* Product Details */}
+        <p className="text-xs text-[#757575] mb-2">
+          {item?.category ? `${item.category}` : "No Brand"}
+        </p>
+
+        {/* Stock Warning */}
+        {item?.stock && item.stock < 10 && (
+          <p className="text-xs text-[#D0011B] mb-2">
+            Only {item.stock} item(s) in stock
+          </p>
+        )}
+
+        {/* Price Section */}
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-base font-bold text-[#F85606]">
+            Rs. {parseFloat(item?.price).toFixed(0)}
+          </span>
+          <span className="text-xs text-[#9E9E9E] line-through">
+            Rs. {originalPrice}
+          </span>
+        </div>
+
+        {/* Quantity Controls */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center border border-[#E0E0E0] rounded">
+            <button
+              onClick={handleDecrease}
+              disabled={updating}
+              className={`w-8 h-8 flex items-center justify-center text-[#757575] hover:bg-[#F5F5F5] transition-colors ${
+                updating ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+            </button>
+
+            <div className="w-10 text-center border-x border-[#E0E0E0]">
+              <span className="text-sm font-medium text-[#212121]">{qty}</span>
+            </div>
+
+            <button
+              onClick={handleIncrease}
+              disabled={updating}
+              className={`w-8 h-8 flex items-center justify-center text-[#757575] hover:bg-[#F5F5F5] transition-colors ${
+                updating ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
           </div>
-          
+
           {/* Delete Button */}
           <button
             onClick={handleRemove}
             disabled={updating}
-            className={`ml-3 flex-shrink-0 transition-all duration-200 ${
-              updating ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 active:scale-95'
-            }`}
+            className={`p-2 transition-colors ${
+              updating ? "opacity-50 cursor-not-allowed" : "hover:bg-[#FFF5F0]"
+            } rounded`}
           >
-            <MdDeleteForever className="size-6 text-red-400 hover:text-red-600" />
+            <svg className="w-5 h-5 text-[#757575] hover:text-[#D0011B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
           </button>
-        </div>
-
-        {/* Price and Category */}
-        <div className="flex items-center gap-3 mb-3">
-          <p className="text-lg font-bold text-[#32CD32]">
-            Rs.{parseFloat(item?.price).toFixed(2)}
-          </p>
-          {item?.category && (
-            <span className="bg-[#DBF3C9] text-[#32CD32] px-2 py-1 rounded-full text-xs font-semibold">
-              {item.category}
-            </span>
-          )}
-        </div>
-
-        {/* Quantity Controls and Total */}
-        <div className="flex items-center justify-between">
-          {/* Quantity Controls */}
-          <div className="flex items-center space-x-3 bg-[#DBF3C9] rounded-full px-3 py-2 border border-[#93DC5C]">
-            {/* Decrease Button */}
-            <button
-              onClick={handleDecrease}
-              disabled={updating}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
-                updating 
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
-                  : "bg-white text-[#32CD32] hover:bg-[#32CD32] hover:text-white shadow-sm active:scale-95"
-              }`}
-            >
-              <AiFillDownSquare className="size-4" />
-            </button>
-
-            {/* Quantity Display */}
-            <div className="min-w-8 text-center">
-              <span className="font-bold text-gray-800 text-base">{qty}</span>
-            </div>
-
-            {/* Increase Button */}
-            <button
-              onClick={handleIncrease}
-              disabled={updating}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
-                updating 
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
-                  : "bg-white text-[#32CD32] hover:bg-[#32CD32] hover:text-white shadow-sm active:scale-95"
-              }`}
-            >
-              <AiFillUpSquare className="size-4" />
-            </button>
-          </div>
-
-          {/* Total Price */}
-          <div className="text-right">
-            <p className="text-xs text-gray-600 mb-1">Item Total</p>
-            <p className="text-lg font-bold text-[#32CD32]">
-              Rs.{((item?.price || 0) * qty).toFixed(2)}
-            </p>
-          </div>
         </div>
       </div>
     </div>

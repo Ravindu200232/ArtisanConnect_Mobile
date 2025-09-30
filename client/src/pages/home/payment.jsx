@@ -45,10 +45,8 @@ export function Payment() {
     try {
       const token = localStorage.getItem("token");
   
-      // Divide total amount evenly and round to 2 decimals
       const perBookingAmount = parseFloat((amount / bookingIds.length).toFixed(2));
   
-      // Make separate requests for each bookingId
       for (const bookingId of bookingIds) {
         await axios.post(
           `http://localhost:3000/api/payment`,
@@ -69,7 +67,7 @@ export function Payment() {
       }
   
       toast.success("Payment successful!");
-      navigate("/"); // 👈 Redirect after all successful
+      navigate("/");
     } catch (err) {
       console.error(err);
       toast.error("Payment failed.");
@@ -100,194 +98,229 @@ export function Payment() {
   };
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] pb-20 pt-4">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#32CD32] to-[#93DC5C] px-6 py-8 rounded-b-3xl shadow-lg">
-        <div className="flex items-center justify-between mb-2">
+    <div className="min-h-screen bg-gray-50">
+      {/* Daraz Header */}
+      <div className="bg-[#F85606] px-4 py-3 shadow-md">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+            className="w-9 h-9 flex items-center justify-center"
           >
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-white text-center flex-1">Secure Payment</h1>
-          <div className="w-10"></div>
+          <h1 className="text-lg font-semibold text-white">Payment</h1>
         </div>
-        <p className="text-white/90 text-center text-sm">Complete your purchase securely</p>
       </div>
 
-      {/* Payment Card */}
-      <div className="mx-4 mt-6 bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-        {/* Amount Display */}
-        <div className="text-center mb-6">
-          <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-          <p className="text-3xl font-bold text-[#32CD32]">Rs.{amount?.toFixed(2)}</p>
-        </div>
-
-        {/* Payment Method Selection */}
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-3">Payment Method</label>
-          <div className="grid grid-cols-3 gap-2">
-            {["Card", "PayPal", "Bank Transfer"].map((method) => (
-              <button
-                key={method}
-                onClick={() => setPaymentType(method)}
-                className={`p-3 rounded-xl border-2 transition-all duration-200 ${
-                  paymentType === method
-                    ? "border-[#32CD32] bg-[#DBF3C9] text-[#32CD32] font-semibold"
-                    : "border-gray-200 bg-gray-50 text-gray-600 hover:border-[#93DC5C]"
-                }`}
-              >
-                <div className="text-center">
-                  <div className="text-lg mb-1">
-                    {method === "Card" && "💳"}
-                    {method === "PayPal" && "🔵"}
-                    {method === "Bank Transfer" && "🏦"}
-                  </div>
-                  <span className="text-xs">{method}</span>
-                </div>
-              </button>
-            ))}
+      {/* Amount Summary Card */}
+      <div className="bg-white mx-4 mt-4 rounded-lg shadow-sm border border-gray-100">
+        <div className="p-4 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">Total Payment</span>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-[#F85606]">Rs. {amount?.toFixed(2)}</div>
+              <div className="text-xs text-gray-500">{bookingIds?.length} booking(s)</div>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Card Details */}
-        {paymentType === "Card" && (
-          <div className="space-y-4">
-            {/* Card Number */}
+      {/* Payment Methods */}
+      <div className="mx-4 mt-4">
+        <div className="text-sm font-semibold text-gray-800 mb-3 px-1">Select Payment Method</div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+          {["Card", "PayPal", "Bank Transfer"].map((method, idx) => (
+            <button
+              key={method}
+              onClick={() => setPaymentType(method)}
+              className={`w-full p-4 flex items-center justify-between border-b border-gray-100 transition-colors ${
+                paymentType === method ? "bg-orange-50" : "bg-white active:bg-gray-50"
+              } ${idx === 2 ? "border-b-0" : ""}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  paymentType === method ? "bg-[#F85606]" : "bg-gray-100"
+                }`}>
+                  <span className="text-xl">
+                    {method === "Card" && "💳"}
+                    {method === "PayPal" && "🅿️"}
+                    {method === "Bank Transfer" && "🏦"}
+                  </span>
+                </div>
+                <div className="text-left">
+                  <div className="text-sm font-medium text-gray-800">{method}</div>
+                  <div className="text-xs text-gray-500">
+                    {method === "Card" && "Credit/Debit Card"}
+                    {method === "PayPal" && "PayPal Account"}
+                    {method === "Bank Transfer" && "Direct Bank Transfer"}
+                  </div>
+                </div>
+              </div>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                paymentType === method ? "border-[#F85606]" : "border-gray-300"
+              }`}>
+                {paymentType === method && (
+                  <div className="w-3 h-3 rounded-full bg-[#F85606]"></div>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Card Details Form */}
+      {paymentType === "Card" && (
+        <div className="mx-4 mt-4 bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+          <div className="text-sm font-semibold text-gray-800 mb-4">Card Details</div>
+          
+          {/* Card Number */}
+          <div className="mb-4">
+            <label className="block text-xs text-gray-600 mb-2 font-medium">
+              CARD NUMBER
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={formatCardNumber(cardNumber)}
+                onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, ''))}
+                className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606] text-sm"
+                placeholder="1234 5678 9012 3456"
+                maxLength={19}
+              />
+              {cardNumber.replace(/\s/g, '').length > 0 && (
+                <div className="absolute right-3 top-3">
+                  {cardNumber.replace(/\s/g, '').length === 16 ? (
+                    <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Expiry and CVV */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Card Number
+              <label className="block text-xs text-gray-600 mb-2 font-medium">
+                EXPIRY DATE
+              </label>
+              <input
+                type="text"
+                value={formatExpiry(expiry)}
+                onChange={(e) => setExpiry(e.target.value)}
+                className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606] text-sm"
+                placeholder="MM/YY"
+                maxLength={5}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-600 mb-2 font-medium">
+                CVV
               </label>
               <div className="relative">
                 <input
-                  type="text"
-                  value={formatCardNumber(cardNumber)}
-                  onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, ''))}
-                  className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] focus:border-transparent"
-                  placeholder="1234 5678 9012 3456"
-                  maxLength={19}
+                  type="password"
+                  value={cvv}
+                  onChange={(e) => setCvv(e.target.value.replace(/[^0-9]/g, ''))}
+                  className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606] text-sm"
+                  placeholder="123"
+                  maxLength={3}
                 />
-                <div className="absolute right-3 top-3 text-gray-400">
-                  {cardNumber.replace(/\s/g, '').length > 0 && 
-                    (cardNumber.replace(/\s/g, '').length === 16 ? "✅" : "❌")}
-                </div>
-              </div>
-            </div>
-
-            {/* Expiry and CVV */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Expiry Date
-                </label>
-                <input
-                  type="text"
-                  value={formatExpiry(expiry)}
-                  onChange={(e) => setExpiry(e.target.value)}
-                  className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] focus:border-transparent"
-                  placeholder="MM/YY"
-                  maxLength={5}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  CVV
-                </label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    value={cvv}
-                    onChange={(e) => setCvv(e.target.value.replace(/[^0-9]/g, ''))}
-                    className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] focus:border-transparent"
-                    placeholder="123"
-                    maxLength={3}
-                  />
-                  <div className="absolute right-3 top-3 text-gray-400">
-                    {cvv.length > 0 && (cvv.length === 3 ? "✅" : "❌")}
+                {cvv.length > 0 && (
+                  <div className="absolute right-3 top-3">
+                    {cvv.length === 3 ? (
+                      <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    )}
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Card Security Info */}
-            <div className="bg-[#DBF3C9] rounded-xl p-3 border border-[#93DC5C]">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <svg className="w-4 h-4 text-[#32CD32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <span>Your payment details are secure and encrypted</span>
+                )}
               </div>
             </div>
           </div>
-        )}
 
-        {/* Other Payment Methods */}
-        {paymentType !== "Card" && (
-          <div className="text-center py-8">
-            <div className="text-4xl mb-3">
-              {paymentType === "PayPal" ? "🔵" : "🏦"}
+          {/* Security Notice */}
+          <div className="mt-4 bg-blue-50 rounded-lg p-3 flex items-start gap-2">
+            <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+            </svg>
+            <div className="text-xs text-blue-800">
+              <div className="font-medium mb-0.5">Secure Payment</div>
+              <div className="text-blue-600">Your card information is encrypted and secure</div>
             </div>
-            <p className="text-gray-600">
-              You will be redirected to {paymentType} to complete your payment
-            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Action Buttons */}
-      <div className="mx-4 mt-6 space-y-3">
+      {/* Other Payment Methods Info */}
+      {paymentType !== "Card" && (
+        <div className="mx-4 mt-4 bg-white rounded-lg shadow-sm border border-gray-100 p-6 text-center">
+          <div className="text-5xl mb-3">
+            {paymentType === "PayPal" ? "🅿️" : "🏦"}
+          </div>
+          <div className="text-sm font-medium text-gray-800 mb-1">
+            {paymentType} Payment
+          </div>
+          <div className="text-xs text-gray-500">
+            You'll be redirected to complete your payment securely
+          </div>
+        </div>
+      )}
+
+      {/* Pay Button Fixed at Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
         <button
           onClick={handlePayment}
           disabled={processing}
-          className="w-full bg-[#32CD32] hover:bg-[#2DB82D] disabled:bg-gray-400 text-white py-4 rounded-xl font-bold text-lg transition-colors shadow-lg flex items-center justify-center gap-3"
+          className="w-full bg-[#F85606] hover:bg-[#E04D05] disabled:bg-gray-300 text-white py-4 rounded-lg font-semibold text-base transition-colors shadow-md flex items-center justify-center gap-2"
         >
           {processing ? (
             <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Processing...
+              <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Processing Payment...</span>
             </>
           ) : (
             <>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Pay Rs.{amount?.toFixed(2)}
+              <span>Pay Rs. {amount?.toFixed(2)}</span>
             </>
           )}
         </button>
-
-        <button
-          onClick={() => navigate(-1)}
-          className="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Cancel Payment
-        </button>
-      </div>
-
-      {/* Security Badges */}
-      <div className="mx-4 mt-6 text-center">
-        <div className="flex justify-center items-center gap-4 text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <svg className="w-4 h-4 text-[#32CD32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        
+        {/* Security Badges */}
+        <div className="flex justify-center items-center gap-4 mt-3">
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <svg className="w-3.5 h-3.5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
             </svg>
             <span>SSL Secure</span>
           </div>
-          <div className="flex items-center gap-1">
-            <svg className="w-4 h-4 text-[#32CD32]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <svg className="w-3.5 h-3.5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
-            <span>Encrypted</span>
+            <span>100% Safe</span>
           </div>
         </div>
       </div>
+
+      {/* Bottom Spacer */}
+      <div className="h-32"></div>
     </div>
   );
 }

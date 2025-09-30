@@ -14,16 +14,20 @@ export default function BookingConfirmation() {
 
   if (!location.state || !location.state.sendData) {
     return (
-      <div className="min-h-screen bg-[#DBF3C9] flex items-center justify-center px-4">
-        <div className="text-center bg-white rounded-2xl p-8 border border-[#B7E892] shadow-lg">
-          <div className="text-[#93DC5C] text-6xl mb-4">❌</div>
-          <h2 className="text-xl font-bold text-gray-700 mb-2">
+      <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center px-4">
+        <div className="text-center bg-white rounded-lg p-8 shadow-lg">
+          <div className="w-20 h-20 bg-[#FFF5F0] rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-10 h-10 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-[#212121] mb-2">
             Booking Details Not Found
           </h2>
-          <p className="text-gray-500 mb-6">Please go back and try again</p>
+          <p className="text-[#757575] mb-6">Please go back and try again</p>
           <button
             onClick={() => navigate("/product")}
-            className="bg-[#32CD32] hover:bg-[#2DB82D] text-white px-6 py-2 rounded-xl font-semibold transition-colors"
+            className="bg-[#F85606] hover:bg-[#E85000] text-white px-6 py-3 rounded font-semibold"
           >
             Back to Shopping
           </button>
@@ -47,12 +51,28 @@ export default function BookingConfirmation() {
   };
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] pb-20 ">
-      {/* Success Header */}
-      <div className="bg-gradient-to-r from-[#32CD32] to-[#93DC5C] px-6 py-12 rounded-b-3xl shadow-lg text-center">
-        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+    <div className="min-h-screen bg-[#F5F5F5] pb-24">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-white border-b border-[#E0E0E0] px-4 py-3">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate("/")}
+            className="w-9 h-9 flex items-center justify-center"
+          >
+            <svg className="w-6 h-6 text-[#212121]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-lg font-bold text-[#212121]">Order Confirmation</h1>
+          <div className="w-9"></div>
+        </div>
+      </div>
+
+      {/* Success Banner */}
+      <div className="bg-white px-4 py-6 text-center border-b border-[#E0E0E0]">
+        <div className="w-16 h-16 bg-[#0ABF53] rounded-full flex items-center justify-center mx-auto mb-3">
           <svg
-            className="w-10 h-10 text-white"
+            className="w-8 h-8 text-white"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -60,26 +80,61 @@ export default function BookingConfirmation() {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
+              strokeWidth={3}
               d="M5 13l4 4L19 7"
             />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-white mb-2">Order Confirmed!</h1>
-        <p className="text-white/90 text-sm">
-          Your order has been successfully placed
+        <h2 className="text-xl font-bold text-[#212121] mb-1">Order Placed Successfully!</h2>
+        <p className="text-sm text-[#757575]">
+          Thank you for your purchase
         </p>
       </div>
 
-      {/* Order Summary Card */}
-      <div className="mx-4 mt-6 bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-        <h2 className="text-xl font-bold text-[#32CD32] mb-4">Order Summary</h2>
+      {/* Order Tracking Steps */}
+      <div className="bg-white mt-2 px-4 py-5">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-10 h-10 bg-[#0ABF53] rounded-full flex items-center justify-center mb-2 relative">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <p className="text-xs text-[#212121] font-semibold">Ordered</p>
+          </div>
 
-        {/* Customer Info */}
-        <div className="space-y-3 mb-6">
-          <div className="flex items-center gap-3">
+          <div className="flex-1 h-0.5 bg-[#E0E0E0] -mt-8"></div>
+
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-10 h-10 bg-[#F5F5F5] border-2 border-[#E0E0E0] rounded-full flex items-center justify-center mb-2">
+              <svg className="w-5 h-5 text-[#9E9E9E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-xs text-[#9E9E9E]">Payment</p>
+          </div>
+
+          <div className="flex-1 h-0.5 bg-[#E0E0E0] -mt-8"></div>
+
+          <div className="flex flex-col items-center flex-1">
+            <div className="w-10 h-10 bg-[#F5F5F5] border-2 border-[#E0E0E0] rounded-full flex items-center justify-center mb-2">
+              <svg className="w-5 h-5 text-[#9E9E9E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+            </div>
+            <p className="text-xs text-[#9E9E9E]">Delivery</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Delivery Information */}
+      <div className="bg-white mt-2 px-4 py-4">
+        <h3 className="text-base font-bold text-[#212121] mb-3">Delivery Information</h3>
+        
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
             <svg
-              className="w-5 h-5 text-[#32CD32] flex-shrink-0"
+              className="w-5 h-5 text-[#757575] flex-shrink-0 mt-0.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -91,9 +146,9 @@ export default function BookingConfirmation() {
                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
               />
             </svg>
-            <div>
-              <p className="text-sm text-gray-600">Email</p>
-              <p className="font-semibold text-gray-800">
+            <div className="flex-1">
+              <p className="text-xs text-[#757575]">Email</p>
+              <p className="text-sm font-medium text-[#212121]">
                 {orderItems[0]?.email}
               </p>
             </div>
@@ -101,7 +156,7 @@ export default function BookingConfirmation() {
 
           <div className="flex items-start gap-3">
             <svg
-              className="w-5 h-5 text-[#32CD32] flex-shrink-0 mt-0.5"
+              className="w-5 h-5 text-[#757575] flex-shrink-0 mt-0.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -112,62 +167,82 @@ export default function BookingConfirmation() {
                 strokeWidth={2}
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
               />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
-            <div>
-              <p className="text-sm text-gray-600">Delivery Address</p>
-              <p className="font-semibold text-gray-800">
+            <div className="flex-1">
+              <p className="text-xs text-[#757575]">Delivery Address</p>
+              <p className="text-sm font-medium text-[#212121]">
                 {orderItems[0]?.address}
               </p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Order Items */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            Order Items ({orderItems.length})
-          </h3>
-          <div className="space-y-3">
-            {orderItems.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-4 p-3 bg-[#DBF3C9]/30 rounded-xl border border-[#B7E892]"
-              >
-                <img
-                  src={item.image}
-                  alt={item.Item_name}
-                  className="w-16 h-16 rounded-xl object-cover border-2 border-[#93DC5C]"
-                />
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-gray-800 text-sm truncate">
-                    {item.Item_name}
-                  </h4>
-                  <div className="flex items-center gap-4 mt-1 text-xs text-gray-600">
-                    <span>Qty: {item.quantity}</span>
-                    <span>Rs.{item.price?.toFixed(2)}</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Order ID: {item.orderId}
-                  </p>
+      {/* Order Items */}
+      <div className="bg-white mt-2 px-4 py-4">
+        <h3 className="text-base font-bold text-[#212121] mb-3">
+          Order Items ({orderItems.length})
+        </h3>
+        
+        <div className="space-y-3">
+          {orderItems.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-3 pb-3 border-b border-[#F5F5F5] last:border-0"
+            >
+              <img
+                src={item.image}
+                alt={item.Item_name}
+                className="w-16 h-16 rounded object-cover border border-[#E0E0E0] flex-shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-[#212121] text-sm line-clamp-2">
+                  {item.Item_name}
+                </h4>
+                <div className="flex items-center gap-3 mt-1 text-xs text-[#757575]">
+                  <span>Qty: {item.quantity}</span>
+                  <span>×</span>
+                  <span>Rs.{item.price?.toFixed(2)}</span>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Item Total</p>
-                  <p className="font-bold text-[#32CD32] text-lg">
-                    Rs.{item.totalAmount?.toFixed(2)}
-                  </p>
-                </div>
+                <p className="text-xs text-[#9E9E9E] mt-1">
+                  Order ID: #{item.orderId?.slice(0, 8)}
+                </p>
               </div>
-            ))}
+              <div className="text-right flex-shrink-0">
+                <p className="font-bold text-[#F85606] text-base">
+                  Rs.{item.totalAmount?.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Order Summary */}
+      <div className="bg-white mt-2 px-4 py-4">
+        <h3 className="text-base font-bold text-[#212121] mb-3">Order Summary</h3>
+        
+        <div className="space-y-2 mb-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-[#757575]">Subtotal</span>
+            <span className="text-[#212121] font-medium">Rs.{totalAmount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-[#757575]">Shipping Fee</span>
+            <span className="text-[#0ABF53] font-medium">FREE</span>
           </div>
         </div>
 
-        {/* Total Amount */}
-        <div className="border-t border-[#B7E892] pt-4">
+        <div className="border-t border-[#E0E0E0] pt-3">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-bold text-gray-800">
-              Total Amount
-            </span>
-            <span className="text-2xl font-bold text-[#32CD32]">
+            <span className="text-base font-bold text-[#212121]">Total</span>
+            <span className="text-xl font-bold text-[#F85606]">
               Rs.{totalAmount.toFixed(2)}
             </span>
           </div>
@@ -175,13 +250,13 @@ export default function BookingConfirmation() {
       </div>
 
       {/* Action Buttons */}
-      <div className="mx-4 mt-6 space-y-3">
+      <div className="px-4 mt-4 space-y-3 pb-4">
         <button
           onClick={handleProceedToPayment}
-          className="w-full bg-[#32CD32] hover:bg-[#2DB82D] text-white py-4 rounded-xl font-bold text-lg transition-colors shadow-lg flex items-center justify-center gap-3"
+          className="w-full bg-[#F85606] hover:bg-[#E85000] text-white py-3 rounded font-bold text-base transition-colors flex items-center justify-center gap-2"
         >
           <svg
-            className="w-6 h-6"
+            className="w-5 h-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -190,15 +265,15 @@ export default function BookingConfirmation() {
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
             />
           </svg>
           Proceed to Payment
         </button>
 
         <button
-          onClick={() => navigate("/item")}
-          className="w-full bg-[#93DC5C] hover:bg-[#7ED048] text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
+          onClick={() => navigate("/product")}
+          className="w-full bg-white hover:bg-[#F5F5F5] text-[#F85606] border-2 border-[#F85606] py-3 rounded font-semibold text-base transition-colors flex items-center justify-center gap-2"
         >
           <svg
             className="w-5 h-5"
@@ -215,59 +290,6 @@ export default function BookingConfirmation() {
           </svg>
           Continue Shopping
         </button>
-
-        <button
-          onClick={() => navigate(-1)}
-          className="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-          Cancel Order
-        </button>
-      </div>
-
-      {/* Order Status */}
-      <div className="mx-4 mt-6 bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-        <h3 className="text-lg font-semibold text-[#32CD32] mb-3">
-          Order Status
-        </h3>
-        <div className="flex items-center justify-between">
-          <div className="text-center">
-            <div className="w-10 h-10 bg-[#32CD32] rounded-full flex items-center justify-center mx-auto mb-2">
-              <span className="text-white font-bold text-sm">1</span>
-            </div>
-            <p className="text-xs text-gray-600">Ordered</p>
-          </div>
-
-          <div className="flex-1 h-1 bg-[#DBF3C9] mx-2"></div>
-
-          <div className="text-center">
-            <div className="w-10 h-10 bg-[#DBF3C9] border-2 border-[#93DC5C] rounded-full flex items-center justify-center mx-auto mb-2">
-              <span className="text-gray-400 font-bold text-sm">2</span>
-            </div>
-            <p className="text-xs text-gray-400">Payment</p>
-          </div>
-
-          <div className="flex-1 h-1 bg-[#DBF3C9] mx-2"></div>
-
-          <div className="text-center">
-            <div className="w-10 h-10 bg-[#DBF3C9] border-2 border-[#93DC5C] rounded-full flex items-center justify-center mx-auto mb-2">
-              <span className="text-gray-400 font-bold text-sm">3</span>
-            </div>
-            <p className="text-xs text-gray-400">Delivery</p>
-          </div>
-        </div>
       </div>
     </div>
   );
