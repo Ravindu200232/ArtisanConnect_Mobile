@@ -10,7 +10,7 @@ export default function Item() {
 
   useEffect(() => {
     if (state === "loading") {
-      fetch(`http://localhost:3000/api/v1/collection`)
+      fetch(`https://artisanconnect-backend.onrender.com/api/v1/collection`)
         .then((res) => res.json())
         .then((data) => {
           const allItems = data;

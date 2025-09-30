@@ -14,7 +14,7 @@ export function AdminInquiryPage() {
       setLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `http://localhost:3000/api/inquiry`,
+        `https://artisanconnect-backend.onrender.com/api/inquiry`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -43,7 +43,7 @@ export function AdminInquiryPage() {
 
     try {
       await axios.put(
-        `http://localhost:3000/api/inquiry/${id}`,
+        `https://artisanconnect-backend.onrender.com/api/inquiry/${id}`,
         { response },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -74,7 +74,7 @@ export function AdminInquiryPage() {
       try {
         const token = localStorage.getItem("token");
         await axios.delete(
-          `http://localhost:3000/api/inquiry/${id}`,
+          `https://artisanconnect-backend.onrender.com/api/inquiry/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

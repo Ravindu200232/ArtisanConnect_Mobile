@@ -49,7 +49,7 @@ export function Payment() {
   
       for (const bookingId of bookingIds) {
         await axios.post(
-          `http://localhost:3000/api/payment`,
+          `https://artisanconnect-backend.onrender.com/api/payment`,
           {
             bookingId,
             amount: perBookingAmount,

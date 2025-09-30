@@ -31,7 +31,7 @@ export default function AdminPackagePage() {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.delete(
-          `http://localhost:3000/api/v1/owner/delete/${id}`,
+          `https://artisanconnect-backend.onrender.com/api/v1/owner/delete/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -62,7 +62,7 @@ export default function AdminPackagePage() {
       const token = localStorage.getItem("token");
 
       const response = await axios.put(
-        `http://localhost:3000/api/v1/owner/update/${id}`,
+        `https://artisanconnect-backend.onrender.com/api/v1/owner/update/${id}`,
         {},
         {
           headers: {
@@ -98,7 +98,7 @@ export default function AdminPackagePage() {
   const fetchShop = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:3000/api/v1/owner", {
+      const response = await axios.get("https://artisanconnect-backend.onrender.com/api/v1/owner", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setShops(response.data);

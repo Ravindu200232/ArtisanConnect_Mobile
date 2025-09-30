@@ -13,7 +13,7 @@ export function AdminReviewPage() {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:3000/api/v1/reviews`,
+        `https://artisanconnect-backend.onrender.com/api/v1/reviews`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -33,7 +33,7 @@ export function AdminReviewPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:3000/api/v1/reviews/approve/${id}`,
+        `https://artisanconnect-backend.onrender.com/api/v1/reviews/approve/${id}`,
         {},
         {
           headers: {
@@ -65,7 +65,7 @@ export function AdminReviewPage() {
       try {
         const token = localStorage.getItem("token");
         await axios.delete(
-          `http://localhost:3000/api/v1/reviews/delete/${id}`,
+          `https://artisanconnect-backend.onrender.com/api/v1/reviews/delete/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

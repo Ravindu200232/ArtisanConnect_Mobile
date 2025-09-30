@@ -12,7 +12,7 @@ export default function Main() {
   useEffect(() => {
     if (state === "loading") {
       // Fetch collections
-      fetch(`http://localhost:3000/api/v1/collection`)
+      fetch(`https://artisanconnect-backend.onrender.com/api/v1/collection`)
         .then((res) => res.json())
         .then((data) => {
           setItems(data);
@@ -43,7 +43,7 @@ export default function Main() {
       // Fetch shops for featured section
       const token = localStorage.getItem("token");
       if (token) {
-        fetch(`http://localhost:3000/api/v1/owner`, {
+        fetch(`https://artisanconnect-backend.onrender.com/api/v1/owner`, {
           headers: { Authorization: `Bearer ${token}` },
         })
           .then((res) => res.json())

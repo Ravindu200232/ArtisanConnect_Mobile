@@ -65,7 +65,7 @@ export function Available() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:3000/api/v1/driver/${driver.id}`,
+        `https://artisanconnect-backend.onrender.com/api/v1/driver/${driver.id}`,
         formData,
         {
           headers: {

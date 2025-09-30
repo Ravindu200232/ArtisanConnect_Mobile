@@ -17,7 +17,7 @@ export default function AdminItemPage() {
     if (!itemsLoaded && shopId) {
       const token = localStorage.getItem("token");
       axios
-        .get(`http://localhost:3000/api/v1/collection/getAll/${shopId}`, {
+        .get(`https://artisanconnect-backend.onrender.com/api/v1/collection/getAll/${shopId}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
@@ -54,7 +54,7 @@ export default function AdminItemPage() {
               onClick={() => {
                 toast.dismiss(t.id);
                 axios
-                  .delete(`http://localhost:3000/api/v1/collection/delete/${itemId}`, {
+                  .delete(`https://artisanconnect-backend.onrender.com/api/v1/collection/delete/${itemId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                   })
                   .then(() => {
@@ -82,7 +82,7 @@ export default function AdminItemPage() {
   const handleApprove = (collectionId, itemName) => {
     const token = localStorage.getItem("token");
     axios
-      .post(`http://localhost:3000/api/v1/collection/isApprove/${collectionId}`, {}, {
+      .post(`https://artisanconnect-backend.onrender.com/api/v1/collection/isApprove/${collectionId}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(() => {

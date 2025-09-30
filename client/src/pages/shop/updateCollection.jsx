@@ -75,7 +75,7 @@ export default function UpdateCollection() {
 
     try {
       const result = await axios.put(
-        `http://localhost:3000/api/v1/collection/update/${data._id}`,
+        `https://artisanconnect-backend.onrender.com/api/v1/collection/update/${data._id}`,
         {
           name: itemName,
           price: itemPrice,

@@ -54,7 +54,7 @@ export function Profile() {
   const fetchDeliveries = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:3000/api/v1/delivery`, {
+      const response = await axios.get(`https://artisanconnect-backend.onrender.com/api/v1/delivery`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userDeliveries = response.data.filter(d => d.customerEmail === user?.email);
@@ -69,7 +69,7 @@ export function Profile() {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:3000/api/v1/orders`, {
+      const response = await axios.get(`https://artisanconnect-backend.onrender.com/api/v1/orders`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userOrders = response.data.filter(order => order.email === user?.email);
@@ -84,7 +84,7 @@ export function Profile() {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:3000/api/v1/notification/user`, {
+      const response = await axios.get(`https://artisanconnect-backend.onrender.com/api/v1/notification/user`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications(response.data);
@@ -97,7 +97,7 @@ export function Profile() {
 
   const handleDriverLocation = async (deliveryId) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/v1/delivery/loc/${deliveryId}`, {
+      const res = await axios.get(`https://artisanconnect-backend.onrender.com/api/v1/delivery/loc/${deliveryId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const delivery = res.data;
@@ -131,7 +131,7 @@ export function Profile() {
   const handleUpdate = async () => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`http://localhost:3000/api/v1/users/update/${user.id}`, formData, {
+      await axios.put(`https://artisanconnect-backend.onrender.com/api/v1/users/update/${user.id}`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       Swal.fire("Success", "Profile updated!", "success");
@@ -156,7 +156,7 @@ export function Profile() {
     if (confirm.isConfirmed) {
       try {
         const token = localStorage.getItem("token");
-        await axios.delete(`http://localhost:3000/api/v1/users/${user.id}`, {
+        await axios.delete(`https://artisanconnect-backend.onrender.com/api/v1/users/${user.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         localStorage.clear();
@@ -203,7 +203,7 @@ export function Profile() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.put(
-        `http://localhost:3000/api/v1/users/update/password/${user.id}`,
+        `https://artisanconnect-backend.onrender.com/api/v1/users/update/password/${user.id}`,
         passwords,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -217,7 +217,7 @@ export function Profile() {
   const markNotificationAsRead = async (notificationId) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`http://localhost:3000/api/v1/notification/${notificationId}/read`, {}, {
+      await axios.put(`https://artisanconnect-backend.onrender.com/api/v1/notification/${notificationId}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setNotifications(prev => prev.map(n => 

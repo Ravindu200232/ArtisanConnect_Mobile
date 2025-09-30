@@ -42,7 +42,7 @@ export function Profile() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      await axios.put(`http://localhost:3000/api/v1/users/update/${user.id}`, formData, {
+      await axios.put(`https://artisanconnect-backend.onrender.com/api/v1/users/update/${user.id}`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       Swal.fire("Success", "Profile updated successfully!", "success");
@@ -71,7 +71,7 @@ export function Profile() {
       try {
         setLoading(true);
         const token = localStorage.getItem("token");
-        await axios.delete(`http://localhost:3000/api/v1/users/${user.id}`, {
+        await axios.delete(`https://artisanconnect-backend.onrender.com/api/v1/users/${user.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         localStorage.clear();
@@ -140,7 +140,7 @@ export function Profile() {
       setLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.put(
-        `http://localhost:3000/api/v1/users/update/password/${user.id}`,
+        `https://artisanconnect-backend.onrender.com/api/v1/users/update/password/${user.id}`,
         passwords,
         { headers: { Authorization: `Bearer ${token}` } }
       );

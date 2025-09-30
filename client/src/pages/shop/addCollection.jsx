@@ -80,7 +80,7 @@ export default function AddCollection() {
       };
 
       const result = await axios.post(
-        `http://localhost:3000/api/v1/collection`,
+        `https://artisanconnect-backend.onrender.com/api/v1/collection`,
         payload,
         {
           headers: {

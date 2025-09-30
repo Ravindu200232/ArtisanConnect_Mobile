@@ -19,6 +19,7 @@ export default function User() {
         console.error("Error fetching users:", error);
       } finally {
         setLoading(false);
+        
       }
     };
 

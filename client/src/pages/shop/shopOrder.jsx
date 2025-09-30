@@ -16,10 +16,10 @@ export default function ShopOrder() {
         const token = localStorage.getItem("token");
 
         const [ordersResponse, driversResponse] = await Promise.all([
-          axios.get(`http://localhost:3000/api/v1/orders`, {
+          axios.get(`https://artisanconnect-backend.onrender.com/api/v1/orders`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get(`http://localhost:3000/api/v1/driver`, {
+          axios.get(`https://artisanconnect-backend.onrender.com/api/v1/driver`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -43,7 +43,7 @@ export default function ShopOrder() {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `http://localhost:3000/api/v1/orders/status/${orderId}`,
+        `https://artisanconnect-backend.onrender.com/api/v1/orders/status/${orderId}`,
         { status: newStatus },
         {
           headers: {
@@ -73,7 +73,7 @@ export default function ShopOrder() {
         const driver = drivers.find((driver) => driver._id === driverId);
         
         await axios.post(
-          `http://localhost:3000/api/v1/delivery`,
+          `https://artisanconnect-backend.onrender.com/api/v1/delivery`,
           {
             orderId,
             driverId,
@@ -100,7 +100,7 @@ export default function ShopOrder() {
         );
 
         await axios.post(
-          `http://localhost:3000/api/v1/notification`,
+          `https://artisanconnect-backend.onrender.com/api/v1/notification`,
           {
             orderId,
             driverId,
@@ -151,7 +151,7 @@ export default function ShopOrder() {
         setLoading(true);
         const token = localStorage.getItem("token");
         await axios.delete(
-          `http://localhost:3000/api/v1/orders/delete/${orderId}`,
+          `https://artisanconnect-backend.onrender.com/api/v1/orders/delete/${orderId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

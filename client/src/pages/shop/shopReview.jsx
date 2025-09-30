@@ -9,7 +9,7 @@ export function ShopReview() {
   const fetchReviews = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:3000/api/v1/reviews`, {
+      const response = await axios.get(`https://artisanconnect-backend.onrender.com/api/v1/reviews`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

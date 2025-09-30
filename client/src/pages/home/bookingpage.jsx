@@ -56,7 +56,7 @@ export function BookingPage() {
     };
 
     axios
-      .post(`http://localhost:3000/api/v1/orders/quote`, selectedCartItems)
+      .post(`https://artisanconnect-backend.onrender.com/api/v1/orders/quote`, selectedCartItems)
       .then((res) => {
         setTotal(res.data.total);
       })
@@ -194,7 +194,7 @@ export function BookingPage() {
       };
 
       await axios.put(
-        `http://localhost:3000/api/v1/users/update/${user.id}`,
+        `https://artisanconnect-backend.onrender.com/api/v1/users/update/${user.id}`,
         updateData,
         {
           headers: {
@@ -234,7 +234,7 @@ export function BookingPage() {
     const token = localStorage.getItem("token");
 
     axios
-      .post(`http://localhost:3000/api/v1/orders`, selectedCartItems, {
+      .post(`https://artisanconnect-backend.onrender.com/api/v1/orders`, selectedCartItems, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -11,7 +11,7 @@ export default function BookingItem({ itemKey, qty, refresh, isSelected, onSelec
   useEffect(() => {
     if (status === "loading") {
       axios
-        .get(`http://localhost:3000/api/v1/collection/getOne/${itemKey}`)
+        .get(`https://artisanconnect-backend.onrender.com/api/v1/collection/getOne/${itemKey}`)
         .then((res) => {
           setItem(res.data);
           setStatus("success");

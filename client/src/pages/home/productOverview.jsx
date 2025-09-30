@@ -27,14 +27,14 @@ export default function ArtisanItemOverview() {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:3000/api/v1/collection/getOne/${key}`)
+      .get(`https://artisanconnect-backend.onrender.com/api/v1/collection/getOne/${key}`)
       .then((res) => {
         setArtisanItem(res.data);
         setLoadingStatus("Loaded");
 
         if (res.data.shopId) {
           axios
-            .get(`http://localhost:3000/api/v1/owner/getOne/${res.data.shopId}`)
+            .get(`https://artisanconnect-backend.onrender.com/api/v1/owner/getOne/${res.data.shopId}`)
             .then((shopRes) => setShop(shopRes.data))
             .catch((err) => console.error("Failed to load shop", err));
         }
@@ -45,7 +45,7 @@ export default function ArtisanItemOverview() {
       });
 
     axios
-      .get(`http://localhost:3000/api/v1/reviews/${key}`)
+      .get(`https://artisanconnect-backend.onrender.com/api/v1/reviews/${key}`)
       .then((res) => {
         setReviews(res.data);
       })
@@ -64,7 +64,7 @@ export default function ArtisanItemOverview() {
 
     try {
       const response = await axios.post(
-        `http://localhost:3000/api/v1/reviews`,
+        `https://artisanconnect-backend.onrender.com/api/v1/reviews`,
         {
           productId: key,
           rating: userRating,
