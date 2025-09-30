@@ -18,12 +18,12 @@ export default function ShopDetails() {
 
       try {
         const res = await axios.get(
-          `https://artisanconnect-backend.onrender.com/api/v1/owner/getOne/${id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/owner/getOne/${id}`
         );
         setShop(res.data);
 
         const collRes = await axios.get(
-          `https://artisanconnect-backend.onrender.com/api/v1/collection/getAll/${id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/collection/getAll/${id}`
         );
         setCollections(collRes.data || []);
       } catch (err) {

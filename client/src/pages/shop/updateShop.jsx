@@ -31,7 +31,7 @@ export default function UpdateShop() {
       }
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(`https://artisanconnect-backend.onrender.com/api/v1/owner/getOne/${id}`, {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/owner/getOne/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -100,7 +100,7 @@ export default function UpdateShop() {
       };
 
       const response = await axios.put(
-        `https://artisanconnect-backend.onrender.com/api/v1/owner/update/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/owner/update/${id}`,
         updateData,
         {
           headers: { Authorization: `Bearer ${token}` },

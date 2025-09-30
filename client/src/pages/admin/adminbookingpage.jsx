@@ -13,7 +13,7 @@ const AdminBookingPage = () => {
     const fetchBookingData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(`https://artisanconnect-backend.onrender.com/api/v1/orders`, {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/orders`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setBookingData(response.data || []);
@@ -34,7 +34,7 @@ const AdminBookingPage = () => {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `https://artisanconnect-backend.onrender.com/api/v1/orders/isApprove/${orderId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/isApprove/${orderId}`,
         {},
         {
           headers: {
@@ -74,7 +74,7 @@ const AdminBookingPage = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem("token");
-        await axios.delete(`https://artisanconnect-backend.onrender.com/api/v1/orders/delete/${orderId}`, {
+        await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/delete/${orderId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

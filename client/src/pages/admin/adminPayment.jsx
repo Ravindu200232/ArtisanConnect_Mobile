@@ -12,7 +12,7 @@ export function AdminPayment() {
     const fetchPayments = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get(`https://artisanconnect-backend.onrender.com/api/payment`, {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/payment`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

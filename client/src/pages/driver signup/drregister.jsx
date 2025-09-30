@@ -41,7 +41,7 @@ export default function DriverRegister() {
     }
 
     try {
-      await axios.post(`https://artisanconnect-backend.onrender.com/api/v1/driver`, {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/driver`, {
         email,
         password,
         firstName,

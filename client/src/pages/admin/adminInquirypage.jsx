@@ -14,7 +14,7 @@ export function AdminInquiryPage() {
       setLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `https://artisanconnect-backend.onrender.com/api/inquiry`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/inquiry`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -43,7 +43,7 @@ export function AdminInquiryPage() {
 
     try {
       await axios.put(
-        `https://artisanconnect-backend.onrender.com/api/inquiry/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/${id}`,
         { response },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -74,7 +74,7 @@ export function AdminInquiryPage() {
       try {
         const token = localStorage.getItem("token");
         await axios.delete(
-          `https://artisanconnect-backend.onrender.com/api/inquiry/${id}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

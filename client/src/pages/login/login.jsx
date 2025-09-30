@@ -19,7 +19,7 @@ export default function Login() {
       
       const mockAccessToken = "mock_google_token_" + Date.now();
       
-      const response = await fetch(`https://artisanconnect-backend.onrender.com/api/v1/users/google`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessToken: mockAccessToken })
@@ -65,7 +65,7 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const response = await fetch(`https://artisanconnect-backend.onrender.com/api/v1/users/login`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })

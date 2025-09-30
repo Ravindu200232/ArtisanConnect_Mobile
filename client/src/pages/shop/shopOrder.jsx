@@ -16,10 +16,10 @@ export default function ShopOrder() {
         const token = localStorage.getItem("token");
 
         const [ordersResponse, driversResponse] = await Promise.all([
-          axios.get(`https://artisanconnect-backend.onrender.com/api/v1/orders`, {
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/orders`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get(`https://artisanconnect-backend.onrender.com/api/v1/driver`, {
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/driver`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -43,7 +43,7 @@ export default function ShopOrder() {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        `https://artisanconnect-backend.onrender.com/api/v1/orders/status/${orderId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/status/${orderId}`,
         { status: newStatus },
         {
           headers: {
@@ -73,7 +73,7 @@ export default function ShopOrder() {
         const driver = drivers.find((driver) => driver._id === driverId);
         
         await axios.post(
-          `https://artisanconnect-backend.onrender.com/api/v1/delivery`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/delivery`,
           {
             orderId,
             driverId,
@@ -100,7 +100,7 @@ export default function ShopOrder() {
         );
 
         await axios.post(
-          `https://artisanconnect-backend.onrender.com/api/v1/notification`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/notification`,
           {
             orderId,
             driverId,
@@ -151,7 +151,7 @@ export default function ShopOrder() {
         setLoading(true);
         const token = localStorage.getItem("token");
         await axios.delete(
-          `https://artisanconnect-backend.onrender.com/api/v1/orders/delete/${orderId}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/delete/${orderId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

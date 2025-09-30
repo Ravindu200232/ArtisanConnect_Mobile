@@ -49,7 +49,7 @@ export function Payment() {
   
       for (const bookingId of bookingIds) {
         await axios.post(
-          `https://artisanconnect-backend.onrender.com/api/payment`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/payment`,
           {
             bookingId,
             amount: perBookingAmount,

@@ -44,7 +44,7 @@ export default function AddShop() {
       );
 
       const response = await axios.post(
-        `https://artisanconnect-backend.onrender.com/api/v1/owner`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/owner`,
         {
           ...shopData,
           images: uploadedUrls,

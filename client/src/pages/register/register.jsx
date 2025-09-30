@@ -61,7 +61,7 @@ export default function Register() {
     }
 
     try {
-      await axios.post(`https://artisanconnect-backend.onrender.com/api/v1/users`, {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users`, {
         email,
         password,
         firstName,

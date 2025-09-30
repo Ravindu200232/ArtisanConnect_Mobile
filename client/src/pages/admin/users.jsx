@@ -13,7 +13,7 @@ export default function User() {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `https://artisanconnect-backend.onrender.com/api/v1/users`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/users`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUsers(response.data);
@@ -33,7 +33,7 @@ export default function User() {
       setLoading(true);
       const token = localStorage.getItem("token");
       await axios.put(
-        `https://artisanconnect-backend.onrender.com/api/v1/users/block/${email}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/block/${email}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

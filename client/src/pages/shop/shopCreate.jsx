@@ -33,7 +33,7 @@ export default function ShopCreate() {
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.delete(`https://artisanconnect-backend.onrender.com/api/v1/owner/delete/${id}`, {
+        const response = await axios.delete(`h${import.meta.env.VITE_BACKEND_URL}/api/v1/owner/delete/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -62,7 +62,7 @@ export default function ShopCreate() {
   const fetchShop = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("https://artisanconnect-backend.onrender.com/api/v1/owner", {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/owner`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setShop(response.data);
@@ -81,8 +81,8 @@ export default function ShopCreate() {
     try {
       const token = localStorage.getItem("token");
       const endpoint = shouldOpen
-        ? `https://artisanconnect-backend.onrender.com/api/v1/owner/isOpen/${id}`
-        : `https://artisanconnect-backend.onrender.com/api/v1/owner/isClose/${id}`;
+        ? `${import.meta.env.VITE_BACKEND_URL}/api/v1/owner/isOpen/${id}`
+        : `${import.meta.env.VITE_BACKEND_URL}/api/v1/owner/isClose/${id}`;
 
       const response = await axios.post(
         endpoint,
