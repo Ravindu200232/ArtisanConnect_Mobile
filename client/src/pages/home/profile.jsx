@@ -230,344 +230,395 @@ export function Profile() {
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'delivered': return 'bg-[#32CD32]';
-      case 'picked up': return 'bg-[#93DC5C]';
-      case 'dispatched': return 'bg-blue-500';
-      case 'pending': return 'bg-yellow-500';
+      case 'delivered': return 'bg-green-600';
+      case 'picked up': return 'bg-blue-500';
+      case 'dispatched': return 'bg-purple-500';
+      case 'pending': return 'bg-orange-500';
       default: return 'bg-gray-500';
     }
   };
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-64 bg-[#DBF3C9]">
-        <div className="w-16 h-16 border-4 border-[#32CD32] border-dashed rounded-full animate-spin"></div>
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="w-12 h-12 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] p-4 pt-20">
-      {/* Header Section */}
-      <div className="text-center mb-6">
-        <div className="relative inline-block">
-          <div 
-            onClick={() => fileInputRef.current.click()} 
-            className="cursor-pointer mb-4 relative"
-          >
-            <img
-              src={formData.image || "https://via.placeholder.com/150?text=Upload+Image"}
-              className="w-24 h-24 object-cover rounded-full border-4 border-[#32CD32] shadow-lg"
-              alt="Profile"
-            />
-            <div className="absolute bottom-0 right-0 bg-[#32CD32] text-white p-1 rounded-full">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+    <div className="min-h-screen bg-gray-50">
+      {/* Daraz Orange Header */}
+      <div className="bg-gradient-to-r from-[#F85606] to-[#FF6B2C] text-white pt-6 pb-20 px-4">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-bold">My Account</h1>
+          <button onClick={handleLogout} className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition">
+            Logout
+          </button>
+        </div>
+        
+        {/* Profile Card */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 -mb-16">
+          <div className="flex items-center gap-4">
+            <div className="relative" onClick={() => fileInputRef.current.click()}>
+              <img
+                src={formData.image || "https://via.placeholder.com/150?text=User"}
+                className="w-20 h-20 rounded-full object-cover border-4 border-[#F85606]"
+                alt="Profile"
+              />
+              <div className="absolute bottom-0 right-0 bg-[#F85606] text-white p-1.5 rounded-full shadow-md">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-gray-800">{formData.firstName} {formData.lastName}</h2>
+              <p className="text-sm text-gray-500">{formData.email}</p>
+              <p className="text-xs text-gray-400 mt-1">{formData.phone || 'Add phone number'}</p>
             </div>
           </div>
-          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
         </div>
-        <h1 className="text-2xl font-bold text-[#32CD32] mb-1">{formData.firstName} {formData.lastName}</h1>
-        <p className="text-gray-600">{formData.email}</p>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex bg-white rounded-2xl shadow-md border border-[#B7E892] p-1 mb-6">
-        <button
-          onClick={() => setActiveTab("profile")}
-          className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-            activeTab === "profile" 
-              ? "bg-[#32CD32] text-white shadow-md" 
-              : "text-gray-600 hover:text-[#32CD32]"
-          }`}
-        >
-          Profile
-        </button>
-        <button
-          onClick={() => setActiveTab("orders")}
-          className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-            activeTab === "orders" 
-              ? "bg-[#32CD32] text-white shadow-md" 
-              : "text-gray-600 hover:text-[#32CD32]"
-          }`}
-        >
-          Orders
-        </button>
-        <button
-          onClick={() => setActiveTab("deliveries")}
-          className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-            activeTab === "deliveries" 
-              ? "bg-[#32CD32] text-white shadow-md" 
-              : "text-gray-600 hover:text-[#32CD32]"
-          }`}
-        >
-          Deliveries
-        </button>
-        <button
-          onClick={() => setActiveTab("notifications")}
-          className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-            activeTab === "notifications" 
-              ? "bg-[#32CD32] text-white shadow-md" 
-              : "text-gray-600 hover:text-[#32CD32]"
-          }`}
-        >
-          🔔
-        </button>
-      </div>
-
-      {/* Profile Tab */}
-      {activeTab === "profile" && (
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Personal Information</h2>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">First Name</label>
-                <input 
-                  name="firstName" 
-                  value={formData.firstName} 
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
-                  placeholder="First Name"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">Last Name</label>
-                <input 
-                  name="lastName" 
-                  value={formData.lastName} 
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
-                  placeholder="Last Name"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Email</label>
-              <input 
-                name="email" 
-                value={formData.email} 
-                disabled 
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl bg-gray-50 text-gray-600"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Phone</label>
-              <input 
-                name="phone" 
-                value={formData.phone} 
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
-                placeholder="Phone Number"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Address</label>
-              <textarea 
-                name="address" 
-                value={formData.address} 
-                onChange={handleChange}
-                rows="3"
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] resize-none"
-                placeholder="Your address"
-              />
-              <button 
-                onClick={getLocation} 
-                className="flex items-center gap-2 text-[#32CD32] font-semibold text-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Use Current Location
-              </button>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <button 
-                onClick={handleUpdate}
-                className="flex-1 bg-[#32CD32] hover:bg-[#2DB82D] text-white py-3 px-6 rounded-xl font-semibold transition-all shadow-md"
-              >
-                Update Profile
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 px-6 rounded-xl font-semibold transition-all shadow-md"
-              >
-                Logout
-              </button>
-            </div>
+      <div className="px-4 pt-20 pb-4">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="grid grid-cols-4 divide-x divide-gray-100">
+            <button
+              onClick={() => setActiveTab("profile")}
+              className={`py-4 px-2 text-center transition ${
+                activeTab === "profile" ? "bg-[#FFF5F0]" : ""
+              }`}
+            >
+              <svg className={`w-6 h-6 mx-auto mb-1 ${activeTab === "profile" ? "text-[#F85606]" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <span className={`text-xs font-medium ${activeTab === "profile" ? "text-[#F85606]" : "text-gray-600"}`}>Profile</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("orders")}
+              className={`py-4 px-2 text-center transition ${
+                activeTab === "orders" ? "bg-[#FFF5F0]" : ""
+              }`}
+            >
+              <svg className={`w-6 h-6 mx-auto mb-1 ${activeTab === "orders" ? "text-[#F85606]" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span className={`text-xs font-medium ${activeTab === "orders" ? "text-[#F85606]" : "text-gray-600"}`}>Orders</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("deliveries")}
+              className={`py-4 px-2 text-center transition ${
+                activeTab === "deliveries" ? "bg-[#FFF5F0]" : ""
+              }`}
+            >
+              <svg className={`w-6 h-6 mx-auto mb-1 ${activeTab === "deliveries" ? "text-[#F85606]" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+              </svg>
+              <span className={`text-xs font-medium ${activeTab === "deliveries" ? "text-[#F85606]" : "text-gray-600"}`}>Delivery</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("notifications")}
+              className={`py-4 px-2 text-center transition relative ${
+                activeTab === "notifications" ? "bg-[#FFF5F0]" : ""
+              }`}
+            >
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
+              <svg className={`w-6 h-6 mx-auto mb-1 ${activeTab === "notifications" ? "text-[#F85606]" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span className={`text-xs font-medium ${activeTab === "notifications" ? "text-[#F85606]" : "text-gray-600"}`}>Alerts</span>
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Orders Tab */}
-      {activeTab === "orders" && (
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Order History</h2>
-          {ordersLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="w-8 h-8 border-2 border-[#32CD32] border-dashed rounded-full animate-spin"></div>
-            </div>
-          ) : orders.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-[#93DC5C] text-6xl mb-4">📦</div>
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No orders yet</h3>
-              <p className="text-gray-500">Your order history will appear here</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {orders.map((order) => (
-                <div key={order._id} className="border border-[#B7E892] rounded-xl p-4 bg-[#DBF3C9]/30">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-bold text-gray-800">Order #{order.orderId}</h3>
-                      <p className="text-sm text-gray-600">{order.Item_name}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <div>
-                      <span className="text-gray-500">Amount:</span>
-                      <p className="font-semibold text-[#32CD32]">Rs.{order.totalAmount}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Date:</span>
-                      <p>{new Date(order.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Quantity:</span>
-                      <p>{order.quantity}</p>
-                    </div>
-                  </div>
-
-                  {order.image && (
-                    <img
-                      src={order.image}
-                      alt={order.Item_name}
-                      className="w-16 h-16 object-cover rounded-lg border border-[#93DC5C]"
+      {/* Content Area */}
+      <div className="px-4 pb-6">
+        {/* Profile Tab */}
+        {activeTab === "profile" && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center">
+                <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
+                Personal Information
+              </h3>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">First Name</label>
+                    <input 
+                      name="firstName" 
+                      value={formData.firstName} 
+                      onChange={handleChange}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606]"
                     />
-                  )}
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">Last Name</label>
+                    <input 
+                      name="lastName" 
+                      value={formData.lastName} 
+                      onChange={handleChange}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606]"
+                    />
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Deliveries Tab */}
-      {activeTab === "deliveries" && (
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Delivery History</h2>
-          {deliveriesLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="w-8 h-8 border-2 border-[#32CD32] border-dashed rounded-full animate-spin"></div>
-            </div>
-          ) : deliveries.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-[#93DC5C] text-6xl mb-4">🚚</div>
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No deliveries yet</h3>
-              <p className="text-gray-500">Your delivery history will appear here</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {deliveries.map((delivery) => (
-                <div key={delivery._id} className="border border-[#B7E892] rounded-xl p-4 bg-[#DBF3C9]/30">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-bold text-gray-800">{delivery.orderName}</h3>
-                      <p className="text-sm text-gray-600">Order #{delivery.orderId}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(delivery.status)}`}>
-                      {delivery.status}
-                    </span>
-                  </div>
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">Email Address</label>
+                  <input 
+                    name="email" 
+                    value={formData.email} 
+                    disabled 
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500"
+                  />
+                </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <div>
-                      <span className="text-gray-500">Driver:</span>
-                      <p className="font-semibold">{delivery.driverName}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Total:</span>
-                      <p className="font-semibold text-[#32CD32]">Rs.{delivery.total}</p>
-                    </div>
-                  </div>
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">Phone Number</label>
+                  <input 
+                    name="phone" 
+                    value={formData.phone} 
+                    onChange={handleChange}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606]"
+                    placeholder="+94 XXX XXX XXX"
+                  />
+                </div>
 
-                  <button
-                    onClick={() => handleDriverLocation(delivery._id)}
-                    className="w-full bg-[#93DC5C] hover:bg-[#7ED048] text-white py-2 px-4 rounded-xl font-semibold transition-colors text-sm"
+                <div>
+                  <label className="text-xs text-gray-600 mb-1 block">Delivery Address</label>
+                  <textarea 
+                    name="address" 
+                    value={formData.address} 
+                    onChange={handleChange}
+                    rows="2"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606] resize-none"
+                  />
+                  <button 
+                    onClick={getLocation} 
+                    className="flex items-center gap-1 text-[#F85606] text-xs font-medium mt-2"
                   >
-                    {expandedDeliveryId === delivery._id ? "Hide Location" : "Track Driver"}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Use Current Location
                   </button>
-
-                  {expandedDeliveryId === delivery._id && (
-                    <div className="mt-3">
-                      <div 
-                        ref={el => mapRefs.current[delivery._id] = el}
-                        className="w-full h-48 rounded-lg border border-[#93DC5C]"
-                      />
-                    </div>
-                  )}
                 </div>
-              ))}
+              </div>
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Notifications Tab */}
-      {activeTab === "notifications" && (
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Notifications</h2>
-          {notificationsLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="w-8 h-8 border-2 border-[#32CD32] border-dashed rounded-full animate-spin"></div>
+            <button 
+              onClick={handleUpdate}
+              className="w-full bg-[#F85606] hover:bg-[#E04E05] text-white py-3.5 rounded-lg font-semibold shadow-md transition"
+            >
+              Update Profile
+            </button>
+          </div>
+        )}
+
+        {/* Orders Tab */}
+        {activeTab === "orders" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-gray-800 flex items-center">
+                <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
+                My Orders
+              </h3>
             </div>
-          ) : notifications.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-[#93DC5C] text-6xl mb-4">🔔</div>
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No notifications</h3>
-              <p className="text-gray-500">You're all caught up!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {notifications.map((notification) => (
-                <div
-                  key={notification._id}
-                  className={`p-4 rounded-xl border ${
-                    notification.read 
-                      ? 'bg-gray-50 border-gray-200' 
-                      : 'bg-[#DBF3C9]/30 border-[#B7E892]'
-                  }`}
-                  onClick={() => !notification.read && markNotificationAsRead(notification._id)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800">{notification.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {new Date(notification.createdAt).toLocaleString()}
-                      </p>
+            {ordersLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="w-10 h-10 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <div className="text-gray-300 text-6xl mb-4">📦</div>
+                <h4 className="text-base font-semibold text-gray-700 mb-2">No orders yet</h4>
+                <p className="text-sm text-gray-500">Start shopping to see your orders here</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {orders.map((order) => (
+                  <div key={order._id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-4">
+                      <div className="flex gap-3">
+                        {order.image && (
+                          <img
+                            src={order.image}
+                            alt={order.Item_name}
+                            className="w-20 h-20 rounded-lg object-cover border border-gray-100"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-800 text-sm">{order.Item_name}</h4>
+                              <p className="text-xs text-gray-500">Order #{order.orderId}</p>
+                            </div>
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(order.status)}`}>
+                              {order.status}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <p className="text-xs text-gray-500">Qty: {order.quantity}</p>
+                              <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <p className="text-base font-bold text-[#F85606]">Rs.{order.totalAmount}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    {!notification.read && (
-                      <span className="w-3 h-3 bg-[#32CD32] rounded-full ml-2"></span>
-                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Deliveries Tab */}
+        {activeTab === "deliveries" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-gray-800 flex items-center">
+                <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
+                Track Delivery
+              </h3>
             </div>
-          )}
-        </div>
-      )}
+            {deliveriesLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="w-10 h-10 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : deliveries.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <div className="text-gray-300 text-6xl mb-4">🚚</div>
+                <h4 className="text-base font-semibold text-gray-700 mb-2">No active deliveries</h4>
+                <p className="text-sm text-gray-500">Your delivery tracking will appear here</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {deliveries.map((delivery) => (
+                  <div key={delivery._id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-800">{delivery.orderName}</h4>
+                          <p className="text-xs text-gray-500">Order #{delivery.orderId}</p>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(delivery.status)}`}>
+                          {delivery.status}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
+                        <div>
+                          <p className="text-xs text-gray-500">Driver</p>
+                          <p className="text-sm font-medium text-gray-800">{delivery.driverName}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">Total</p>
+                          <p className="text-base font-bold text-[#F85606]">Rs.{delivery.total}</p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleDriverLocation(delivery._id)}
+                        className="w-full bg-gradient-to-r from-[#F85606] to-[#FF6B2C] hover:from-[#E04E05] hover:to-[#F85606] text-white py-2.5 rounded-lg font-medium text-sm transition flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        </svg>
+                        {expandedDeliveryId === delivery._id ? "Hide Location" : "Track Live Location"}
+                      </button>
+
+                      {expandedDeliveryId === delivery._id && (
+                        <div className="mt-3">
+                          <div 
+                            ref={el => mapRefs.current[delivery._id] = el}
+                            className="w-full h-56 rounded-lg overflow-hidden border border-gray-200"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Notifications Tab */}
+        {activeTab === "notifications" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-gray-800 flex items-center">
+                <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
+                Notifications
+              </h3>
+            </div>
+            {notificationsLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="w-10 h-10 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <div className="text-gray-300 text-6xl mb-4">🔔</div>
+                <h4 className="text-base font-semibold text-gray-700 mb-2">No notifications</h4>
+                <p className="text-sm text-gray-500">You're all caught up!</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification._id}
+                    className={`rounded-xl overflow-hidden cursor-pointer transition ${
+                      notification.read 
+                        ? 'bg-white' 
+                        : 'bg-[#FFF5F0]'
+                    }`}
+                    onClick={() => !notification.read && markNotificationAsRead(notification._id)}
+                  >
+                    <div className="p-4 flex gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        notification.read ? 'bg-gray-100' : 'bg-[#F85606]'
+                      }`}>
+                        <svg className={`w-5 h-5 ${notification.read ? 'text-gray-400' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-1">
+                          <h4 className={`text-sm font-semibold ${notification.read ? 'text-gray-600' : 'text-gray-800'}`}>
+                            {notification.title}
+                          </h4>
+                          {!notification.read && (
+                            <span className="w-2 h-2 bg-[#F85606] rounded-full flex-shrink-0 ml-2 mt-1"></span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{notification.message}</p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(notification.createdAt).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
