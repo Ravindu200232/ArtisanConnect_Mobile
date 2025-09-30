@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { MdMessage, MdEmail, MdPhone, MdDelete, MdSend } from "react-icons/md";
 
 export function AdminInquiryPage() {
   const [inquiries, setInquiries] = useState([]);
   const [responseMap, setResponseMap] = useState({});
+  const [expandedInquiry, setExpandedInquiry] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchInquiries = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem("token");
       const res = await axios.get(
         `http://localhost:3000/api/inquiry`,
@@ -18,6 +22,9 @@ export function AdminInquiryPage() {
       setInquiries(res.data || []);
     } catch (error) {
       console.error("Failed to fetch inquiries", error);
+      Swal.fire("Error", "Failed to load inquiries", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,22 +49,25 @@ export function AdminInquiryPage() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      Swal.fire("Success", "Response updated successfully.", "success");
+      Swal.fire("Success", "Response sent successfully!", "success");
       fetchInquiries();
+      setResponseMap(prev => ({ ...prev, [id]: "" }));
     } catch (error) {
       console.error("Failed to update response", error);
-      Swal.fire("Error", "Failed to update response.", "error");
+      Swal.fire("Error", "Failed to send response.", "error");
     }
   };
 
-  const handleDeleteInquiry = async (id) => {
+  const handleDeleteInquiry = async (id, email) => {
     const confirmed = await Swal.fire({
-      title: "Are you sure?",
-      text: "This inquiry will be permanently deleted.",
+      title: "Delete Inquiry?",
+      text: `Delete inquiry from ${email}?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel"
     });
 
     if (confirmed.isConfirmed) {
@@ -78,61 +88,157 @@ export function AdminInquiryPage() {
     }
   };
 
+  const toggleInquiryExpand = (inquiryId) => {
+    setExpandedInquiry(expandedInquiry === inquiryId ? null : inquiryId);
+  };
+
   useEffect(() => {
     fetchInquiries();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#DBF3C9] flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#32CD32] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#32CD32] font-medium">Loading inquiries...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 sm:p-6">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4">Admin - Inquiries</h1>
+    <div className="min-h-screen bg-[#DBF3C9] p-4 pb-20">
+      {/* Header */}
+      <div className="bg-white rounded-2xl shadow-lg p-4 border border-[#B7E892] mb-4">
+        <h1 className="text-xl font-bold text-[#32CD32] text-center mb-2">
+          Customer Inquiries
+        </h1>
+        <p className="text-gray-600 text-center text-sm">
+          Manage customer messages and responses
+        </p>
+        <div className="flex items-center justify-center mt-2">
+          <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+          <span className="text-xs text-gray-600">{inquiries.length} inquiries</span>
+        </div>
+      </div>
 
-      {inquiries.length === 0 ? (
-        <p className="text-center text-gray-500 mt-10">No inquiries found.</p>
-      ) : (
-        <div className="space-y-6">
-          {inquiries.map((inq) => (
-            <div
-              key={inq._id}
-              className="border rounded-lg shadow-md p-4 bg-white space-y-4"
-            >
-              <div className="text-sm text-gray-500">ID: {inq.id}</div>
-              <div className="text-sm">Phone: {inq.phone || "Unknown"}</div>
-              <div className="text-sm">Email: {inq.email}</div>
-              <div className="text-sm font-medium">Message:</div>
-              <p className="bg-gray-100 p-2 rounded text-sm">{inq.message}</p>
+      {/* Inquiries List */}
+      <div className="space-y-4">
+        {inquiries.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892] text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <MdMessage className="text-2xl text-gray-400" />
+            </div>
+            <p className="text-gray-500">No inquiries found</p>
+            <p className="text-sm text-gray-400 mt-1">Customer inquiries will appear here</p>
+          </div>
+        ) : (
+          inquiries.map((inq) => (
+            <div key={inq._id} className="bg-white rounded-2xl shadow-lg border border-[#B7E892] overflow-hidden">
+              {/* Inquiry Header */}
+              <div className="p-4 border-b border-gray-100">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-800 truncate flex items-center gap-2">
+                      <MdEmail className="text-[#32CD32]" />
+                      {inq.email}
+                    </h3>
+                    <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
+                      <MdPhone className="text-gray-400" />
+                      <span>{inq.phone || "No phone provided"}</span>
+                    </div>
+                    {inq.id && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        ID: {inq.id}
+                      </div>
+                    )}
+                  </div>
+                  {inq.response && (
+                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                      Replied
+                    </span>
+                  )}
+                </div>
 
-              <div className="mt-2">
-                <label className="block text-sm font-medium mb-1">
-                  Response:
-                </label>
-                <textarea
-                  rows={3}
-                  className="w-full p-2 border rounded text-sm"
-                  value={responseMap[inq._id] ?? inq.response ?? ""}
-                  onChange={(e) =>
-                    handleResponseChange(inq._id, e.target.value)
-                  }
-                />
+                {/* Preview Message */}
+                <p className="text-sm text-gray-700 line-clamp-2 mt-2">
+                  {inq.message}
+                </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:space-x-2 mt-2 space-y-2 sm:space-y-0">
+              {/* Expandable Content */}
+              {expandedInquiry === inq._id && (
+                <div className="p-4 bg-gray-50 border-t border-gray-100">
+                  {/* Full Message */}
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                      <MdMessage className="text-[#32CD32]" />
+                      Customer Message
+                    </h4>
+                    <div className="bg-gray-100 p-3 rounded-lg text-sm text-gray-700">
+                      {inq.message}
+                    </div>
+                  </div>
+
+                  {/* Response Section */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Your Response
+                    </label>
+                    <textarea
+                      rows={4}
+                      className="w-full p-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] bg-white resize-none"
+                      value={responseMap[inq._id] ?? inq.response ?? ""}
+                      onChange={(e) => handleResponseChange(inq._id, e.target.value)}
+                      placeholder="Type your response to the customer..."
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => handleUpdateResponse(inq._id)}
+                      className="bg-[#32CD32] text-white py-3 rounded-lg font-semibold transition-all duration-200 active:bg-[#2DB82D] flex items-center justify-center gap-2"
+                    >
+                      <MdSend className="text-lg" />
+                      Send Response
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteInquiry(inq._id, inq.email)}
+                      className="bg-red-500 text-white py-3 rounded-lg font-semibold transition-all duration-200 active:bg-red-600 flex items-center justify-center gap-2"
+                    >
+                      <MdDelete className="text-lg" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Footer */}
+              <div className="p-4 bg-gray-50 border-t border-gray-100">
                 <button
-                  onClick={() => handleUpdateResponse(inq._id)}
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                  onClick={() => toggleInquiryExpand(inq._id)}
+                  className="w-full bg-[#32CD32] text-white py-3 rounded-lg font-semibold text-sm active:bg-green-600 transition-colors flex items-center justify-center gap-2"
                 >
-                  Send Response
-                </button>
-                <button
-                  onClick={() => handleDeleteInquiry(inq._id)}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                >
-                  Delete
+                  {expandedInquiry === inq._id ? (
+                    <>
+                      <span>▲</span>
+                      Hide Details
+                    </>
+                  ) : (
+                    <>
+                      <span>▼</span>
+                      View Details & Respond
+                    </>
+                  )}
                 </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }
