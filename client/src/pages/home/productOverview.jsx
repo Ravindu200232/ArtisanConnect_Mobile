@@ -62,6 +62,8 @@ export default function ArtisanItemOverview() {
       return;
     }
 
+    console.log(key, userRating, userComment, shop?.ownerId, shop?.name, artisanItem?.name,token);
+
     try {
       const response = await axios.post(
         `http://localhost:3000/api/v1/reviews`,

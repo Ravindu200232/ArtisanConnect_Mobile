@@ -7,7 +7,8 @@ export default function ShopOrder() {
   const [bookingData, setBookingData] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandedOrders, setExpandedOrders] = useState({});
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState({});
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -27,6 +28,7 @@ export default function ShopOrder() {
         setDrivers(driversResponse.data || []);
       } catch (error) {
         console.error("Error fetching data:", error);
+        toast.error("Failed to load orders");
       } finally {
         setLoading(false);
       }
@@ -68,15 +70,17 @@ export default function ShopOrder() {
           return;
         }
 
+        const driver = drivers.find((driver) => driver._id === driverId);
+        
         await axios.post(
           `http://localhost:3000/api/v1/delivery`,
           {
             orderId,
             driverId,
-            driverName: drivers.find((driver) => driver._id === driverId)?.firstName + " " + drivers.find((driver) => driver._id === driverId)?.lastName || "N/A",
-            driverPhone: drivers.find((driver) => driver._id === driverId)?.phone || "N/A",
+            driverName: `${driver?.firstName || ""} ${driver?.lastName || ""}`.trim() || "N/A",
+            driverPhone: driver?.phone || "N/A",
             status: "picked up",
-            driverEmail: drivers.find((driver) => driver._id === driverId)?.email || "N/A",
+            driverEmail: driver?.email || "N/A",
             customerEmail: order?.email,
             address: order?.address,
             phone: order?.phone,
@@ -100,10 +104,10 @@ export default function ShopOrder() {
           {
             orderId,
             driverId,
-            driverName: drivers.find((driver) => driver._id === driverId)?.firstName + " " + drivers.find((driver) => driver._id === driverId)?.lastName || "N/A",
-            driverPhone: drivers.find((driver) => driver._id === driverId)?.phone || "N/A",
+            driverName: `${driver?.firstName || ""} ${driver?.lastName || ""}`.trim() || "N/A",
+            driverPhone: driver?.phone || "N/A",
             status: "picked up",
-            driverEmail: drivers.find((driver) => driver._id === driverId)?.email || "N/A",
+            driverEmail: driver?.email || "N/A",
             customerEmail: order?.email,
             address: order?.address,
             phone: order?.phone,
@@ -113,7 +117,7 @@ export default function ShopOrder() {
             itemName: order?.Item_name,
             qty: order?.quantity,
             totalPrice: order?.totalAmount,
-            shopId: order?.shopId,
+            restaurantId: order?.shopId,
             timestamp: new Date(),
           },
           {
@@ -167,120 +171,115 @@ export default function ShopOrder() {
     }
   };
 
-  const toggleOrderDetails = (orderId) => {
-    setExpandedOrders((prev) => ({
-      ...prev,
-      [orderId]: !prev[orderId],
-    }));
+  const toggleOrderExpand = (orderId) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500';
-      case 'confirmed': return 'bg-[#32CD32]';
-      case 'preparing': return 'bg-blue-500';
-      case 'dispatched': return 'bg-purple-500';
-      case 'delivered': return 'bg-green-600';
-      default: return 'bg-gray-500';
+      case "pending": return "bg-yellow-100 text-yellow-800";
+      case "confirmed": return "bg-blue-100 text-blue-800";
+      case "preparing": return "bg-orange-100 text-orange-800";
+      case "dispatched": return "bg-purple-100 text-purple-800";
+      case "delivered": return "bg-green-100 text-green-800";
+      default: return "bg-gray-100 text-gray-800";
     }
   };
 
-  if (loading) {
+  if (loading && bookingData.length === 0) {
     return (
-      <div className="flex justify-center items-center h-64 bg-[#DBF3C9]">
-        <div className="w-16 h-16 border-4 border-[#32CD32] border-dashed rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#DBF3C9] flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#32CD32] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#32CD32] font-medium">Loading orders...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] p-4">
+    <div className="min-h-screen bg-[#DBF3C9] pb-6">
       {/* Header */}
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-[#32CD32] mb-2">Order Management</h1>
-        <p className="text-gray-600">Manage your shop orders and deliveries</p>
+      <div className="  ">
+        <div className="px-4 py-4">
+          
+         
+        </div>
       </div>
 
       {/* Orders List */}
-      <div className="space-y-4">
+      <div className="p-4 space-y-4">
         {bookingData.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-2xl shadow-md border border-[#B7E892]">
-            <div className="text-[#93DC5C] text-6xl mb-4">📦</div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">No orders yet</h3>
-            <p className="text-gray-500">Orders will appear here when customers place them</p>
+          <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892] text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">📦</span>
+            </div>
+            <p className="text-gray-500">No orders found</p>
           </div>
         ) : (
           bookingData.map((order) => (
-            <div
-              key={order.orderId}
-              className="bg-white rounded-2xl shadow-lg border border-[#B7E892] overflow-hidden"
-            >
+            <div key={order.orderId} className="bg-white rounded-2xl shadow-lg border border-[#B7E892] overflow-hidden">
               {/* Order Header */}
-              <div className="p-4 border-b border-[#B7E892]">
+              <div className="p-4 border-b border-gray-100">
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h3 className="font-bold text-gray-800">Order #{order.orderId}</h3>
                     <p className="text-sm text-gray-600">{order.email}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(order.status)}`}>
-                    {order.status.toUpperCase()}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                    {order.status}
                   </span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <span className="text-gray-500">Date:</span>
-                    <p>{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}</p>
+                    <p className="text-gray-600">Amount</p>
+                    <p className="font-semibold">Rs. {order.totalAmount}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Amount:</span>
-                    <p className="font-semibold text-[#32CD32]">Rs.{order.totalAmount}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Items:</span>
-                    <p>{order.quantity}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Customer:</span>
-                    <p>{order.customerName || "N/A"}</p>
+                    <p className="text-gray-600">Items</p>
+                    <p className="font-semibold">{order.quantity}</p>
                   </div>
                 </div>
+
+                <p className="text-xs text-gray-500 mt-2">
+                  {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+                </p>
               </div>
 
-              {/* Expandable Details */}
-              {expandedOrders[order.orderId] && (
-                <div className="p-4 bg-[#DBF3C9]/30 border-b border-[#B7E892]">
-                  {/* Order Item */}
+              {/* Expandable Content */}
+              {expandedOrder === order.orderId && (
+                <div className="p-4 bg-gray-50 border-t border-gray-100">
+                  {/* Customer Info */}
                   <div className="mb-4">
-                    <h4 className="font-semibold text-gray-700 mb-2">Order Item</h4>
-                    <div className="flex gap-3 bg-white p-3 rounded-xl border border-[#93DC5C]">
-                      <img
-                        src={order.image || "/default-product.jpg"}
-                        alt={order.Item_name || "Product"}
-                        className="w-16 h-16 object-cover rounded-lg border border-[#93DC5C]"
-                      />
-                      <div className="flex-1">
-                        <h5 className="font-semibold text-gray-800">{order.Item_name}</h5>
-                        <div className="text-sm text-gray-600">
-                          <p>Quantity: {order.quantity}</p>
-                          <p>Price: Rs.{order.price}</p>
-                        </div>
-                      </div>
+                    <h4 className="font-semibold text-gray-800 mb-2">Customer Details</h4>
+                    <div className="space-y-1 text-sm">
+                      <p><span className="text-gray-600">Name:</span> {order.customerName || "N/A"}</p>
+                      <p><span className="text-gray-600">Phone:</span> {order.phone || "N/A"}</p>
+                      <p><span className="text-gray-600">Address:</span> {order.address || "N/A"}</p>
                     </div>
                   </div>
 
-                  {/* Customer Details */}
+                  {/* Order Item */}
                   <div className="mb-4">
-                    <h4 className="font-semibold text-gray-700 mb-2">Customer Details</h4>
-                    <div className="bg-white p-3 rounded-xl border border-[#93DC5C] space-y-1 text-sm">
-                      <p><span className="text-gray-500">Phone:</span> {order.phone || "N/A"}</p>
-                      <p><span className="text-gray-500">Address:</span> {order.address || "N/A"}</p>
+                    <h4 className="font-semibold text-gray-800 mb-2">Order Item</h4>
+                    <div className="flex gap-3 bg-white p-3 rounded-lg border border-gray-200">
+                      <img
+                        src={order.image || "/default-product.jpg"}
+                        alt={order.Item_name || "Product"}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <h5 className="font-medium text-gray-800">{order.Item_name}</h5>
+                        <p className="text-sm text-gray-600">Qty: {order.quantity}</p>
+                        <p className="text-sm text-green-600 font-semibold">Rs. {order.price}</p>
+                      </div>
                     </div>
                   </div>
 
                   {/* Driver Assignment */}
                   <div className="mb-4">
-                    <h4 className="font-semibold text-gray-700 mb-2">Assign Driver</h4>
+                    <h4 className="font-semibold text-gray-800 mb-2">Assign Driver</h4>
                     <select
                       value={order.assignedDriver || ""}
                       onChange={(e) => {
@@ -293,7 +292,7 @@ export default function ShopOrder() {
                           )
                         );
                       }}
-                      className="w-full px-4 py-2 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
+                      className="w-full p-3 border border-gray-300 rounded-lg bg-white text-sm"
                     >
                       <option value="">Select Driver</option>
                       {drivers.map((driver) => (
@@ -303,45 +302,70 @@ export default function ShopOrder() {
                       ))}
                     </select>
                   </div>
+
+                  {/* Actions */}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Update Status
+                      </label>
+                      <select
+                        value={selectedStatus[order.orderId] || order.status}
+                        onChange={(e) => {
+                          setSelectedStatus(prev => ({
+                            ...prev,
+                            [order.orderId]: e.target.value
+                          }));
+                          handleStatusChange(order.orderId, e.target.value);
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg bg-white text-sm"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="preparing">Preparing</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="delivered">Delivered</option>
+                      </select>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDeleteOrder(order._id)}
+                        className="flex-1 bg-red-500 text-white py-3 rounded-lg font-medium text-sm active:bg-red-600 transition-colors"
+                      >
+                        Delete Order
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="p-4">
-                <div className="space-y-3">
-                  {/* Status Update */}
-                  <select
-                    value={order.status}
-                    onChange={(e) => handleStatusChange(order.orderId, e.target.value)}
-                    className="w-full px-4 py-2 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] bg-white"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="preparing">Preparing</option>
-                    <option value="dispatched">Dispatched</option>
-                    <option value="delivered">Delivered</option>
-                  </select>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => toggleOrderDetails(order.orderId)}
-                      className="flex-1 bg-[#93DC5C] hover:bg-[#7ED048] text-white py-2 px-4 rounded-xl font-semibold transition-colors text-sm"
-                    >
-                      {expandedOrders[order.orderId] ? "Hide Details" : "View Details"}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteOrder(order._id)}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-xl font-semibold transition-colors text-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+              {/* Footer */}
+              <div className="p-4 bg-gray-50 border-t border-gray-100">
+                <button
+                  onClick={() => toggleOrderExpand(order.orderId)}
+                  className="w-full bg-[#32CD32] text-white py-3 rounded-lg font-medium text-sm active:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  {expandedOrder === order.orderId ? (
+                    <>
+                      <span>▲</span>
+                      Hide Details
+                    </>
+                  ) : (
+                    <>
+                      <span>▼</span>
+                      View Details & Actions
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Bottom Spacer */}
+      <div className="h-4"></div>
     </div>
   );
 }

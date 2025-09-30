@@ -123,7 +123,7 @@ export default function ShopCreate() {
     <div className="max-w-7xl mx-auto mt-6 px-4">
       {/* Header with Add Button */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-[#32CD32]">My Category</h1>
+        <h1 className="text-2xl font-bold text-[#32CD32]">My Shops</h1>
         <Link
           to="/shopC/shop/add"
           className="flex items-center gap-2 bg-[#32CD32] hover:bg-[#2DB82D] text-white px-4 py-3 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
@@ -131,7 +131,7 @@ export default function ShopCreate() {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Add Category
+          Add Shop
         </Link>
       </div>
 
@@ -166,9 +166,7 @@ export default function ShopCreate() {
 
             {/* Status Badges */}
             <div className="flex justify-between items-center">
-              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${shop.isOpen ? "bg-[#93DC5C] text-white" : "bg-red-200 text-red-800"}`}>
-                {shop.isOpen ? "Open" : "Closed"}
-              </span>
+              
               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${shop.verified ? "bg-[#32CD32] text-white" : "bg-yellow-200 text-yellow-800"}`}>
                 {shop.verified ? "✓" : "!"}
               </span>
