@@ -71,113 +71,166 @@ export default function AdminPage() {
 
   const quickActions = [
     {
-      icon: <IoBookOutline className="text-2xl text-blue-600" />,
+      icon: <IoBookOutline className="text-2xl text-white" />,
       label: "Bookings",
       description: "Manage reservations",
       to: "/admin/booking",
-      color: "bg-blue-100"
+      gradient: "from-blue-500 to-blue-600"
     },
     {
-      icon: <MdShop className="text-2xl text-green-600" />,
+      icon: <MdShop className="text-2xl text-white" />,
       label: "Shops",
       description: "Manage shop",
       to: "/admin/package",
-      color: "bg-green-100"
+      gradient: "from-green-500 to-green-600"
     },
     {
-      icon: <MdPeople className="text-2xl text-purple-600" />,
+      icon: <MdPeople className="text-2xl text-white" />,
       label: "Users",
       description: "User management",
       to: "/admin/user",
-      color: "bg-purple-100"
+      gradient: "from-purple-500 to-purple-600"
     },
     {
-      icon: <MdRateReview className="text-2xl text-orange-600" />,
+      icon: <MdRateReview className="text-2xl text-white" />,
       label: "Reviews",
       description: "Customer feedback",
       to: "/admin/review",
-      color: "bg-orange-100"
+      gradient: "from-orange-500 to-orange-600"
     },
     {
-      icon: <FaQuestionCircle className="text-2xl text-red-600" />,
+      icon: <FaQuestionCircle className="text-2xl text-white" />,
       label: "Inquiries",
       description: "Customer questions",
       to: "/admin/inquiry",
-      color: "bg-red-100"
+      gradient: "from-red-500 to-red-600"
     },
     {
-      icon: <MdOutlinePayments className="text-2xl text-indigo-600" />,
+      icon: <MdOutlinePayments className="text-2xl text-white" />,
       label: "Payments",
       description: "Payment management",
       to: "/admin/payment",
-      color: "bg-indigo-100"
+      gradient: "from-indigo-500 to-indigo-600"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] pb-20">
-      {/* Header */}
-     
-
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
       {/* Main Content */}
-      <main className="p-4">
+      <main className="p-0">
         <Routes>
           <Route path="/" element={
             <div>
-              {/* Welcome Section */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892] mb-6">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-[#32CD32] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <IoSettingsOutline className="text-white text-2xl" />
+              {/* Header Banner */}
+              <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg">
+                <div className="p-6 pb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+                      <p className="text-orange-100 text-sm mt-1">Welcome back, Admin</p>
+                    </div>
+                    <div className="w-14 h-14 bg-white bg-opacity-20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <IoSettingsOutline className="text-white text-2xl" />
+                    </div>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome Admin!</h2>
-                  <p className="text-gray-600">Manage your platform efficiently</p>
                 </div>
               </div>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-white rounded-2xl p-4 border border-[#B7E892] shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Total Users</p>
-                      <p className="text-2xl font-bold text-gray-800">1,234</p>
-                    </div>
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                      <MdPeople className="text-blue-600 text-xl" />
+              <div className="px-4 -mt-4 mb-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white rounded-2xl p-4 shadow-md border border-orange-100">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Total Users</p>
+                        <p className="text-2xl font-bold text-gray-800">1,234</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-xs text-green-600 font-medium">↑ 12%</span>
+                        </div>
+                      </div>
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                        <MdPeople className="text-white text-xl" />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="bg-white rounded-2xl p-4 border border-[#B7E892] shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Today's Bookings</p>
-                      <p className="text-2xl font-bold text-gray-800">56</p>
-                    </div>
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                      <IoBookOutline className="text-green-600 text-xl" />
+                  
+                  <div className="bg-white rounded-2xl p-4 shadow-md border border-orange-100">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Bookings</p>
+                        <p className="text-2xl font-bold text-gray-800">56</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="text-xs text-green-600 font-medium">↑ 8%</span>
+                        </div>
+                      </div>
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#F85606] to-[#FF7420] rounded-xl flex items-center justify-center shadow-md">
+                        <IoBookOutline className="text-white text-xl" />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-                <h3 className="text-lg font-bold text-[#32CD32] mb-4">Quick Actions</h3>
+              {/* Quick Actions Section */}
+              <div className="px-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-bold text-gray-800">Quick Actions</h3>
+                  <span className="text-xs text-gray-500">Manage everything</span>
+                </div>
+                
                 <div className="grid grid-cols-2 gap-3">
                   {quickActions.map((action, index) => (
                     <Link
                       key={index}
                       to={action.to}
-                      className="flex flex-col items-center justify-center p-4 rounded-xl border border-[#B7E892] hover:bg-gray-50 transition-colors"
+                      className="bg-white rounded-2xl overflow-hidden shadow-md border border-orange-100 active:scale-95 transition-transform duration-200"
                     >
-                      <div className={`w-12 h-12 ${action.color} rounded-full flex items-center justify-center mb-2`}>
-                        {action.icon}
+                      <div className={`bg-gradient-to-r ${action.gradient} p-4`}>
+                        <div className="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-3">
+                          {action.icon}
+                        </div>
+                        <h4 className="text-white font-bold text-base mb-1">{action.label}</h4>
+                        <p className="text-white text-opacity-90 text-xs">{action.description}</p>
                       </div>
-                      <span className="text-sm font-semibold text-gray-800 text-center">{action.label}</span>
-                      <span className="text-xs text-gray-600 text-center">{action.description}</span>
+                      <div className="p-3 bg-gray-50 flex items-center justify-between">
+                        <span className="text-xs text-gray-600">Tap to open</span>
+                        <span className="text-gray-400">→</span>
+                      </div>
                     </Link>
                   ))}
+                </div>
+              </div>
+
+              {/* Activity Summary */}
+              <div className="px-4 mt-4">
+                <div className="bg-white rounded-2xl shadow-md border border-orange-100 p-4">
+                  <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <FaChartBar className="text-[#F85606]" />
+                    Recent Activity
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-gray-800">New order received</p>
+                        <p className="text-xs text-gray-500">2 minutes ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-gray-800">New user registered</p>
+                        <p className="text-xs text-gray-500">15 minutes ago</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-gray-800">Payment received</p>
+                        <p className="text-xs text-gray-500">1 hour ago</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -193,41 +246,44 @@ export default function AdminPage() {
         </Routes>
       </main>
 
-      {/* Facebook-like Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
-        <div className="flex justify-around items-center py-2">
+      {/* Modern Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-orange-100 shadow-2xl z-40">
+        <div className="flex justify-around items-center py-2 px-2">
           {navItems.map((item) => (
             <Link
               key={item.id}
               to={item.to}
-              className={`flex flex-col items-center justify-center w-16 py-1 ${
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-all duration-300 ${
                 activeTab === item.id 
-                  ? "text-[#32CD32]" 
-                  : "text-gray-500"
+                  ? "text-[#F85606]" 
+                  : "text-gray-400"
               }`}
               onClick={() => setActiveTab(item.id)}
             >
-              <div className={`p-2 rounded-full transition-all duration-200 ${
+              <div className={`p-2 rounded-2xl transition-all duration-300 ${
                 activeTab === item.id 
-                  ? "bg-[#32CD32]/10" 
+                  ? "bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white scale-110 shadow-lg" 
                   : "hover:bg-gray-100"
               }`}>
                 {item.icon}
               </div>
-              <span className={`text-xs mt-1 transition-all duration-200 ${
+              <span className={`text-xs mt-1 transition-all duration-300 ${
                 activeTab === item.id 
-                  ? "font-semibold" 
+                  ? "font-bold" 
                   : "font-medium"
               }`}>
                 {item.label}
               </span>
+              {activeTab === item.id && (
+                <div className="w-1 h-1 bg-[#F85606] rounded-full mt-1"></div>
+              )}
             </Link>
           ))}
         </div>
       </nav>
 
       {/* Bottom Spacer for Navigation */}
-      <div className="h-16"></div>
+      <div className="h-20"></div>
     </div>
   );
 }

@@ -99,247 +99,282 @@ export default function AddCollection() {
   }
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] pb-6">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-[#B7E892] sticky top-0 z-10">
-        <div className="px-4 py-4">
-          <h1 className="text-xl font-bold text-[#32CD32] text-center">
-            Add New Item
-          </h1>
-          <p className="text-gray-600 text-center text-sm mt-1">
-            Create a new item for your shop
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-6">
+      {/* Header - Fixed */}
+      <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
+        <div className="p-4 pb-5">
+          <div className="flex items-center justify-between">
+            <button 
+              onClick={() => navigate("/shopC/shop")}
+              className="w-9 h-9 bg-white bg-opacity-20 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-95 transition-transform"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="text-center flex-1">
+              <h1 className="text-xl font-bold text-white">
+                Add New Item
+              </h1>
+              <p className="text-orange-100 text-xs mt-0.5">
+                Create item for your shop
+              </p>
+            </div>
+            <div className="w-9"></div>
+          </div>
         </div>
       </div>
 
       {/* Form Container */}
-      <div className="p-4">
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <div className="space-y-6">
-            {/* Seller Type Selection */}
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-gray-700">
-                Seller Type *
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSellerType("product")}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                    sellerType === "product"
-                      ? "border-[#32CD32] bg-[#32CD32]/10"
-                      : "border-gray-300 bg-gray-50"
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className="w-8 h-8 mx-auto mb-2 bg-[#32CD32] rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm">🛍️</span>
-                    </div>
-                    <span className={`text-sm font-medium ${
-                      sellerType === "product" ? "text-[#32CD32]" : "text-gray-600"
-                    }`}>
-                      Product Seller
-                    </span>
-                    <p className="text-xs text-gray-500 mt-1">Finished goods</p>
-                  </div>
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => setSellerType("material")}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                    sellerType === "material"
-                      ? "border-[#32CD32] bg-[#32CD32]/10"
-                      : "border-gray-300 bg-gray-50"
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className="w-8 h-8 mx-auto mb-2 bg-[#32CD32] rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm">⚒️</span>
-                    </div>
-                    <span className={`text-sm font-medium ${
-                      sellerType === "material" ? "text-[#32CD32]" : "text-gray-600"
-                    }`}>
-                      Material Seller
-                    </span>
-                    <p className="text-xs text-gray-500 mt-1">Raw materials</p>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Item Name */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Item Name *
-              </label>
-              <input
-                type="text"
-                placeholder={`Enter ${sellerType === 'product' ? 'product' : 'material'} name`}
-                value={itemName}
-                onChange={(e) => setItemName(e.target.value)}
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] focus:border-transparent transition-all duration-200 bg-white"
-              />
-            </div>
-
-            {/* Price */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Price (Rs.) *
-              </label>
-              <input
-                type="number"
-                placeholder="Enter price"
-                value={itemPrice}
-                onChange={(e) => setItemPrice(e.target.value)}
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] focus:border-transparent transition-all duration-200 bg-white"
-              />
-            </div>
-
-            {/* Category */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Category *
-              </label>
-              <select
-                value={itemCategory}
-                onChange={(e) => setItemCategory(e.target.value)}
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] focus:border-transparent transition-all duration-200 bg-white"
-              >
-                <option value="">Select Category</option>
-                {(sellerType === "product" ? productCategories : materialCategories).map((category) => (
-                  <option key={category.value} value={category.value}>
-                    {category.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Description *
-              </label>
-              <textarea
-                placeholder={`Describe this ${sellerType === 'product' ? 'product' : 'material'}`}
-                value={itemDescription}
-                onChange={(e) => setItemDescription(e.target.value)}
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] focus:border-transparent transition-all duration-200 bg-white resize-none"
-                rows="3"
-              />
-            </div>
-
-            {/* Availability */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-[#93DC5C]">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Availability
-                </label>
-                <p className="text-xs text-gray-600">
-                  {itemAvailable ? 'Item is available for sale' : 'Item is currently out of stock'}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-sm font-semibold ${itemAvailable ? 'text-[#32CD32]' : 'text-red-500'}`}>
-                  {itemAvailable ? 'In Stock' : 'Out of Stock'}
-                </span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={itemAvailable}
-                    onChange={() => setItemAvailable(!itemAvailable)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-12 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#32CD32]"></div>
-                </label>
-              </div>
-            </div>
-
-            {/* Image Upload */}
-            <div className="space-y-3">
-              <label className="block text-sm font-semibold text-gray-700">
-                Upload Images
-              </label>
-              <div className="border-2 border-dashed border-[#93DC5C] rounded-xl p-6 text-center transition-all duration-200 bg-gray-50">
-                <input
-                  type="file"
-                  multiple
-                  onChange={(e) => setItemImages(e.target.files)}
-                  className="hidden"
-                  id="image-upload"
-                  accept="image/*"
-                />
-                <label htmlFor="image-upload" className="cursor-pointer block">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="w-12 h-12 bg-[#32CD32] rounded-full flex items-center justify-center mb-3">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <p className="text-gray-600 text-sm font-medium">
-                      Tap to upload images
-                    </p>
-                    <p className="text-gray-500 text-xs mt-1">
-                      Supports JPG, PNG, WEBP
-                    </p>
-                    {itemImages.length > 0 && (
-                      <p className="text-[#32CD32] text-sm font-semibold mt-2">
-                        {itemImages.length} file(s) selected
-                      </p>
-                    )}
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Image Previews */}
-            {itemImages.length > 0 && (
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-700">
-                  Image Previews
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {Array.from(itemImages).map((file, idx) => (
-                    <div key={idx} className="relative">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt="preview"
-                        className="w-full h-24 object-cover rounded-lg border-2 border-[#93DC5C]"
-                      />
-                      <button
-                        onClick={() => {
-                          const newImages = Array.from(itemImages);
-                          newImages.splice(idx, 1);
-                          setItemImages(newImages);
-                        }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+      <div className="p-4 space-y-3">
+        {/* Seller Type Selection */}
+        <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+          <label className="block text-sm font-bold text-gray-800 mb-3">
+            Seller Type <span className="text-[#F85606]">*</span>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setSellerType("product")}
+              className={`p-4 rounded-xl border-2 transition-all duration-200 active:scale-95 ${
+                sellerType === "product"
+                  ? "border-[#F85606] bg-orange-50 shadow-sm"
+                  : "border-gray-200 bg-gray-50"
+              }`}
+            >
+              <div className="text-center">
+                <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center transition-colors ${
+                  sellerType === "product" ? "bg-[#F85606]" : "bg-gray-300"
+                }`}>
+                  <span className="text-white text-xl">🛍️</span>
                 </div>
+                <span className={`text-sm font-bold block ${
+                  sellerType === "product" ? "text-[#F85606]" : "text-gray-600"
+                }`}>
+                  Product Seller
+                </span>
+                <p className="text-xs text-gray-500 mt-1">Finished goods</p>
               </div>
-            )}
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setSellerType("material")}
+              className={`p-4 rounded-xl border-2 transition-all duration-200 active:scale-95 ${
+                sellerType === "material"
+                  ? "border-[#F85606] bg-orange-50 shadow-sm"
+                  : "border-gray-200 bg-gray-50"
+              }`}
+            >
+              <div className="text-center">
+                <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center transition-colors ${
+                  sellerType === "material" ? "bg-[#F85606]" : "bg-gray-300"
+                }`}>
+                  <span className="text-white text-xl">⚒️</span>
+                </div>
+                <span className={`text-sm font-bold block ${
+                  sellerType === "material" ? "text-[#F85606]" : "text-gray-600"
+                }`}>
+                  Material Seller
+                </span>
+                <p className="text-xs text-gray-500 mt-1">Raw materials</p>
+              </div>
+            </button>
           </div>
         </div>
 
+        {/* Item Name */}
+        <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+          <label className="block text-sm font-bold text-gray-800 mb-2">
+            Item Name <span className="text-[#F85606]">*</span>
+          </label>
+          <input
+            type="text"
+            placeholder={`Enter ${sellerType === 'product' ? 'product' : 'material'} name`}
+            value={itemName}
+            onChange={(e) => setItemName(e.target.value)}
+            className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all duration-200 bg-white text-sm"
+          />
+        </div>
+
+        {/* Price */}
+        <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+          <label className="block text-sm font-bold text-gray-800 mb-2">
+            Price (Rs.) <span className="text-[#F85606]">*</span>
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Rs.</span>
+            <input
+              type="number"
+              placeholder="0.00"
+              value={itemPrice}
+              onChange={(e) => setItemPrice(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all duration-200 bg-white text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Category */}
+        <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+          <label className="block text-sm font-bold text-gray-800 mb-2">
+            Category <span className="text-[#F85606]">*</span>
+          </label>
+          <div className="relative">
+            <select
+              value={itemCategory}
+              onChange={(e) => setItemCategory(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all duration-200 bg-white text-sm appearance-none"
+            >
+              <option value="">Select Category</option>
+              {(sellerType === "product" ? productCategories : materialCategories).map((category) => (
+                <option key={category.value} value={category.value}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+          <label className="block text-sm font-bold text-gray-800 mb-2">
+            Description <span className="text-[#F85606]">*</span>
+          </label>
+          <textarea
+            placeholder={`Describe this ${sellerType === 'product' ? 'product' : 'material'} in detail...`}
+            value={itemDescription}
+            onChange={(e) => setItemDescription(e.target.value)}
+            className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all duration-200 bg-white resize-none text-sm"
+            rows="4"
+          />
+          <p className="text-xs text-gray-500 mt-2">
+            {itemDescription.length} characters
+          </p>
+        </div>
+
+        {/* Availability */}
+        <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Availability Status
+              </label>
+              <p className="text-xs text-gray-600">
+                {itemAvailable ? 'Item is available for sale' : 'Item is out of stock'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                itemAvailable 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-red-100 text-red-700'
+              }`}>
+                {itemAvailable ? '✓ In Stock' : '✗ Out of Stock'}
+              </span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={itemAvailable}
+                  onChange={() => setItemAvailable(!itemAvailable)}
+                  className="sr-only peer"
+                />
+                <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#F85606] shadow-inner"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Image Upload */}
+        <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+          <label className="block text-sm font-bold text-gray-800 mb-3">
+            Upload Images {itemImages.length > 0 && (
+              <span className="text-[#F85606] ml-1">({itemImages.length} selected)</span>
+            )}
+          </label>
+          <div className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center transition-all duration-200 bg-orange-50/50">
+            <input
+              type="file"
+              multiple
+              onChange={(e) => setItemImages(e.target.files)}
+              className="hidden"
+              id="image-upload"
+              accept="image/*"
+            />
+            <label htmlFor="image-upload" className="cursor-pointer block">
+              <div className="flex flex-col items-center justify-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#F85606] to-[#FF7420] rounded-2xl flex items-center justify-center mb-3 shadow-md">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-gray-800 text-sm font-bold mb-1">
+                  Tap to upload images
+                </p>
+                <p className="text-gray-500 text-xs">
+                  Supports JPG, PNG, WEBP
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* Image Previews */}
+        {itemImages.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+            <label className="block text-sm font-bold text-gray-800 mb-3">
+              Image Previews
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {Array.from(itemImages).map((file, idx) => (
+                <div key={idx} className="relative group">
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt="preview"
+                    className="w-full h-24 object-cover rounded-xl border-2 border-orange-200"
+                  />
+                  <button
+                    onClick={() => {
+                      const newImages = Array.from(itemImages);
+                      newImages.splice(idx, 1);
+                      setItemImages(newImages);
+                    }}
+                    className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg active:scale-95 transition-transform"
+                  >
+                    ×
+                  </button>
+                  <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-0.5 rounded">
+                    {idx + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
-        <div className="flex gap-3 mt-6">
+        <div className="grid grid-cols-2 gap-3 pt-2">
           <button
             onClick={() => navigate("/shopC/shop")}
-            className="flex-1 bg-gray-500 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-200 active:bg-gray-600"
+            className="bg-gray-400 text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
           >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
             Cancel
           </button>
           <button
             onClick={handleAddItem}
             disabled={isLoading}
-            className="flex-1 bg-[#32CD32] text-white py-4 px-6 rounded-xl font-semibold transition-all duration-200 active:bg-[#2DB82D] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
-                <div className="w-5 h-5 border-2 border-white border-dashed rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 Adding...
               </>
             ) : (
@@ -354,12 +389,30 @@ export default function AddCollection() {
         </div>
 
         {/* Help Text */}
-        <div className="text-center mt-4">
-          <p className="text-xs text-gray-500">
-            All fields marked with * are required
+        <div className="bg-orange-100 rounded-xl p-3 border border-orange-200">
+          <p className="text-xs text-gray-700 text-center">
+            <span className="text-[#F85606] font-bold">*</span> All fields marked with asterisk are required
           </p>
         </div>
       </div>
+
+      {/* Mobile Bottom Toast Position */}
+      <style>{`
+        .Toastify__toast-container,
+        .go2072408551 {
+          bottom: 20px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          width: calc(100% - 2rem) !important;
+          max-width: 400px !important;
+        }
+        .Toastify__toast,
+        .go685806154 {
+          border-radius: 12px !important;
+          font-weight: 600 !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        }
+      `}</style>
     </div>
   );
 }

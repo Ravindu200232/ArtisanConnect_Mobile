@@ -179,9 +179,9 @@ export function Profile() {
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'delivered': return 'bg-[#32CD32]';
-      case 'picked up': return 'bg-[#93DC5C]';
-      case 'dispatched': return 'bg-blue-500';
+      case 'delivered': return 'bg-green-500';
+      case 'picked up': return 'bg-blue-500';
+      case 'dispatched': return 'bg-[#F85606]';
       case 'pending': return 'bg-yellow-500';
       default: return 'bg-gray-500';
     }
@@ -189,135 +189,164 @@ export function Profile() {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-64 bg-[#DBF3C9]">
-        <div className="w-16 h-16 border-4 border-[#32CD32] border-dashed rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#F85606] font-semibold text-lg">Loading profile...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] p-4">
-      {/* Header Section */}
-      <div className="text-center mb-6">
-        <div className="relative inline-block">
-          <div 
-            onClick={() => fileInputRef.current.click()} 
-            className="cursor-pointer mb-4 relative"
-          >
-            <img
-              src={formData.image || "https://via.placeholder.com/150?text=Upload+Image"}
-              className="w-24 h-24 object-cover rounded-full border-4 border-[#32CD32] shadow-lg"
-              alt="Profile"
-            />
-            <div className="absolute bottom-0 right-0 bg-[#32CD32] text-white p-1 rounded-full">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
+      {/* Header with Profile Picture */}
+      <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
+        <div className="p-4 pb-8">
+          <h1 className="text-2xl font-bold text-white text-center mb-6">My Profile</h1>
+          
+          {/* Profile Picture */}
+          <div className="flex justify-center">
+            <div className="relative">
+              <div 
+                onClick={() => fileInputRef.current.click()} 
+                className="cursor-pointer relative active:scale-95 transition-transform"
+              >
+                <img
+                  src={formData.image || "https://via.placeholder.com/150?text=Upload"}
+                  className="w-28 h-28 object-cover rounded-full border-4 border-white shadow-lg"
+                  alt="Profile"
+                />
+                <div className="absolute bottom-0 right-0 bg-white text-[#F85606] p-2 rounded-full shadow-md">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+              </div>
+              <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
             </div>
           </div>
-          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
+
+          {/* User Info */}
+          <div className="text-center mt-4">
+            <h2 className="text-xl font-bold text-white">{formData.firstName} {formData.lastName}</h2>
+            <p className="text-orange-100 text-sm mt-1">{formData.email}</p>
+          </div>
         </div>
-        <h1 className="text-2xl font-bold text-[#32CD32] mb-1">{formData.firstName} {formData.lastName}</h1>
-        <p className="text-gray-600">{formData.email}</p>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex bg-white rounded-2xl shadow-md border border-[#B7E892] p-1 mb-6">
-        <button
-          onClick={() => setActiveTab("profile")}
-          className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-            activeTab === "profile" 
-              ? "bg-[#32CD32] text-white shadow-md" 
-              : "text-gray-600 hover:text-[#32CD32]"
-          }`}
-        >
-          Profile
-        </button>
-        <button
-          onClick={() => setActiveTab("deliveries")}
-          className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-            activeTab === "deliveries" 
-              ? "bg-[#32CD32] text-white shadow-md" 
-              : "text-gray-600 hover:text-[#32CD32]"
-          }`}
-        >
-          Deliveries
-        </button>
-        <button
-          onClick={() => setActiveTab("security")}
-          className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-            activeTab === "security" 
-              ? "bg-[#32CD32] text-white shadow-md" 
-              : "text-gray-600 hover:text-[#32CD32]"
-          }`}
-        >
-          Security
-        </button>
-      </div>
+      <div className="p-4">
+        <div className="bg-white rounded-2xl shadow-md border border-orange-100 p-1 mb-4">
+          <div className="grid grid-cols-3 gap-1">
+            <button
+              onClick={() => setActiveTab("profile")}
+              className={`py-3 px-2 rounded-xl font-bold text-sm transition-all active:scale-95 ${
+                activeTab === "profile" 
+                  ? "bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white shadow-md" 
+                  : "text-gray-600"
+              }`}
+            >
+              Profile
+            </button>
+            <button
+              onClick={() => setActiveTab("deliveries")}
+              className={`py-3 px-2 rounded-xl font-bold text-sm transition-all active:scale-95 ${
+                activeTab === "deliveries" 
+                  ? "bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white shadow-md" 
+                  : "text-gray-600"
+              }`}
+            >
+              Deliveries
+            </button>
+            <button
+              onClick={() => setActiveTab("security")}
+              className={`py-3 px-2 rounded-xl font-bold text-sm transition-all active:scale-95 ${
+                activeTab === "security" 
+                  ? "bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white shadow-md" 
+                  : "text-gray-600"
+              }`}
+            >
+              Security
+            </button>
+          </div>
+        </div>
 
-      {/* Profile Tab */}
-      {activeTab === "profile" && (
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Personal Information</h2>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">First Name</label>
-                <input 
-                  name="firstName" 
-                  value={formData.firstName} 
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
-                  placeholder="First Name"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">Last Name</label>
-                <input 
-                  name="lastName" 
-                  value={formData.lastName} 
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
-                  placeholder="Last Name"
-                />
-              </div>
+        {/* Profile Tab */}
+        {activeTab === "profile" && (
+          <div className="space-y-3">
+            {/* Name Fields */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+              <label className="block text-sm font-bold text-gray-800 mb-2">First Name</label>
+              <input 
+                name="firstName" 
+                value={formData.firstName} 
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all bg-white text-sm"
+                placeholder="First Name"
+              />
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Email</label>
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+              <label className="block text-sm font-bold text-gray-800 mb-2">Last Name</label>
+              <input 
+                name="lastName" 
+                value={formData.lastName} 
+                onChange={handleChange}
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all bg-white text-sm"
+                placeholder="Last Name"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+              <label className="block text-sm font-bold text-gray-800 mb-2">Email</label>
               <input 
                 name="email" 
                 value={formData.email} 
                 disabled 
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl bg-gray-50 text-gray-600"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-100 text-gray-600 text-sm"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Phone</label>
+            {/* Phone */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+              <label className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                Phone Number
+              </label>
               <input 
                 name="phone" 
                 value={formData.phone} 
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all bg-white text-sm"
                 placeholder="Phone Number"
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Address</label>
+            {/* Address */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+              <label className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Address
+              </label>
               <textarea 
                 name="address" 
                 value={formData.address} 
                 onChange={handleChange}
                 rows="3"
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32] resize-none"
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all bg-white resize-none text-sm"
                 placeholder="Your address"
               />
               <button 
                 onClick={getLocation} 
-                className="flex items-center gap-2 text-[#32CD32] font-semibold text-sm"
+                className="flex items-center gap-2 text-[#F85606] font-bold text-sm mt-2 active:scale-95 transition-transform"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -327,137 +356,207 @@ export function Profile() {
               </button>
             </div>
 
-            <div className="flex gap-3 pt-4">
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
               <button 
                 onClick={handleUpdate}
-                className="flex-1 bg-[#32CD32] hover:bg-[#2DB82D] text-white py-3 px-6 rounded-xl font-semibold transition-all shadow-md"
+                className="bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-4 rounded-xl font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
               >
-                Update Profile
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Update
               </button>
               <button 
                 onClick={handleLogout}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 px-6 rounded-xl font-semibold transition-all shadow-md"
+                className="bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-xl font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
               >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
                 Logout
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Deliveries Tab */}
-      {activeTab === "deliveries" && (
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Delivery History</h2>
-          {deliveriesLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="w-8 h-8 border-2 border-[#32CD32] border-dashed rounded-full animate-spin"></div>
-            </div>
-          ) : deliveries.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-[#93DC5C] text-6xl mb-4">🚚</div>
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No deliveries yet</h3>
-              <p className="text-gray-500">Your delivery history will appear here</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {deliveries.map((delivery) => (
-                <div key={delivery._id} className="border border-[#B7E892] rounded-xl p-4 bg-[#DBF3C9]/30">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-bold text-gray-800">{delivery.orderName}</h3>
-                      <p className="text-sm text-gray-600">Order #{delivery.orderId}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor(delivery.status)}`}>
-                      {delivery.status}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <div>
-                      <span className="text-gray-500">Driver:</span>
-                      <p className="font-semibold">{delivery.driverName}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Total:</span>
-                      <p className="font-semibold text-[#32CD32]">Rs.{delivery.total}</p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleDriverLocation(delivery._id)}
-                    className="w-full bg-[#93DC5C] hover:bg-[#7ED048] text-white py-2 px-4 rounded-xl font-semibold transition-colors text-sm"
-                  >
-                    {expandedDeliveryId === delivery._id ? "Hide Location" : "Track Driver"}
-                  </button>
-
-                  {expandedDeliveryId === delivery._id && (
-                    <div className="mt-3">
-                      <div 
-                        ref={el => mapRefs.current[delivery._id] = el}
-                        className="w-full h-48 rounded-lg border border-[#93DC5C]"
-                      />
-                    </div>
-                  )}
+        {/* Deliveries Tab */}
+        {activeTab === "deliveries" && (
+          <div className="space-y-3">
+            {deliveriesLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="text-center">
+                  <div className="w-12 h-12 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-[#F85606] font-semibold">Loading deliveries...</p>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            ) : deliveries.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-md p-8 text-center">
+                <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-10 h-10 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">No Deliveries Yet</h3>
+                <p className="text-gray-500 text-sm">Your delivery history will appear here</p>
+              </div>
+            ) : (
+              deliveries.map((delivery) => (
+                <div key={delivery._id} className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100">
+                  <div className="p-4 bg-gradient-to-r from-orange-50 to-white">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-bold text-gray-800 text-base">{delivery.orderName}</h3>
+                        <p className="text-sm text-gray-600">Order #{delivery.orderId}</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${getStatusColor(delivery.status)}`}>
+                        {delivery.status}
+                      </span>
+                    </div>
 
-      {/* Security Tab */}
-      {activeTab === "security" && (
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892]">
-          <h2 className="text-xl font-bold text-[#32CD32] mb-4">Security Settings</h2>
-          
-          <div className="space-y-4 mb-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Current Password</label>
-              <input 
-                type="password"
-                name="oldPassword"
-                value={passwords.oldPassword}
-                onChange={handlePasswordChange}
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
-                placeholder="Enter current password"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">New Password</label>
-              <input 
-                type="password"
-                name="newPassword"
-                value={passwords.newPassword}
-                onChange={handlePasswordChange}
-                className="w-full px-4 py-3 border border-[#93DC5C] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#32CD32]"
-                placeholder="Enter new password"
-              />
-            </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="bg-white p-3 rounded-lg border border-orange-100">
+                        <span className="text-gray-500 text-xs block mb-1">Driver</span>
+                        <p className="font-bold text-gray-800 text-sm">{delivery.driverName}</p>
+                      </div>
+                      <div className="bg-white p-3 rounded-lg border border-orange-100">
+                        <span className="text-gray-500 text-xs block mb-1">Total</span>
+                        <p className="font-bold text-[#F85606] text-sm">Rs. {delivery.total}</p>
+                      </div>
+                    </div>
 
-            <button 
-              onClick={handleChangePassword}
-              className="w-full bg-[#32CD32] hover:bg-[#2DB82D] text-white py-3 px-6 rounded-xl font-semibold transition-all shadow-md"
-            >
-              Change Password
-            </button>
+                    <button
+                      onClick={() => handleDriverLocation(delivery._id)}
+                      className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 rounded-xl font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {expandedDeliveryId === delivery._id ? "Hide Location" : "Track Driver"}
+                    </button>
+
+                    {expandedDeliveryId === delivery._id && (
+                      <div className="mt-3">
+                        <div 
+                          ref={el => mapRefs.current[delivery._id] = el}
+                          className="w-full h-56 rounded-xl border-2 border-orange-200 overflow-hidden"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
+        )}
 
-          <div className="border-t border-[#B7E892] pt-4">
-            <h3 className="text-lg font-semibold text-red-600 mb-3">Danger Zone</h3>
-            <button 
-              onClick={handleDelete}
-              className="w-full bg-red-500 hover:bg-red-600 text-white py-3 px-6 rounded-xl font-semibold transition-all shadow-md"
-            >
-              Delete Account
-            </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              Once you delete your account, there is no going back. Please be certain.
-            </p>
+        {/* Security Tab */}
+        {activeTab === "security" && (
+          <div className="space-y-3">
+            {/* Password Change */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">Change Password</h3>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-bold text-gray-800 mb-2">Current Password</label>
+                  <input 
+                    type="password"
+                    name="oldPassword"
+                    value={passwords.oldPassword}
+                    onChange={handlePasswordChange}
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all bg-white text-sm"
+                    placeholder="Enter current password"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-bold text-gray-800 mb-2">New Password</label>
+                  <input 
+                    type="password"
+                    name="newPassword"
+                    value={passwords.newPassword}
+                    onChange={handlePasswordChange}
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all bg-white text-sm"
+                    placeholder="Enter new password"
+                  />
+                </div>
+
+                <button 
+                  onClick={handleChangePassword}
+                  className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-4 rounded-xl font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Change Password
+                </button>
+              </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border-2 border-red-200">
+              <h3 className="text-lg font-bold text-red-600 mb-2 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Danger Zone
+              </h3>
+              <p className="text-xs text-gray-600 mb-3">
+                Once you delete your account, there is no going back. Please be certain.
+              </p>
+              <button 
+                onClick={handleDelete}
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-xl font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Account
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Mobile Bottom Toast/SweetAlert Position */}
+      <style>{`
+        .Toastify__toast-container,
+        .go2072408551 {
+          bottom: 90px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          width: calc(100% - 2rem) !important;
+          max-width: 400px !important;
+        }
+        
+        .Toastify__toast,
+        .go685806154 {
+          border-radius: 12px !important;
+          font-weight: 600 !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .swal2-popup {
+          border-radius: 20px !important;
+          padding: 2rem 1.5rem !important;
+        }
+        
+        .swal2-title {
+          font-size: 1.5rem !important;
+          font-weight: 700 !important;
+        }
+        
+        .swal2-styled.swal2-confirm {
+          background: linear-gradient(to right, #F85606, #FF7420) !important;
+          border-radius: 12px !important;
+          font-weight: 700 !important;
+          padding: 12px 32px !important;
+          box-shadow: 0 4px 12px rgba(248, 86, 6, 0.3) !important;
+        }
+      `}</style>
     </div>
   );
 }

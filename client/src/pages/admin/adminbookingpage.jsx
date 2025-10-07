@@ -98,176 +98,213 @@ const AdminBookingPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#DBF3C9] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#32CD32] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[#32CD32] font-medium">Loading orders...</p>
+          <div className="w-16 h-16 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#F85606] font-semibold text-lg">Loading orders...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] p-4 pb-20">
-      {/* Header */}
-      <div className="bg-white rounded-2xl shadow-lg p-4 border border-[#B7E892] mb-4">
-        <h1 className="text-xl font-bold text-[#32CD32] text-center mb-2">
-          Order Management
-        </h1>
-        <p className="text-gray-600 text-center text-sm">
-          Manage and approve customer orders
-        </p>
-        <div className="flex items-center justify-center mt-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-          <span className="text-xs text-gray-600">{bookingData.length} orders total</span>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
+      {/* Header - Fixed */}
+      <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
+        <div className="p-4 pb-5">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h1 className="text-2xl font-bold text-white">
+                Order Dashboard
+              </h1>
+              <p className="text-orange-100 text-sm mt-1">
+                Manage customer orders
+              </p>
+            </div>
+            <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-full p-3">
+              <MdShoppingCart className="text-2xl text-white" />
+            </div>
+          </div>
+          
+          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-white font-medium text-sm">Total Orders</span>
+            </div>
+            <span className="text-white font-bold text-xl">{bookingData.length}</span>
+          </div>
         </div>
       </div>
 
       {/* Orders List */}
-      <div className="space-y-4">
+      <div className="p-4 space-y-3">
         {bookingData.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892] text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <MdShoppingCart className="text-2xl text-gray-400" />
+          <div className="bg-white rounded-2xl shadow-md p-8 text-center mt-8">
+            <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MdShoppingCart className="text-3xl text-[#F85606]" />
             </div>
-            <p className="text-gray-500">No orders found</p>
-            <p className="text-sm text-gray-400 mt-1">Customer orders will appear here</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Orders Yet</h3>
+            <p className="text-gray-500 text-sm">Customer orders will appear here</p>
           </div>
         ) : (
           bookingData.map((order) => (
-            <div key={order.orderId} className="bg-white rounded-2xl shadow-lg border border-[#B7E892] overflow-hidden">
+            <div key={order.orderId} className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100">
               {/* Order Header */}
-              <div className="p-4 border-b border-gray-100">
-                <div className="flex items-start justify-between mb-2">
+              <div className="p-4 bg-gradient-to-r from-orange-50 to-white">
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                      <MdShoppingCart className="text-[#32CD32]" />
-                      Order #{order.orderId}
-                    </h3>
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
-                      <MdEmail className="text-gray-400" />
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-8 h-8 bg-[#F85606] rounded-lg flex items-center justify-center">
+                        <MdShoppingCart className="text-white text-sm" />
+                      </div>
+                      <h3 className="font-bold text-gray-800 text-base">
+                        #{order.orderId}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-600 ml-10">
+                      <MdEmail className="text-gray-400 text-sm" />
                       <span className="truncate">{order.email}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      order.isApprove ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                  
+                  <div className="flex flex-col items-end gap-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      order.isApprove 
+                        ? "bg-green-100 text-green-700 border border-green-200" 
+                        : "bg-amber-100 text-amber-700 border border-amber-200"
                     }`}>
-                      {order.isApprove ? "Approved" : "Pending"}
+                      {order.isApprove ? "✓ Approved" : "⏳ Pending"}
                     </span>
-                    <span className="text-sm font-semibold text-[#32CD32]">
-                      Rs. {order.totalAmount}
-                    </span>
+                    <div className="bg-[#F85606] text-white px-3 py-1 rounded-lg">
+                      <span className="text-xs font-bold">Rs. {order.totalAmount}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+                <div className="flex items-center gap-4 text-xs text-gray-600 bg-white rounded-lg p-2 mt-2">
                   <div className="flex items-center gap-1">
-                    <MdCalendarToday className="text-gray-400" />
-                    <span>
-                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+                    <MdCalendarToday className="text-[#F85606]" />
+                    <span className="font-medium">
+                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "N/A"}
                     </span>
                   </div>
+                  <div className="w-px h-4 bg-gray-300"></div>
                   <div className="flex items-center gap-1">
-                    <MdAttachMoney className="text-gray-400" />
-                    <span>Qty: {order.quantity}</span>
+                    <MdAttachMoney className="text-[#F85606]" />
+                    <span className="font-medium">Qty: {order.quantity}</span>
                   </div>
                 </div>
               </div>
 
               {/* Expandable Content */}
               {expandedOrder === order.orderId && (
-                <div className="p-4 bg-gray-50 border-t border-gray-100">
+                <div className="border-t border-orange-100">
                   {/* Customer Details */}
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                      <MdPerson className="text-[#32CD32]" />
-                      Customer Details
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <MdPerson className="text-gray-400" />
-                        <span><strong>Name:</strong> {order.customerName || "N/A"}</span>
+                  <div className="p-4 bg-gray-50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 bg-[#F85606] rounded-full flex items-center justify-center">
+                        <MdPerson className="text-white text-xs" />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <MdEmail className="text-gray-400" />
-                        <span><strong>Email:</strong> {order.email}</span>
+                      <h4 className="font-bold text-gray-800 text-sm">Customer Details</h4>
+                    </div>
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg">
+                        <MdPerson className="text-[#F85606] text-lg" />
+                        <div className="text-sm">
+                          <span className="text-gray-500 text-xs block">Name</span>
+                          <span className="text-gray-800 font-medium">{order.customerName || "N/A"}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <MdPhone className="text-gray-400" />
-                        <span><strong>Phone:</strong> {order.phone || "N/A"}</span>
+                      <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg">
+                        <MdEmail className="text-[#F85606] text-lg" />
+                        <div className="text-sm flex-1 min-w-0">
+                          <span className="text-gray-500 text-xs block">Email</span>
+                          <span className="text-gray-800 font-medium truncate block">{order.email}</span>
+                        </div>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <MdLocationOn className="text-gray-400 mt-0.5" />
-                        <span><strong>Address:</strong> {order.address || "N/A"}</span>
+                      <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg">
+                        <MdPhone className="text-[#F85606] text-lg" />
+                        <div className="text-sm">
+                          <span className="text-gray-500 text-xs block">Phone</span>
+                          <span className="text-gray-800 font-medium">{order.phone || "N/A"}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2 bg-white p-2.5 rounded-lg">
+                        <MdLocationOn className="text-[#F85606] text-lg mt-0.5" />
+                        <div className="text-sm flex-1">
+                          <span className="text-gray-500 text-xs block">Address</span>
+                          <span className="text-gray-800 font-medium">{order.address || "N/A"}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Order Item */}
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-gray-800 mb-3">Order Item</h4>
-                    <div className="flex gap-3 bg-white p-3 rounded-lg border border-gray-200">
-                      <img
-                        src={order.image || "/default-product.jpg"}
-                        alt={order.Item_name || "Product"}
-                        className="w-16 h-16 object-cover rounded-lg border-2 border-[#B7E892]"
-                      />
-                      <div className="flex-1">
-                        <h5 className="font-medium text-gray-800">{order.Item_name}</h5>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                          <span>Qty: {order.quantity}</span>
-                          <span>Price: Rs.{order.price}</span>
+                  <div className="p-4 bg-white">
+                    <h4 className="font-bold text-gray-800 mb-3 text-sm">Order Item</h4>
+                    <div className="flex gap-3 bg-orange-50 p-3 rounded-xl border-2 border-orange-200">
+                      <div className="relative">
+                        <img
+                          src={order.image || "/default-product.jpg"}
+                          alt={order.Item_name || "Product"}
+                          className="w-20 h-20 object-cover rounded-xl border-2 border-white shadow-sm"
+                        />
+                        <div className="absolute -top-1 -right-1 bg-[#F85606] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                          {order.quantity}
                         </div>
-                        <div className="text-sm font-semibold text-[#32CD32] mt-1">
-                          Total: Rs.{order.totalAmount}
+                      </div>
+                      <div className="flex-1">
+                        <h5 className="font-bold text-gray-800 text-sm mb-1 line-clamp-2">{order.Item_name}</h5>
+                        <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+                          <span className="bg-white px-2 py-1 rounded">Unit: Rs.{order.price}</span>
+                        </div>
+                        <div className="bg-[#F85606] text-white px-2 py-1 rounded-lg inline-block">
+                          <span className="text-xs font-bold">Total: Rs.{order.totalAmount}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="p-4 bg-gray-50 space-y-2">
                     {!order.isApprove && (
                       <button
                         onClick={() => handleApproveOrder(order.orderId, order.email)}
-                        className="bg-[#32CD32] text-white py-3 rounded-lg font-semibold transition-all duration-200 active:bg-[#2DB82D] flex items-center justify-center gap-2"
+                        className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
                       >
-                        <MdCheckCircle className="text-lg" />
+                        <MdCheckCircle className="text-xl" />
                         Approve Order
                       </button>
                     )}
                     
                     <button
                       onClick={() => handleDeleteOrder(order._id, order.email)}
-                      className="bg-red-500 text-white py-3 rounded-lg font-semibold transition-all duration-200 active:bg-red-600 flex items-center justify-center gap-2"
+                      className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
                     >
-                      <MdDelete className="text-lg" />
+                      <MdDelete className="text-xl" />
                       Delete Order
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Footer */}
-              <div className="p-4 bg-gray-50 border-t border-gray-100">
-                <button
-                  onClick={() => toggleOrderExpand(order.orderId)}
-                  className="w-full bg-[#32CD32] text-white py-3 rounded-lg font-semibold text-sm active:bg-green-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  {expandedOrder === order.orderId ? (
-                    <>
-                      <span>▲</span>
-                      Hide Details
-                    </>
-                  ) : (
-                    <>
-                      <span>▼</span>
-                      View Details & Actions
-                    </>
-                  )}
-                </button>
-              </div>
+              {/* Expand/Collapse Button */}
+              <button
+                onClick={() => toggleOrderExpand(order.orderId)}
+                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2"
+              >
+                {expandedOrder === order.orderId ? (
+                  <>
+                    <MdExpandMore className="text-xl transform rotate-180 transition-transform" />
+                    Hide Details
+                  </>
+                ) : (
+                  <>
+                    <MdExpandMore className="text-xl transition-transform" />
+                    View Full Details
+                  </>
+                )}
+              </button>
             </div>
           ))
         )}

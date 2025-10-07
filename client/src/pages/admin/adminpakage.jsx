@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { MdVerified, MdDelete, MdStore, MdPhone, MdLocationOn } from "react-icons/md";
+import { MdVerified, MdDelete, MdStore, MdPhone, MdLocationOn, MdExpandMore } from "react-icons/md";
 import { FaStore, FaUser, FaInfoCircle } from "react-icons/fa";
 
 export default function AdminPackagePage() {
@@ -21,10 +21,11 @@ export default function AdminPackagePage() {
       text: `Are you sure you want to delete ${shopName}?`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
+      confirmButtonColor: "#F85606",
+      cancelButtonColor: "#6B7280",
       confirmButtonText: "Yes, delete it!",
       cancelButtonText: "Cancel",
+      position: "center"
     });
 
     if (result.isConfirmed) {
@@ -41,8 +42,10 @@ export default function AdminPackagePage() {
           icon: "success",
           title: "Deleted!",
           text: response.data.message,
-          timer: 1500,
+          timer: 3000,
           showConfirmButton: false,
+          position: "bottom",
+          toast: true
         });
 
         setShops((prevShops) => prevShops.filter((shop) => shop._id !== id));
@@ -52,6 +55,10 @@ export default function AdminPackagePage() {
           icon: "error",
           title: "Oops...",
           text: "Failed to delete the shop.",
+          position: "bottom",
+          toast: true,
+          timer: 3000,
+          showConfirmButton: false
         });
       }
     }
@@ -75,8 +82,10 @@ export default function AdminPackagePage() {
         icon: "success",
         title: "Verified!",
         text: `${shopName} has been verified`,
-        timer: 1500,
+        timer: 3000,
         showConfirmButton: false,
+        position: "bottom",
+        toast: true
       });
 
       // Update local state
@@ -91,6 +100,10 @@ export default function AdminPackagePage() {
         icon: "error",
         title: "Oops...",
         text: "Failed to verify the shop.",
+        position: "bottom",
+        toast: true,
+        timer: 3000,
+        showConfirmButton: false
       });
     }
   };
@@ -108,6 +121,10 @@ export default function AdminPackagePage() {
         icon: "error",
         title: "Error",
         text: "Failed to load shops",
+        position: "bottom",
+        toast: true,
+        timer: 3000,
+        showConfirmButton: false
       });
     } finally {
       setLoading(false);
@@ -124,130 +141,172 @@ export default function AdminPackagePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#DBF3C9] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#32CD32] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[#32CD32] font-medium">Loading shops...</p>
+          <div className="w-16 h-16 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#F85606] font-semibold text-lg">Loading shops...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] p-4 pb-20">
-      {/* Header */}
-      <div className="bg-white rounded-2xl shadow-lg p-4 border border-[#B7E892] mb-4">
-        <h1 className="text-xl font-bold text-[#32CD32] text-center mb-2">
-          Manage Shops
-        </h1>
-        <p className="text-gray-600 text-center text-sm">
-          Verify and manage restaurant shops
-        </p>
-        <div className="flex items-center justify-center mt-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-          <span className="text-xs text-gray-600">{shops.length} shops total</span>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
+      {/* Header - Fixed */}
+      <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
+        <div className="p-4 pb-5">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h1 className="text-2xl font-bold text-white">
+                Shop Management
+              </h1>
+              <p className="text-orange-100 text-sm mt-1">
+                Verify & manage shops
+              </p>
+            </div>
+            <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-full p-3">
+              <FaStore className="text-2xl text-white" />
+            </div>
+          </div>
+          
+          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-white font-medium text-sm">Total Shops</span>
+            </div>
+            <span className="text-white font-bold text-xl">{shops.length}</span>
+          </div>
         </div>
       </div>
 
       {/* Shops List */}
-      <div className="space-y-4">
+      <div className="p-4 space-y-3">
         {shops.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-6 border border-[#B7E892] text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <FaStore className="text-2xl text-gray-400" />
+          <div className="bg-white rounded-2xl shadow-md p-8 text-center mt-8">
+            <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaStore className="text-3xl text-[#F85606]" />
             </div>
-            <p className="text-gray-500">No shops found</p>
-            <p className="text-sm text-gray-400 mt-1">Shops will appear here once created</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Shops Yet</h3>
+            <p className="text-gray-500 text-sm">Shops will appear here once created</p>
           </div>
         ) : (
           shops.map((shop) => (
-            <div key={shop._id} className="bg-white rounded-2xl shadow-lg border border-[#B7E892] overflow-hidden">
+            <div key={shop._id} className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100">
               {/* Shop Header */}
-              <div className="p-4 border-b border-gray-100">
-                <div className="flex items-start gap-3">
-                  <img
-                    src={shop.images?.[0] || "/default-shop.jpg"}
-                    alt={shop.name}
-                    className="w-16 h-16 object-cover rounded-lg border-2 border-[#B7E892]"
-                  />
+              <div className="p-4 bg-gradient-to-r from-orange-50 to-white">
+                <div className="flex items-start gap-3 mb-2">
+                  <div className="relative">
+                    <img
+                      src={shop.images?.[0] || "/default-shop.jpg"}
+                      alt={shop.name}
+                      className="w-20 h-20 object-cover rounded-xl border-2 border-orange-200 shadow-sm"
+                    />
+                    {shop.verified && (
+                      <div className="absolute -top-1 -right-1 bg-blue-500 rounded-full p-1">
+                        <MdVerified className="text-white text-sm" />
+                      </div>
+                    )}
+                  </div>
+                  
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-1">
-                      <h3 className="font-bold text-gray-800 truncate">{shop.name}</h3>
-                      <div className="flex items-center gap-1">
-                        {shop.verified && (
-                          <MdVerified className="text-blue-500 text-lg" />
-                        )}
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          shop.isOpen ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                        }`}>
-                          {shop.isOpen ? "Open" : "Closed"}
+                      <h3 className="font-bold text-gray-800 text-base line-clamp-1">{shop.name}</h3>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        shop.isOpen 
+                          ? "bg-green-100 text-green-700 border border-green-200" 
+                          : "bg-red-100 text-red-700 border border-red-200"
+                      }`}>
+                        {shop.isOpen ? "🟢 Open" : "🔴 Closed"}
+                      </span>
+                      {shop.verified && (
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                          ✓ Verified
                         </span>
-                      </div>
+                      )}
                     </div>
                     
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                    <div className="flex items-center gap-1 text-xs text-gray-600">
                       <FaUser className="text-gray-400" />
-                      <span>{shop.ownerName}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <MdLocationOn className="text-gray-400" />
-                      <span className="truncate">{shop.address}</span>
+                      <span className="truncate">{shop.ownerName}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Location Row */}
+                <div className="flex items-center gap-1 bg-white rounded-lg p-2">
+                  <MdLocationOn className="text-[#F85606] text-lg flex-shrink-0" />
+                  <span className="text-xs text-gray-700 truncate">{shop.address}</span>
                 </div>
               </div>
 
               {/* Expandable Content */}
               {expandedShop === shop._id && (
-                <div className="p-4 bg-gray-50 border-t border-gray-100">
+                <div className="border-t border-orange-100">
                   {/* Shop Details */}
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center gap-2 text-sm">
-                      <MdPhone className="text-gray-400" />
-                      <span className="text-gray-700">{shop.phone}</span>
+                  <div className="p-4 bg-gray-50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-6 h-6 bg-[#F85606] rounded-full flex items-center justify-center">
+                        <FaInfoCircle className="text-white text-xs" />
+                      </div>
+                      <h4 className="font-bold text-gray-800 text-sm">Shop Details</h4>
                     </div>
                     
-                    <div className="flex items-start gap-2 text-sm">
-                      <FaInfoCircle className="text-gray-400 mt-0.5" />
-                      <p className="text-gray-700 flex-1">{shop.description}</p>
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2 bg-white p-2.5 rounded-lg">
+                        <MdPhone className="text-[#F85606] text-lg" />
+                        <div className="text-sm">
+                          <span className="text-gray-500 text-xs block">Phone</span>
+                          <span className="text-gray-800 font-medium">{shop.phone}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-2 bg-white p-2.5 rounded-lg">
+                        <FaInfoCircle className="text-[#F85606] text-lg mt-0.5" />
+                        <div className="text-sm flex-1">
+                          <span className="text-gray-500 text-xs block">Description</span>
+                          <span className="text-gray-800 font-medium">{shop.description}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Status Info */}
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
-                        <p className="text-gray-600">Status</p>
-                        <p className={`font-semibold ${
-                          shop.isOpen ? "text-green-600" : "text-red-500"
+                    {/* Status Grid */}
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <div className="bg-white p-3 rounded-xl border border-orange-200 text-center">
+                        <p className="text-xs text-gray-600 mb-1">Shop Status</p>
+                        <p className={`font-bold text-sm ${
+                          shop.isOpen ? "text-green-600" : "text-red-600"
                         }`}>
-                          {shop.isOpen ? "Open" : "Closed"}
+                          {shop.isOpen ? "Open Now" : "Closed"}
                         </p>
                       </div>
-                      <div className="bg-white p-3 rounded-lg border border-gray-200 text-center">
-                        <p className="text-gray-600">Verified</p>
-                        <p className={`font-semibold ${
-                          shop.verified ? "text-green-600" : "text-red-500"
+                      <div className="bg-white p-3 rounded-xl border border-orange-200 text-center">
+                        <p className="text-xs text-gray-600 mb-1">Verification</p>
+                        <p className={`font-bold text-sm ${
+                          shop.verified ? "text-blue-600" : "text-amber-600"
                         }`}>
-                          {shop.verified ? "Yes" : "No"}
+                          {shop.verified ? "Verified" : "Pending"}
                         </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="space-y-2">
+                  <div className="p-4 bg-white space-y-2">
                     <button
                       onClick={() => handleItem(shop._id)}
-                      className="w-full bg-[#32CD32] text-white py-3 rounded-lg font-semibold transition-all duration-200 active:bg-[#2DB82D] flex items-center justify-center gap-2"
+                      className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
                     >
-                      <FaStore className="text-lg" />
-                      View Items
+                      <FaStore className="text-xl" />
+                      View Shop Items
                     </button>
 
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => handleDeleteShop(shop._id, shop.name)}
-                        className="bg-red-500 text-white py-3 rounded-lg font-semibold transition-all duration-200 active:bg-red-600 flex items-center justify-center gap-2"
+                        className="bg-gradient-to-r from-red-500 to-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
                       >
                         <MdDelete className="text-lg" />
                         Delete
@@ -256,7 +315,7 @@ export default function AdminPackagePage() {
                       {!shop.verified && (
                         <button
                           onClick={() => handleVerifyShop(shop._id, shop.name)}
-                          className="bg-blue-500 text-white py-3 rounded-lg font-semibold transition-all duration-200 active:bg-blue-600 flex items-center justify-center gap-2"
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
                         >
                           <MdVerified className="text-lg" />
                           Verify
@@ -267,25 +326,23 @@ export default function AdminPackagePage() {
                 </div>
               )}
 
-              {/* Footer */}
-              <div className="p-4 bg-gray-50 border-t border-gray-100">
-                <button
-                  onClick={() => toggleShopExpand(shop._id)}
-                  className="w-full bg-[#32CD32] text-white py-3 rounded-lg font-semibold text-sm active:bg-green-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  {expandedShop === shop._id ? (
-                    <>
-                      <span>▲</span>
-                      Hide Details
-                    </>
-                  ) : (
-                    <>
-                      <span>▼</span>
-                      View Details & Actions
-                    </>
-                  )}
-                </button>
-              </div>
+              {/* Expand/Collapse Button */}
+              <button
+                onClick={() => toggleShopExpand(shop._id)}
+                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2"
+              >
+                {expandedShop === shop._id ? (
+                  <>
+                    <MdExpandMore className="text-xl transform rotate-180 transition-transform" />
+                    Hide Details
+                  </>
+                ) : (
+                  <>
+                    <MdExpandMore className="text-xl transition-transform" />
+                    View Details & Actions
+                  </>
+                )}
+              </button>
             </div>
           ))
         )}

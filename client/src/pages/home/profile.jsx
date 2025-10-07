@@ -193,11 +193,21 @@ export function Profile() {
     );
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    Swal.fire("Logged out", "See you again!", "success");
-    window.location.href = "/login";
-  };
+const handleLogout = () => {
+  Swal.fire({
+    title: "Are you sure?",
+    text: "You will be logged out.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, logout",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      localStorage.clear();
+      Swal.fire("Logged out", "See you again!", "success");
+      window.location.href = "/login";
+    }
+  });
+};
 
   const handleChangePassword = async () => {
     try {
