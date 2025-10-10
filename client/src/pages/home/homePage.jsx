@@ -2,8 +2,7 @@ import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Contact from "./contacts";
 import Item from "./item";
-import Home from "./home";
-import ShopMessages from "./shopMessages";
+
 import ErrorNotFound from "./error";
 import ProductOverview from "./productOverview";
 import { BookingPage } from "./bookingpage";
@@ -236,7 +235,6 @@ export default function HomePage() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/shop/:id" element={<ShopDetails />} />
           <Route path="/messages" element={<Messages />} />
-          <Route path="/messages/:shopId" element={<ShopMessages />} />
           <Route path="/*" element={<ErrorNotFound />} />
           <Route path="/my-messages" element={<CustomerMessages />} />
           <Route path="/messages/customer/:customerId/shop/:shopId" element={<CustomerConversation />} />
