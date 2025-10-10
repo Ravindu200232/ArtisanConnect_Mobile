@@ -1,7 +1,8 @@
-import { CgProfile } from "react-icons/cg"; 
+import { CgProfile } from "react-icons/cg";
 import { MdOutlinePayments, MdRateReview } from "react-icons/md";
 import { BsGraphDown } from "react-icons/bs";
 import { CiSpeaker, CiBookmarkCheck, CiUser } from "react-icons/ci";
+import { IoSend } from "react-icons/io5"; // Add message icon
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -14,6 +15,7 @@ import AddShop from "./addShop";
 import ShopOrder from "./shopOrder";
 import ShopCreate from "./shopCreate";
 import UpdateShop from "./updateShop";
+import ShopOwnerMessages from "./ShopOwnerMessages";
 
 export default function Shop() {
   const location = useLocation();
@@ -27,6 +29,7 @@ export default function Shop() {
     else if (path.includes("/shop")) setActiveTab("shop");
     else if (path.includes("/profile")) setActiveTab("profile");
     else if (path.includes("/review")) setActiveTab("review");
+    else if (path.includes("/messages")) setActiveTab("messages"); // Add messages tab
   }, [location]);
 
   if (!token) {
@@ -46,6 +49,12 @@ export default function Shop() {
       id: "shop",
       icon: <CiSpeaker className="text-2xl" />,
       label: "Shop",
+    },
+    {
+      to: "/shopC/messages", // Add messages route
+      id: "messages",
+      icon: <IoSend className="text-2xl" />, // Message icon
+      label: "Messages",
     },
     {
       to: "/shopC/profile",
@@ -71,16 +80,20 @@ export default function Shop() {
           <Route path="/shop" element={<ShopCreate />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/review" element={<ShopReview />} />
-          
+          <Route path="/messages" element={<ShopOwnerMessages />} /> {/* Add messages route */}
+
           {/* Shop Management Routes */}
           <Route path="/shop/add" element={<AddShop />} />
           <Route path="/shop/edit" element={<UpdateShop />} />
-          
+
           {/* Collection Management Routes */}
           <Route path="/shop/collection" element={<CollectionPage />} />
           <Route path="/shop/collection/add" element={<AddCollection />} />
-          <Route path="/shop/collection/update" element={<UpdateCollection />} />
-          
+          <Route
+            path="/shop/collection/update"
+            element={<UpdateCollection />}
+          />
+
           {/* Default route - redirect to shop */}
           <Route path="/" element={<ShopOrder />} />
         </Routes>
@@ -120,24 +133,9 @@ export default function Shop() {
               )}
             </Link>
           ))}
-          
+
           {/* Logout Button */}
-          <button
-            onClick={() => {
-              localStorage.clear();
-              window.location.href = "/login";
-            }}
-            className="flex flex-col items-center justify-center flex-1 h-full transition-all text-gray-500 hover:text-red-600 active:scale-95"
-          >
-            <div className="flex flex-col items-center justify-center">
-              <div className="p-2 rounded-xl hover:bg-red-50 transition-all">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </div>
-              <span className="text-xs mt-1 font-bold">Logout</span>
-            </div>
-          </button>
+          
         </div>
 
         {/* Decorative gradient bar */}

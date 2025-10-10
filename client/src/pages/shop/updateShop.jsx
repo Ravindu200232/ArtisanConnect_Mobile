@@ -22,6 +22,9 @@ export default function UpdateShop() {
   const [isLoading, setIsLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
 
+
+  
+
   useEffect(() => {
     const fetchShop = async () => {
       if (!id) {
