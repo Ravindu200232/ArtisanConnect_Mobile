@@ -5,10 +5,24 @@ import { useState, useEffect } from "react";
 import { Available } from "./available.jsx";
 import { DeliveryTrack } from "./deliveryTrack.jsx";
 import { Profile } from "./profile.jsx";
+import axios from "axios";
+import Swal from "sweetalert2";
 
 export default function DriverPage() {
   const [activeTab, setActiveTab] = useState("home");
+  const [driver, setDriver] = useState(null);
+  const [isAvailable, setIsAvailable] = useState(false);
   const location = useLocation();
+
+  // Load driver data
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      setDriver(parsed);
+      setIsAvailable(parsed.isAvailable || false);
+    }
+  }, []);
 
   // Update active tab based on current route
   useEffect(() => {
@@ -18,6 +32,41 @@ export default function DriverPage() {
     else if (path.includes("/profile")) setActiveTab("profile");
     else setActiveTab("home");
   }, [location]);
+
+  const toggleAvailability = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const newAvailability = !isAvailable;
+      
+      const response = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/driver/${driver.id}`,
+        { isAvailable: newAvailability },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setIsAvailable(newAvailability);
+      
+      // Update local storage
+      const updatedDriver = { ...driver, isAvailable: newAvailability };
+      localStorage.setItem("user", JSON.stringify(updatedDriver));
+      setDriver(updatedDriver);
+
+      Swal.fire({
+        title: newAvailability ? "You're Available!" : "You're Offline",
+        text: newAvailability ? "You will now receive delivery requests" : "You won't receive new delivery requests",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      console.error("Error updating availability:", err);
+      Swal.fire("Error", "Failed to update availability", "error");
+    }
+  };
 
   const [token] = useState(localStorage.getItem("token"));
   if (!token) {
@@ -59,7 +108,7 @@ export default function DriverPage() {
         <Routes>
           <Route path="/" element={
             <div className="min-h-screen">
-              {/* Header */}
+              {/* Header with Availability Toggle */}
               <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg">
                 <div className="px-4 py-6">
                   <div className="flex items-center justify-between mb-4">
@@ -70,6 +119,33 @@ export default function DriverPage() {
                     <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
                       <MdOutlineDeliveryDining className="text-white text-2xl" />
                     </div>
+                  </div>
+                  
+                  {/* Availability Toggle Button */}
+                  <div className="flex items-center justify-between bg-white/20 backdrop-blur rounded-xl p-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${isAvailable ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                      <div>
+                        <p className="text-sm font-bold text-white">
+                          {isAvailable ? 'Available for Delivery' : 'Currently Offline'}
+                        </p>
+                        <p className="text-xs text-orange-100">
+                          {isAvailable ? 'You will receive orders' : 'You will not receive orders'}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={toggleAvailability}
+                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
+                        isAvailable ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                          isAvailable ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
                   </div>
                 </div>
               </div>

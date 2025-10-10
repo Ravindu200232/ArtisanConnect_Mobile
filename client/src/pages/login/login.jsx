@@ -50,7 +50,7 @@ export default function Login() {
         })
       );
 
-      console.log(user.role)
+      console.log(user.role);
       setTimeout(() => {
         if (user.role === "admin") {
           window.location.href = "/admin/";
@@ -58,6 +58,8 @@ export default function Login() {
           window.location.href = "/shopC/";
         } else if (user.role === "supplier") {
           window.location.href = "/shopC/";
+        } else if (user.role === "delivery") {
+          window.location.href = "/driver/";
         } else {
           window.location.href = "/";
         }
@@ -118,7 +120,7 @@ export default function Login() {
         setTimeout(() => (window.location.href = "/verify-email"), 1500);
         return;
       }
-      console.log('user role',user.role)
+      console.log("user role", user.role);
       setTimeout(() => {
         if (user.role === "admin") {
           window.location.href = "/admin/";
@@ -126,6 +128,8 @@ export default function Login() {
           window.location.href = "/shopC//";
         } else if (user.role === "supplier") {
           window.location.href = "/shopC//";
+        } else if (user.role === "delivery") {
+          window.location.href = "/driver/";
         } else {
           window.location.href = "/";
         }

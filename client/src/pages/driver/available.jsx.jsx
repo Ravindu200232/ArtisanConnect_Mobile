@@ -63,6 +63,7 @@ export function Available() {
 
   const handleUpdate = async () => {
     try {
+      console.log("driver", driver);
       const token = localStorage.getItem("token");
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/driver/${driver.id}`,

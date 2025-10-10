@@ -3,6 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import mediaUpload from "../../utils/mediaUpload";
+import { IoArrowBack, IoCamera } from "react-icons/io5";
 
 export default function DriverRegister() {
   const [email, setEmail] = useState("");
@@ -11,10 +12,11 @@ export default function DriverRegister() {
   const [lastName, setLastName] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
-  const [image, setImage] = useState("https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg");
+  const [image, setImage] = useState("");
   const [vehicleType, setVehicleType] = useState("");
   const [drNic, setDrNic] = useState("");
-  const role = "delivery"; // Hidden and fixed
+  const [isLoading, setIsLoading] = useState(false);
+  const role = "delivery";
   const fileInputRef = useRef();
   const navigate = useNavigate();
 
@@ -23,23 +25,27 @@ export default function DriverRegister() {
     if (!file) return;
 
     try {
+      setIsLoading(true);
       const uploadedUrl = await mediaUpload(file);
       setImage(uploadedUrl);
       toast.success("Image uploaded successfully!");
     } catch (err) {
       console.error("Image upload failed", err);
       toast.error("Image upload failed.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleOnSubmit = async (e) => {
     e.preventDefault();
 
-    if(image == ""){
-      toast.success("Please upload profile picture")
-      return
+    if (!image) {
+      toast.error("Please upload profile picture");
+      return;
     }
 
+    setIsLoading(true);
     try {
       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/driver`, {
         email,
@@ -51,138 +57,204 @@ export default function DriverRegister() {
         image,
         vehicleType,
         drNic,
-        role, // Fixed as "delivery"
+        role,
       });
-      toast.success("Registration Successfully")
-      
-      
-      navigate("/login");
+      toast.success("Registration Successful");
+      navigate("/admin");
     } catch (err) {
       console.error(err);
-      toast.error(err?.response?.data?.error || "Email Already Added");
+      toast.error(err?.response?.data?.error || "Registration failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleOnSubmit}>
-      <div className="w-full h-screen flex justify-center items-center bg-picture">
-        <div className="w-[400px] h-[700px] backdrop-blur-xl rounded-2xl flex flex-col justify-center items-center relative">
-          <span className="text-white text-3xl mt-24 mb-4">Register as Driver</span>
-
-          {/* Profile Image Upload */}
-          <div
-            className="cursor-pointer mb-4"
-            onClick={() => fileInputRef.current.click()}
-          >
-            <img
-              src={image || "https://via.placeholder.com/100?text=Upload"}
-              alt="Profile"
-              className="w-24 h-24 object-cover rounded-full border-2 border-white"
-            />
-            <label className="text-white text-sm mt-2 cursor-pointer">
-              Click to upload image
-            </label>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg">
+        <div className="p-4 pt-6">
+          <div className="flex items-center justify-between">
+            <button 
+              onClick={() => navigate(-1)}
+              className="w-10 h-10 bg-white bg-opacity-20 backdrop-blur-sm rounded-full flex items-center justify-center"
+            >
+              <IoArrowBack className="text-white text-xl" />
+            </button>
+            <h1 className="text-xl font-bold text-white">Driver Registration</h1>
+            <div className="w-10 h-10"></div> {/* Spacer for balance */}
           </div>
-          <input
-          
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            className="hidden"
-          />
+          <p className="text-orange-100 text-sm mt-2 text-center">Register new delivery driver</p>
+        </div>
+      </div>
 
-          {/* /* Form Fields */} 
+      {/* Form Container */}
+      <div className="px-4 mt-4">
+        <div className="bg-white rounded-2xl shadow-md border border-orange-100 p-5">
+          {/* Profile Image Upload */}
+          <div className="flex justify-center mb-6">
+            <div 
+              className="relative cursor-pointer"
+              onClick={() => fileInputRef.current.click()}
+            >
+              <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center border-2 border-orange-200">
+                {image ? (
+                  <img
+                    src={image}
+                    alt="Profile"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <IoCamera className="text-orange-400 text-2xl" />
+                )}
+              </div>
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-r from-[#F85606] to-[#FF7420] rounded-full flex items-center justify-center border-2 border-white">
+                <IoCamera className="text-white text-sm" />
+              </div>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+          </div>
+
+          <form onSubmit={handleOnSubmit} className="space-y-4">
+            {/* Name Row */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-600 font-medium mb-1 block">First Name</label>
                 <input
-                required
-                type="text"
-                placeholder="First Name"
-                className="placeholder:text-white w-[300px] h-[40px] bg-transparent border-b-2 border-white text-xl text-white outline-none mb-3"
-                onChange={(e) => setFirstName(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
-                value={firstName}
+                  required
+                  type="text"
+                  placeholder="John"
+                  className="w-full h-12 bg-orange-50 border border-orange-200 rounded-xl px-4 text-gray-800 outline-none focus:border-[#F85606] transition-colors"
+                  onChange={(e) => setFirstName(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
+                  value={firstName}
                 />
+              </div>
+              <div>
+                <label className="text-xs text-gray-600 font-medium mb-1 block">Last Name</label>
                 <input
-                required
-                type="text"
-                placeholder="Last Name"
-                className="placeholder:text-white w-[300px] h-[40px] bg-transparent border-b-2 border-white text-xl text-white outline-none mb-3"
-                onChange={(e) => setLastName(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
-                value={lastName}
+                  required
+                  type="text"
+                  placeholder="Doe"
+                  className="w-full h-12 bg-orange-50 border border-orange-200 rounded-xl px-4 text-gray-800 outline-none focus:border-[#F85606] transition-colors"
+                  onChange={(e) => setLastName(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
+                  value={lastName}
                 />
-                <input
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="text-xs text-gray-600 font-medium mb-1 block">Email</label>
+              <input
                 required
                 type="email"
-                placeholder="Email"
-                className="placeholder:text-white w-[300px] h-[40px] bg-transparent border-b-2 border-white text-xl text-white outline-none mb-3"
+                placeholder="john.doe@example.com"
+                className="w-full h-12 bg-orange-50 border border-orange-200 rounded-xl px-4 text-gray-800 outline-none focus:border-[#F85606] transition-colors"
                 onChange={(e) => setEmail(e.target.value)}
                 value={email}
-                />
-                <input
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="text-xs text-gray-600 font-medium mb-1 block">Password</label>
+              <input
                 required
                 type="password"
-                placeholder="Password"
-                className="placeholder:text-white w-[300px] h-[40px] bg-transparent border-b-2 border-white text-xl text-white outline-none mb-3"
+                placeholder="••••••••"
+                className="w-full h-12 bg-orange-50 border border-orange-200 rounded-xl px-4 text-gray-800 outline-none focus:border-[#F85606] transition-colors"
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
                 pattern="^(?=.*[A-Z])(?=.*[\W_]).{8,}$"
                 title="Password must be at least 8 characters long and include at least one uppercase letter and one symbol."
-                />
-                <input
+              />
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="text-xs text-gray-600 font-medium mb-1 block">Address</label>
+              <input
                 required
                 type="text"
-                placeholder="Address"
-                className="placeholder:text-white w-[300px] h-[40px] bg-transparent border-b-2 border-white text-xl text-white outline-none mb-3"
+                placeholder="Enter full address"
+                className="w-full h-12 bg-orange-50 border border-orange-200 rounded-xl px-4 text-gray-800 outline-none focus:border-[#F85606] transition-colors"
                 onChange={(e) => setAddress(e.target.value)}
                 value={address}
-                />
-                <input
+              />
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="text-xs text-gray-600 font-medium mb-1 block">Phone Number</label>
+              <input
                 required
                 type="number"
-                placeholder="Phone"
-                className="placeholder:text-white w-[300px] h-[40px] bg-transparent border-b-2 border-white text-xl text-white outline-none mb-3"
+                placeholder="07X XXX XXXX"
+                className="w-full h-12 bg-orange-50 border border-orange-200 rounded-xl px-4 text-gray-800 outline-none focus:border-[#F85606] transition-colors"
                 onChange={(e) => setPhone(e.target.value)}
                 value={phone}
-                />
+              />
+            </div>
 
-                {/* Vehicle Type Dropdown */}
-          <select
-          required
-            value={vehicleType}
-            onChange={(e) => setVehicleType(e.target.value)}
-            className="placeholder:text-white w-[300px] h-[40px] bg-transparent border-b-2 border-white text-xl text-white outline-none mb-3"
-          >
-            <option className="text-black" value="" disabled>Select Vehicle Type</option>
-            <option className="text-black" value="Car">Car</option>
-            <option className="text-black" value="Bike">Bike</option>
-            <option className="text-black" value="Van">Van</option>
-            <option className="text-black" lassName="text-black" value="Truck">Truck</option>
-            {/* Add other vehicle types as needed */}
-          </select>
+            {/* Vehicle Type */}
+            <div>
+              <label className="text-xs text-gray-600 font-medium mb-1 block">Vehicle Type</label>
+              <select
+                required
+                value={vehicleType}
+                onChange={(e) => setVehicleType(e.target.value)}
+                className="w-full h-12 bg-orange-50 border border-orange-200 rounded-xl px-4 text-gray-800 outline-none focus:border-[#F85606] transition-colors"
+              >
+                <option value="" disabled>Select Vehicle</option>
+                <option value="Car">Car</option>
+                <option value="Bike">Bike</option>
+                <option value="Van">Van</option>
+                <option value="Truck">Truck</option>
+              </select>
+            </div>
 
-          <input
-          required
-            type="text"
-            placeholder="Driver NIC"
-            className="placeholder:text-white w-[300px] h-[40px] bg-transparent border-b-2 border-white text-xl text-white outline-none mb-3"
-            onChange={(e) => setDrNic(e.target.value)}
-            value={drNic}
-          />
+            {/* Driver NIC */}
+            <div>
+              <label className="text-xs text-gray-600 font-medium mb-1 block">Driver NIC</label>
+              <input
+                required
+                type="text"
+                placeholder="Enter NIC number"
+                className="w-full h-12 bg-orange-50 border border-orange-200 rounded-xl px-4 text-gray-800 outline-none focus:border-[#F85606] transition-colors"
+                onChange={(e) => setDrNic(e.target.value)}
+                value={drNic}
+              />
+            </div>
 
-          <button className="mt-4 w-[300px] h-[50px] bg-[#010750] text-xl text-white rounded-lg">
-            Register
-          </button>
-
-          <span className="text-white text-sm mt-4 mb-2">
-            Already have an account?{" "}
-            <span
-              className="text-blue-400 cursor-pointer"
-              onClick={() => navigate("/login")}
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-14 bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white font-bold rounded-xl shadow-lg active:scale-95 transition-transform duration-200 mt-6 flex items-center justify-center"
             >
-              Login
-            </span>
-          </span>
+              {isLoading ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                "Register Driver"
+              )}
+            </button>
+          </form>
+
+          {/* Back to Admin */}
+          <button
+            onClick={() => navigate("/admin")}
+            className="w-full h-12 bg-orange-100 text-[#F85606] font-medium rounded-xl border border-orange-200 mt-3 active:scale-95 transition-transform duration-200"
+          >
+            Back to Dashboard
+          </button>
         </div>
       </div>
-    </form>
+    </div>
   );
 }

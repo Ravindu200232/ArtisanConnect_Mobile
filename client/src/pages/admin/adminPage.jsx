@@ -1,4 +1,4 @@
-import { MdOutlinePayments, MdRateReview, MdShop, MdPeople, MdPerson } from "react-icons/md";
+import { MdOutlinePayments, MdRateReview, MdShop, MdPeople, MdPerson, MdDirectionsCar } from "react-icons/md";
 import { IoHomeOutline, IoSettingsOutline, IoBookOutline } from "react-icons/io5";
 import { FaChartBar, FaQuestionCircle } from "react-icons/fa";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
@@ -12,6 +12,7 @@ import { AdminInquiryPage } from "./adminInquirypage";
 import AdminPackagePage from "./adminpakage";
 import { AdminPayment } from "./adminPayment";
 import { Profile } from "./profile";
+import DriverRegister from "../driver signup/drregister";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("home");
@@ -111,6 +112,13 @@ export default function AdminPage() {
       description: "Payment management",
       to: "/admin/payment",
       gradient: "from-indigo-500 to-indigo-600"
+    },
+    {
+      icon: <MdDirectionsCar className="text-2xl text-white" />,
+      label: "Driver Reg",
+      description: "Register drivers",
+      to: "/admin/driver-registration",
+      gradient: "from-teal-500 to-teal-600"
     }
   ];
 
@@ -243,6 +251,7 @@ export default function AdminPage() {
           <Route path="/package" element={<AdminPackagePage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/payment" element={<AdminPayment />} />
+          <Route path="/driver-registration" element={<DriverRegister/>}/>
         </Routes>
       </main>
 
