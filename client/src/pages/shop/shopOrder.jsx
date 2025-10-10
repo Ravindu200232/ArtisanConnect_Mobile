@@ -261,7 +261,7 @@ export default function ShopOrder() {
 
   if (loading && bookingData.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br  flex items-center justify-center p-4">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-[#F85606] font-semibold text-lg">Loading orders...</p>

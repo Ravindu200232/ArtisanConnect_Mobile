@@ -1,11 +1,13 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { MdPerson, MdEmail, MdPhone, MdLocationOn, MdBlock, MdCheckCircle, MdExpandMore } from "react-icons/md";
+import { MdPerson, MdEmail, MdPhone, MdLocationOn, MdBlock, MdCheckCircle, MdExpandMore, MdSearch, MdClear } from "react-icons/md";
 
 export default function User() {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedUser, setExpandedUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch users
   useEffect(() => {
@@ -17,6 +19,7 @@ export default function User() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUsers(response.data);
+        setFilteredUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
       } finally {
@@ -26,6 +29,28 @@ export default function User() {
 
     fetchUsers();
   }, []);
+
+  // Filter users based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter((user) => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          user.firstName?.toLowerCase().includes(searchLower) ||
+          user.lastName?.toLowerCase().includes(searchLower) ||
+          user.email?.toLowerCase().includes(searchLower) ||
+          user.phone?.toLowerCase().includes(searchLower) ||
+          user.address?.toLowerCase().includes(searchLower) ||
+          user.role?.toLowerCase().includes(searchLower) ||
+          (user.isBlocked && "blocked".includes(searchLower)) ||
+          (!user.isBlocked && "active".includes(searchLower))
+        );
+      });
+      setFilteredUsers(filtered);
+    }
+  }, [searchTerm, users]);
 
   // Handle Block/Unblock User
   const handleBlockUser = async (email, isBlocked, userName) => {
@@ -55,9 +80,20 @@ export default function User() {
     setExpandedUser(expandedUser === userId ? null : userId);
   };
 
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
+
+  // Stats calculation
+  const totalUsers = users.length;
+  const activeUsers = users.filter(user => !user.isBlocked).length;
+  const blockedUsers = users.filter(user => user.isBlocked).length;
+  const customerUsers = users.filter(user => user.role === 'customer').length;
+  const artisanUsers = users.filter(user => user.role === 'artisan').length;
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br  flex items-center justify-center p-4">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-[#F85606] font-semibold text-lg">Loading users...</p>
@@ -85,28 +121,115 @@ export default function User() {
             </div>
           </div>
           
-          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-white font-medium text-sm">Total Users</span>
+          {/* Search Bar */}
+          <div className="relative mt-3">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <MdSearch className="w-5 h-5 text-gray-500" />
             </div>
-            <span className="text-white font-bold text-xl">{users.length}</span>
+            <input
+              type="text"
+              placeholder="Search users by name, email, phone, address, role, status..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white text-gray-800 pl-10 pr-10 py-3.5 rounded-xl border-2 border-orange-200 focus:ring-2 focus:ring-white focus:border-white focus:outline-none placeholder-gray-500 text-sm font-medium"
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <MdClear className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+              </button>
+            )}
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-white font-medium text-sm">Total Users</span>
+              </div>
+              <span className="text-white font-bold text-xl">{totalUsers}</span>
+            </div>
+            <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span className="text-white font-medium text-sm">Showing</span>
+              </div>
+              <span className="text-white font-bold text-xl">{filteredUsers.length}</span>
+            </div>
+          </div>
+
+          {/* Additional Stats */}
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span className="text-white font-medium text-xs">Active</span>
+              </div>
+              <span className="text-white font-bold text-lg">{activeUsers}</span>
+            </div>
+            <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                <span className="text-white font-medium text-xs">Blocked</span>
+              </div>
+              <span className="text-white font-bold text-lg">{blockedUsers}</span>
+            </div>
+          </div>
+
+          {/* Role Stats */}
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span className="text-white font-medium text-xs">Customers</span>
+              </div>
+              <span className="text-white font-bold text-lg">{customerUsers}</span>
+            </div>
+            <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                <span className="text-white font-medium text-xs">Artisans</span>
+              </div>
+              <span className="text-white font-bold text-lg">{artisanUsers}</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Users List */}
       <div className="p-4 space-y-3">
-        {users.length === 0 ? (
+        {filteredUsers.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-md p-8 text-center mt-8">
             <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MdPerson className="text-3xl text-[#F85606]" />
+              {searchTerm ? (
+                <MdSearch className="text-3xl text-[#F85606]" />
+              ) : (
+                <MdPerson className="text-3xl text-[#F85606]" />
+              )}
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Users Yet</h3>
-            <p className="text-gray-500 text-sm">User accounts will appear here</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              {searchTerm ? "No Users Found" : "No Users Yet"}
+            </h3>
+            <p className="text-gray-500 text-sm">
+              {searchTerm 
+                ? `No users found for "${searchTerm}". Try different search terms.`
+                : "User accounts will appear here once they register."
+              }
+            </p>
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="mt-4 bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white px-6 py-2.5 rounded-lg font-medium text-sm hover:shadow-lg transition-all"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         ) : (
-          users.map((user) => (
+          filteredUsers.map((user) => (
             <div key={user._id} className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100">
               {/* User Header */}
               <div className="p-4 bg-gradient-to-r from-orange-50 to-white">
@@ -134,8 +257,14 @@ export default function User() {
                       <span className="truncate">{user.email}</span>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      <span className="capitalize bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white px-3 py-1 rounded-full text-xs font-bold">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`capitalize px-3 py-1 rounded-full text-xs font-bold ${
+                        user.role === 'artisan' 
+                          ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                          : user.role === 'admin'
+                          ? 'bg-red-100 text-red-700 border border-red-200'
+                          : 'bg-blue-100 text-blue-700 border border-blue-200'
+                      }`}>
                         {user.role}
                       </span>
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
@@ -145,6 +274,12 @@ export default function User() {
                       }`}>
                         {user.isBlocked ? "🔒 Blocked" : "✓ Active"}
                       </span>
+                      {user.phone && (
+                        <span className="flex items-center gap-1 text-xs text-gray-600">
+                          <MdPhone className="text-gray-400" />
+                          {user.phone}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -206,7 +341,12 @@ export default function User() {
                     <div className="grid grid-cols-2 gap-2 mt-3">
                       <div className="bg-white p-3 rounded-xl border border-orange-200 text-center">
                         <p className="text-xs text-gray-600 mb-1">Role</p>
-                        <p className="font-bold text-sm text-gray-800 capitalize">{user.role}</p>
+                        <p className={`font-bold text-sm capitalize ${
+                          user.role === 'artisan' ? 'text-purple-600' :
+                          user.role === 'admin' ? 'text-red-600' : 'text-blue-600'
+                        }`}>
+                          {user.role}
+                        </p>
                       </div>
                       <div className="bg-white p-3 rounded-xl border border-orange-200 text-center">
                         <p className="text-xs text-gray-600 mb-1">Status</p>
@@ -223,7 +363,7 @@ export default function User() {
                   <div className="p-4 bg-white">
                     <button
                       onClick={() => handleBlockUser(user.email, user.isBlocked, `${user.firstName} ${user.lastName}`)}
-                      className={`w-full py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 ${
+                      className={`w-full py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:shadow-lg ${
                         user.isBlocked
                           ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
                           : "bg-gradient-to-r from-red-500 to-red-600 text-white"
@@ -248,7 +388,7 @@ export default function User() {
               {/* Expand/Collapse Button */}
               <button
                 onClick={() => toggleUserExpand(user._id)}
-                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2 hover:shadow-lg"
               >
                 {expandedUser === user._id ? (
                   <>

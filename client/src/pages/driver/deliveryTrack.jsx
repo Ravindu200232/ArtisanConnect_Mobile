@@ -108,7 +108,7 @@ export function DeliveryTrack() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100">
+    <div className="min-h-screen bg-gradient-to-br ">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg">
         <div className="px-4 py-4">

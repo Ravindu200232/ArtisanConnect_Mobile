@@ -107,7 +107,7 @@ export default function UpdateCollection() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-6">
+    <div className="min-h-screen bg-gradient-to-br  pb-6">
       {/* Header - Fixed */}
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
         <div className="p-4 pb-5">

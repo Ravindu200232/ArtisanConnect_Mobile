@@ -117,7 +117,7 @@ export function ShopReview() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br  flex items-center justify-center p-4">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-[#F85606] font-semibold text-lg">Loading reviews...</p>
@@ -127,7 +127,7 @@ export function ShopReview() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
+    <div className="min-h-screen bg-gradient-to-br  pb-20">
       {/* Header - Fixed */}
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
         <div className="p-4 pb-5">

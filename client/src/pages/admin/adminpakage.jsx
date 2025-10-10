@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { MdVerified, MdDelete, MdStore, MdPhone, MdLocationOn, MdExpandMore } from "react-icons/md";
+import { MdVerified, MdDelete, MdStore, MdPhone, MdLocationOn, MdExpandMore, MdSearch, MdClear } from "react-icons/md";
 import { FaStore, FaUser, FaInfoCircle } from "react-icons/fa";
 
 export default function AdminPackagePage() {
   const [shops, setShops] = useState([]);
+  const [filteredShops, setFilteredShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedShop, setExpandedShop] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   const handleItem = async (id) => {
@@ -115,6 +117,7 @@ export default function AdminPackagePage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setShops(response.data);
+      setFilteredShops(response.data);
     } catch (error) {
       console.error("Failed to fetch shop:", error);
       Swal.fire({
@@ -131,6 +134,29 @@ export default function AdminPackagePage() {
     }
   };
 
+  // Filter shops based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredShops(shops);
+    } else {
+      const filtered = shops.filter((shop) => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          shop.name?.toLowerCase().includes(searchLower) ||
+          shop.ownerName?.toLowerCase().includes(searchLower) ||
+          shop.address?.toLowerCase().includes(searchLower) ||
+          shop.phone?.toLowerCase().includes(searchLower) ||
+          shop.description?.toLowerCase().includes(searchLower) ||
+          (shop.verified && "verified".includes(searchLower)) ||
+          (!shop.verified && "pending".includes(searchLower)) ||
+          (shop.isOpen && "open".includes(searchLower)) ||
+          (!shop.isOpen && "closed".includes(searchLower))
+        );
+      });
+      setFilteredShops(filtered);
+    }
+  }, [searchTerm, shops]);
+
   useEffect(() => {
     fetchShop();
   }, []);
@@ -138,6 +164,16 @@ export default function AdminPackagePage() {
   const toggleShopExpand = (shopId) => {
     setExpandedShop(expandedShop === shopId ? null : shopId);
   };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
+
+  // Stats calculation
+  const totalShops = shops.length;
+  const verifiedShops = shops.filter(shop => shop.verified).length;
+  const pendingShops = totalShops - verifiedShops;
+  const openShops = shops.filter(shop => shop.isOpen).length;
 
   if (loading) {
     return (
@@ -151,7 +187,7 @@ export default function AdminPackagePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
+    <div className="min-h-screen bg-gradient-to-br  pb-20">
       {/* Header - Fixed */}
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
         <div className="p-4 pb-5">
@@ -169,28 +205,97 @@ export default function AdminPackagePage() {
             </div>
           </div>
           
-          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-white font-medium text-sm">Total Shops</span>
+          {/* Search Bar */}
+          <div className="relative mt-3">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <MdSearch className="w-5 h-5 text-gray-500" />
             </div>
-            <span className="text-white font-bold text-xl">{shops.length}</span>
+            <input
+              type="text"
+              placeholder="Search shops by name, owner, address, phone, status..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white text-gray-800 pl-10 pr-10 py-3.5 rounded-xl border-2 border-orange-200 focus:ring-2 focus:ring-white focus:border-white focus:outline-none placeholder-gray-500 text-sm font-medium"
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <MdClear className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+              </button>
+            )}
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-white font-medium text-sm">Total Shops</span>
+              </div>
+              <span className="text-white font-bold text-xl">{totalShops}</span>
+            </div>
+            <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span className="text-white font-medium text-sm">Showing</span>
+              </div>
+              <span className="text-white font-bold text-xl">{filteredShops.length}</span>
+            </div>
+          </div>
+
+          {/* Additional Stats */}
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span className="text-white font-medium text-xs">Verified</span>
+              </div>
+              <span className="text-white font-bold text-lg">{verifiedShops}</span>
+            </div>
+            <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                <span className="text-white font-medium text-xs">Pending</span>
+              </div>
+              <span className="text-white font-bold text-lg">{pendingShops}</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Shops List */}
       <div className="p-4 space-y-3">
-        {shops.length === 0 ? (
+        {filteredShops.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-md p-8 text-center mt-8">
             <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FaStore className="text-3xl text-[#F85606]" />
+              {searchTerm ? (
+                <MdSearch className="text-3xl text-[#F85606]" />
+              ) : (
+                <FaStore className="text-3xl text-[#F85606]" />
+              )}
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Shops Yet</h3>
-            <p className="text-gray-500 text-sm">Shops will appear here once created</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              {searchTerm ? "No Shops Found" : "No Shops Yet"}
+            </h3>
+            <p className="text-gray-500 text-sm">
+              {searchTerm 
+                ? `No shops found for "${searchTerm}". Try different search terms.`
+                : "Shops will appear here once created"
+              }
+            </p>
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="mt-4 bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white px-6 py-2.5 rounded-lg font-medium text-sm hover:shadow-lg transition-all"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         ) : (
-          shops.map((shop) => (
+          filteredShops.map((shop) => (
             <div key={shop._id} className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100">
               {/* Shop Header */}
               <div className="p-4 bg-gradient-to-r from-orange-50 to-white">
@@ -224,6 +329,11 @@ export default function AdminPackagePage() {
                       {shop.verified && (
                         <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
                           ✓ Verified
+                        </span>
+                      )}
+                      {!shop.verified && (
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                          ⏳ Pending
                         </span>
                       )}
                     </div>
@@ -297,7 +407,7 @@ export default function AdminPackagePage() {
                   <div className="p-4 bg-white space-y-2">
                     <button
                       onClick={() => handleItem(shop._id)}
-                      className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
+                      className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
                     >
                       <FaStore className="text-xl" />
                       View Shop Items
@@ -306,7 +416,7 @@ export default function AdminPackagePage() {
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => handleDeleteShop(shop._id, shop.name)}
-                        className="bg-gradient-to-r from-red-500 to-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
+                        className="bg-gradient-to-r from-red-500 to-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
                       >
                         <MdDelete className="text-lg" />
                         Delete
@@ -315,10 +425,19 @@ export default function AdminPackagePage() {
                       {!shop.verified && (
                         <button
                           onClick={() => handleVerifyShop(shop._id, shop.name)}
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
                         >
                           <MdVerified className="text-lg" />
                           Verify
+                        </button>
+                      )}
+                      {shop.verified && (
+                        <button
+                          disabled
+                          className="bg-gradient-to-r from-gray-400 to-gray-500 text-white py-3.5 rounded-xl font-bold shadow-md flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
+                        >
+                          <MdVerified className="text-lg" />
+                          Verified
                         </button>
                       )}
                     </div>
@@ -329,7 +448,7 @@ export default function AdminPackagePage() {
               {/* Expand/Collapse Button */}
               <button
                 onClick={() => toggleShopExpand(shop._id)}
-                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2 hover:shadow-lg"
               >
                 {expandedShop === shop._id ? (
                   <>

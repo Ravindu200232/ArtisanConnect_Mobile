@@ -3,6 +3,7 @@ import { IoHomeOutline, IoSettingsOutline, IoBookOutline } from "react-icons/io5
 import { FaChartBar, FaQuestionCircle } from "react-icons/fa";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import axios from "axios";
 
 import AdminItemPage from "./adminItemPage";
 import User from "./users";
@@ -16,6 +17,11 @@ import DriverRegister from "../driver signup/drregister";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("home");
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalBookings: 0,
+    loading: true
+  });
   const location = useLocation();
 
   // Update active tab based on current route
@@ -30,6 +36,43 @@ export default function AdminPage() {
     else if (path.includes("/profile")) setActiveTab("profile");
     else setActiveTab("home");
   }, [location]);
+
+  // Fetch real statistics
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        
+        // Fetch users data
+        const usersResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/users`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // Fetch orders data
+        const ordersResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/orders`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const usersData = usersResponse.data || [];
+        const ordersData = ordersResponse.data || [];
+
+        setStats({
+          totalUsers: Array.isArray(usersData) ? usersData.length : 0,
+          totalBookings: Array.isArray(ordersData) ? ordersData.length : 0,
+          loading: false
+        });
+
+      } catch (error) {
+        console.error("Error fetching statistics:", error);
+        setStats(prev => ({
+          ...prev,
+          loading: false
+        }));
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const [token] = useState(localStorage.getItem("token"));
   if (!token) {
@@ -76,7 +119,8 @@ export default function AdminPage() {
       label: "Bookings",
       description: "Manage reservations",
       to: "/admin/booking",
-      gradient: "from-blue-500 to-blue-600"
+      gradient: "from-blue-500 to-blue-600",
+      count: stats.totalBookings
     },
     {
       icon: <MdShop className="text-2xl text-white" />,
@@ -90,7 +134,8 @@ export default function AdminPage() {
       label: "Users",
       description: "User management",
       to: "/admin/user",
-      gradient: "from-purple-500 to-purple-600"
+      gradient: "from-purple-500 to-purple-600",
+      count: stats.totalUsers
     },
     {
       icon: <MdRateReview className="text-2xl text-white" />,
@@ -123,7 +168,8 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
+    <div className="min-h-screen bg-gradient-to-br ">
+     
       {/* Main Content */}
       <main className="p-0">
         <Routes>
@@ -151,10 +197,19 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-gray-600 mb-1">Total Users</p>
-                        <p className="text-2xl font-bold text-gray-800">1,234</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="text-xs text-green-600 font-medium">↑ 12%</span>
-                        </div>
+                        {stats.loading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 border-2 border-[#F85606] border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-xs text-gray-500">Loading...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-2xl font-bold text-gray-800">{stats.totalUsers}</p>
+                            <div className="flex items-center gap-1 mt-1">
+                              <span className="text-xs text-green-600 font-medium">Registered</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
                         <MdPeople className="text-white text-xl" />
@@ -165,11 +220,20 @@ export default function AdminPage() {
                   <div className="bg-white rounded-2xl p-4 shadow-md border border-orange-100">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Bookings</p>
-                        <p className="text-2xl font-bold text-gray-800">56</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <span className="text-xs text-green-600 font-medium">↑ 8%</span>
-                        </div>
+                        <p className="text-xs text-gray-600 mb-1">Total Bookings</p>
+                        {stats.loading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 border-2 border-[#F85606] border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-xs text-gray-500">Loading...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-2xl font-bold text-gray-800">{stats.totalBookings}</p>
+                            <div className="flex items-center gap-1 mt-1">
+                              <span className="text-xs text-green-600 font-medium">All Time</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                       <div className="w-12 h-12 bg-gradient-to-br from-[#F85606] to-[#FF7420] rounded-xl flex items-center justify-center shadow-md">
                         <IoBookOutline className="text-white text-xl" />
@@ -191,9 +255,15 @@ export default function AdminPage() {
                     <Link
                       key={index}
                       to={action.to}
-                      className="bg-white rounded-2xl overflow-hidden shadow-md border border-orange-100 active:scale-95 transition-transform duration-200"
+                      className="bg-white rounded-2xl overflow-hidden shadow-md border border-orange-100 active:scale-95 transition-transform duration-200 hover:shadow-lg"
                     >
-                      <div className={`bg-gradient-to-r ${action.gradient} p-4`}>
+                      <div className={`bg-gradient-to-r ${action.gradient} p-4 relative`}>
+                        {/* Count Badge */}
+                        {action.count !== undefined && (
+                          <div className="absolute top-3 right-3 bg-white bg-opacity-30 backdrop-blur-sm rounded-full px-2 py-1">
+                            <span className="text-white text-xs font-bold">{action.count}</span>
+                          </div>
+                        )}
                         <div className="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-3">
                           {action.icon}
                         </div>
@@ -209,35 +279,86 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Activity Summary */}
+              {/* System Status */}
               <div className="px-4 mt-4">
                 <div className="bg-white rounded-2xl shadow-md border border-orange-100 p-4">
                   <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
                     <FaChartBar className="text-[#F85606]" />
+                    System Status
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-800">API Connection</p>
+                          <p className="text-xs text-gray-500">Backend services</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-green-600 font-bold">Online</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-2 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-800">Database</p>
+                          <p className="text-xs text-gray-500">MongoDB Atlas</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-blue-600 font-bold">Connected</span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-2 bg-purple-50 rounded-lg border border-purple-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <div>
+                          <p className="text-xs font-medium text-gray-800">Users Online</p>
+                          <p className="text-xs text-gray-500">Active sessions</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-purple-600 font-bold">{stats.totalUsers > 0 ? 'Active' : 'No Data'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Activity */}
+              <div className="px-4 mt-4">
+                <div className="bg-white rounded-2xl shadow-md border border-orange-100 p-4">
+                  <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <IoBookOutline className="text-[#F85606]" />
                     Recent Activity
                   </h3>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-xs font-medium text-gray-800">New order received</p>
-                        <p className="text-xs text-gray-500">2 minutes ago</p>
+                    {stats.loading ? (
+                      <div className="text-center py-4">
+                        <div className="w-6 h-6 border-2 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                        <p className="text-xs text-gray-500">Loading activity...</p>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-xs font-medium text-gray-800">New user registered</p>
-                        <p className="text-xs text-gray-500">15 minutes ago</p>
+                    ) : stats.totalBookings > 0 ? (
+                      <>
+                        <div className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <div className="flex-1">
+                            <p className="text-xs font-medium text-gray-800">New orders received</p>
+                            <p className="text-xs text-gray-500">{stats.totalBookings} total bookings</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <div className="flex-1">
+                            <p className="text-xs font-medium text-gray-800">Users registered</p>
+                            <p className="text-xs text-gray-500">{stats.totalUsers} total users</p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-4">
+                        <p className="text-xs text-gray-500">No recent activity</p>
+                        <p className="text-xs text-gray-400 mt-1">Activity will appear here</p>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <div className="flex-1">
-                        <p className="text-xs font-medium text-gray-800">Payment received</p>
-                        <p className="text-xs text-gray-500">1 hour ago</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -102,7 +102,7 @@ export default function DriverPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
+    <div className="min-h-screen bg-gradient-to-br  pb-20">
       {/* Main Content */}
       <main>
         <Routes>

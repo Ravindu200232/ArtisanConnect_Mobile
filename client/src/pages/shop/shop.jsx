@@ -92,7 +92,7 @@ export default function Shop() {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-orange-50 to-orange-100">
+    <div className="flex flex-col h-screen bg-gradient-to-br ">
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20">
         <Routes>

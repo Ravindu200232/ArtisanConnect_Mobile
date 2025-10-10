@@ -1,14 +1,27 @@
 import { useEffect, useState } from "react";
-import { FiEdit, FiTrash2, FiCheckCircle } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiCheckCircle, FiSearch, FiX } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { MdFastfood, MdCategory, MdDescription, MdInventory, MdExpandMore } from "react-icons/md";
+import { 
+  MdFastfood, 
+  MdCategory, 
+  MdDescription, 
+  MdInventory, 
+  MdExpandMore,
+  MdFilterList,
+  MdAttachMoney
+} from "react-icons/md";
 
 export default function AdminItemPage() {
   const [items, setItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [expandedItem, setExpandedItem] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // all, approved, pending
+  const [stockFilter, setStockFilter] = useState("all"); // all, in-stock, out-of-stock
+  const [sortBy, setSortBy] = useState("newest"); // newest, oldest, price-high, price-low, name
   const navigate = useNavigate();
   const location = useLocation();
   const shopId = location.state;
@@ -21,7 +34,9 @@ export default function AdminItemPage() {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
-          setItems(res.data);
+          const data = res.data || [];
+          setItems(data);
+          setFilteredItems(data);
           setItemsLoaded(true);
         })
         .catch((err) => {
@@ -33,6 +48,57 @@ export default function AdminItemPage() {
         });
     }
   }, [itemsLoaded, shopId]);
+
+  // Filter and search functionality
+  useEffect(() => {
+    let results = items;
+
+    // Apply search filter
+    if (searchQuery.trim() !== "") {
+      const query = searchQuery.toLowerCase().trim();
+      results = results.filter(item =>
+        item.name?.toLowerCase().includes(query) ||
+        item.description?.toLowerCase().includes(query) ||
+        item.category?.toLowerCase().includes(query) ||
+        item.itemId?.toString().includes(query) ||
+        item.price?.toString().includes(query)
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== "all") {
+      results = results.filter(item => 
+        statusFilter === "approved" ? item.approve : !item.approve
+      );
+    }
+
+    // Apply stock filter
+    if (stockFilter !== "all") {
+      results = results.filter(item => 
+        stockFilter === "in-stock" ? item.available : !item.available
+      );
+    }
+
+    // Apply sorting
+    results = [...results].sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        case "oldest":
+          return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+        case "price-high":
+          return (b.price || 0) - (a.price || 0);
+        case "price-low":
+          return (a.price || 0) - (b.price || 0);
+        case "name":
+          return (a.name || "").localeCompare(b.name || "");
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredItems(results);
+  }, [searchQuery, statusFilter, stockFilter, sortBy, items]);
 
   const handleDelete = (itemId, itemName) => {
     const token = localStorage.getItem("token");
@@ -115,6 +181,22 @@ export default function AdminItemPage() {
     setExpandedItem(expandedItem === itemId ? null : itemId);
   };
 
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
+  const getItemStats = () => {
+    const total = items.length;
+    const approved = items.filter(item => item.approve).length;
+    const pending = total - approved;
+    const inStock = items.filter(item => item.available).length;
+    const outOfStock = total - inStock;
+    
+    return { total, approved, pending, inStock, outOfStock };
+  };
+
+  const itemStats = getItemStats();
+
   if (!itemsLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
@@ -127,7 +209,7 @@ export default function AdminItemPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
+    <div className="min-h-screen  ">
       {/* Header - Fixed */}
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
         <div className="p-4 pb-5">
@@ -144,20 +226,127 @@ export default function AdminItemPage() {
               <MdFastfood className="text-2xl text-white" />
             </div>
           </div>
-          
-          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-white font-medium text-sm">Total Items</span>
+
+          {/* Search Bar */}
+          <div className="relative mb-3">
+            <div className="relative">
+              <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl" />
+              <input
+                type="text"
+                placeholder="Search items by name, description, category, price, ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-12 py-4 bg-white rounded-xl border-2 border-orange-200 focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-transparent text-gray-800 placeholder-gray-500 font-medium text-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <FiX className="text-xl" />
+                </button>
+              )}
             </div>
-            <span className="text-white font-bold text-xl">{items.length}</span>
+          </div>
+
+          {/* Filters and Stats */}
+          <div className="space-y-3">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-4 gap-2">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-2 text-center">
+                <div className="text-white font-bold text-sm">{itemStats.total}</div>
+                <div className="text-orange-100 text-xs">Total</div>
+              </div>
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-2 text-center">
+                <div className="text-white font-bold text-sm">{itemStats.approved}</div>
+                <div className="text-orange-100 text-xs">Approved</div>
+              </div>
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-2 text-center">
+                <div className="text-white font-bold text-sm">{itemStats.pending}</div>
+                <div className="text-orange-100 text-xs">Pending</div>
+              </div>
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-2 text-center">
+                <div className="text-white font-bold text-sm">{itemStats.inStock}</div>
+                <div className="text-orange-100 text-xs">In Stock</div>
+              </div>
+            </div>
+
+            {/* Filter Controls */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full bg-white bg-opacity-20 backdrop-blur-sm text-white rounded-lg py-2 pl-3 pr-8 border border-orange-200 focus:outline-none focus:ring-2 focus:ring-white text-sm appearance-none"
+                >
+                  <option value="all" className="text-gray-800">All Status</option>
+                  <option value="approved" className="text-gray-800">Approved</option>
+                  <option value="pending" className="text-gray-800">Pending</option>
+                </select>
+                <MdFilterList className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white text-sm pointer-events-none" />
+              </div>
+
+              <div className="relative">
+                <select
+                  value={stockFilter}
+                  onChange={(e) => setStockFilter(e.target.value)}
+                  className="w-full bg-white bg-opacity-20 backdrop-blur-sm text-white rounded-lg py-2 pl-3 pr-8 border border-orange-200 focus:outline-none focus:ring-2 focus:ring-white text-sm appearance-none"
+                >
+                  <option value="all" className="text-gray-800">All Stock</option>
+                  <option value="in-stock" className="text-gray-800">In Stock</option>
+                  <option value="out-of-stock" className="text-gray-800">Out of Stock</option>
+                </select>
+                <MdInventory className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white text-sm pointer-events-none" />
+              </div>
+
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full bg-white bg-opacity-20 backdrop-blur-sm text-white rounded-lg py-2 pl-3 pr-8 border border-orange-200 focus:outline-none focus:ring-2 focus:ring-white text-sm appearance-none"
+                >
+                  <option value="newest" className="text-gray-800">Newest</option>
+                  <option value="oldest" className="text-gray-800">Oldest</option>
+                  <option value="price-high" className="text-gray-800">Price: High</option>
+                  <option value="price-low" className="text-gray-800">Price: Low</option>
+                  <option value="name" className="text-gray-800">Name: A-Z</option>
+                </select>
+                <MdAttachMoney className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white text-sm pointer-events-none" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Items List */}
       <div className="p-4 space-y-3">
-        {items.length === 0 ? (
+        {/* Search Results Info */}
+        {searchQuery && (
+          <div className="bg-white rounded-2xl shadow-sm p-4 border border-orange-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FiSearch className="w-4 h-4 text-[#F85606]" />
+                <span className="text-sm font-medium text-gray-700">
+                  Search results for: "{searchQuery}"
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs bg-orange-100 text-[#F85606] px-2 py-1 rounded">
+                  {filteredItems.length} item{filteredItems.length !== 1 ? 's' : ''}
+                </span>
+                <button
+                  onClick={clearSearch}
+                  className="text-xs bg-orange-500 text-white px-2 py-1 rounded-lg font-bold hover:bg-orange-600 transition-colors flex items-center gap-1"
+                >
+                  <FiX size={12} />
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {filteredItems.length === 0 && !searchQuery ? (
           <div className="bg-white rounded-2xl shadow-md p-8 text-center mt-8">
             <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MdFastfood className="text-3xl text-[#F85606]" />
@@ -165,9 +354,26 @@ export default function AdminItemPage() {
             <h3 className="text-lg font-semibold text-gray-800 mb-2">No Items Yet</h3>
             <p className="text-gray-500 text-sm">Shop items will appear here</p>
           </div>
+        ) : filteredItems.length === 0 && searchQuery ? (
+          <div className="bg-white rounded-2xl shadow-md p-8 text-center mt-8">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FiSearch className="text-3xl text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Items Found</h3>
+            <p className="text-gray-500 text-sm mb-4">
+              No items found for "{searchQuery}"
+            </p>
+            <button
+              onClick={clearSearch}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md hover:shadow-lg"
+            >
+              <FiX size={18} />
+              Clear Search
+            </button>
+          </div>
         ) : (
-          items.map((product) => (
-            <div key={product.itemId} className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100">
+          filteredItems.map((product) => (
+            <div key={product.itemId} className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100 hover:shadow-lg transition-shadow duration-200">
               {/* Item Header */}
               <div className="p-4 bg-gradient-to-r from-orange-50 to-white">
                 <div className="flex items-start gap-3 mb-2">
@@ -176,6 +382,9 @@ export default function AdminItemPage() {
                       src={product.images?.[0] || "/default-food.jpg"}
                       alt={product.name}
                       className="w-20 h-20 object-cover rounded-xl border-2 border-orange-200 shadow-sm"
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/80x80/f97316/white?text=No+Image";
+                      }}
                     />
                     {product.approve && (
                       <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
@@ -258,6 +467,12 @@ export default function AdminItemPage() {
                         </p>
                       </div>
                     </div>
+
+                    {/* Additional Info */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-3 rounded-xl border-2 border-purple-200">
+                      <p className="text-xs text-gray-600 mb-1">Item ID</p>
+                      <p className="font-bold text-sm text-gray-800 font-mono">{product.itemId}</p>
+                    </div>
                   </div>
 
                   {/* Action Buttons */}
@@ -265,7 +480,7 @@ export default function AdminItemPage() {
                     {!product.approve && (
                       <button
                         onClick={() => handleApprove(product._id, product.name)}
-                        className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
+                        className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
                       >
                         <FiCheckCircle className="text-xl" />
                         Approve Item
@@ -275,7 +490,7 @@ export default function AdminItemPage() {
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => navigate("/admin/item/edit", { state: product })}
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
                       >
                         <FiEdit className="text-lg" />
                         Edit
@@ -283,7 +498,7 @@ export default function AdminItemPage() {
 
                       <button
                         onClick={() => handleDelete(product._id, product.name)}
-                        className="bg-gradient-to-r from-red-500 to-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
+                        className="bg-gradient-to-r from-red-500 to-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
                       >
                         <FiTrash2 className="text-lg" />
                         Delete
@@ -296,7 +511,7 @@ export default function AdminItemPage() {
               {/* Expand/Collapse Button */}
               <button
                 onClick={() => toggleItemExpand(product._id)}
-                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2 hover:shadow-md"
               >
                 {expandedItem === product._id ? (
                   <>
@@ -312,6 +527,34 @@ export default function AdminItemPage() {
               </button>
             </div>
           ))
+        )}
+
+        {/* Quick Search Tips */}
+        {items.length > 5 && (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border-2 border-green-200">
+            <h3 className="font-bold text-gray-800 text-sm mb-2 flex items-center gap-2">
+              <FiSearch className="w-4 h-4 text-green-600" />
+              Search Tips
+            </h3>
+            <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
+              <div className="flex items-center gap-1">
+                <span className="text-green-600 font-bold">•</span>
+                <span>Search by product name</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-green-600 font-bold">•</span>
+                <span>Filter by category</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-green-600 font-bold">•</span>
+                <span>Find by price</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-green-600 font-bold">•</span>
+                <span>Search description</span>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
