@@ -53,36 +53,132 @@ export default function DriverPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#DBF3C9] pb-20">
-      {/* Header */}
-      
-
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-20">
       {/* Main Content */}
-      <main className="p-4">
+      <main>
         <Routes>
           <Route path="/" element={
-            <div className="text-center py-12">
-              <div className="w-24 h-24 bg-[#32CD32] rounded-full flex items-center justify-center mx-auto mb-6">
-                <MdOutlineDeliveryDining className="text-white text-3xl" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome Driver!</h2>
-              <p className="text-gray-600 mb-8">Select an option from the bottom menu to get started</p>
-              
-              {/* Quick Stats */}
-              <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-                <div className="bg-white rounded-2xl p-4 border border-[#B7E892] shadow-sm">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <MdOutlineDeliveryDining className="text-blue-600 text-xl" />
+            <div className="min-h-screen">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg">
+                <div className="px-4 py-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h1 className="text-2xl font-bold text-white">Hello Driver!</h1>
+                      <p className="text-sm text-orange-100">Ready to deliver excellence</p>
+                    </div>
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
+                      <MdOutlineDeliveryDining className="text-white text-2xl" />
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600">Available</p>
-                  <p className="text-lg font-bold text-gray-800">Orders</p>
                 </div>
-                <div className="bg-white rounded-2xl p-4 border border-[#B7E892] shadow-sm">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <MdHistory className="text-green-600 text-xl" />
+              </div>
+
+              <div className="p-4">
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-white rounded-2xl p-4 border border-orange-100 shadow-md">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <MdOutlineDeliveryDining className="text-white text-xl" />
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-800 mb-1">0</p>
+                    <p className="text-xs text-gray-600 font-medium">Available Orders</p>
                   </div>
-                  <p className="text-sm text-gray-600">Active</p>
-                  <p className="text-lg font-bold text-gray-800">Deliveries</p>
+                  
+                  <div className="bg-white rounded-2xl p-4 border border-orange-100 shadow-md">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <MdHistory className="text-white text-xl" />
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-800 mb-1">0</p>
+                    <p className="text-xs text-gray-600 font-medium">Active Deliveries</p>
+                  </div>
+                </div>
+
+                {/* Today's Overview */}
+                <div className="bg-white rounded-2xl p-4 border border-orange-100 shadow-md mb-4">
+                  <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Today's Overview
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-[#F85606] rounded-full"></div>
+                        <span className="text-sm text-gray-700 font-medium">Completed</span>
+                      </div>
+                      <span className="text-sm font-bold text-gray-800">0 orders</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm text-gray-700 font-medium">In Progress</span>
+                      </div>
+                      <span className="text-sm font-bold text-gray-800">0 orders</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                        <span className="text-sm text-gray-700 font-medium">Total Earnings</span>
+                      </div>
+                      <span className="text-sm font-bold text-gray-800">$0.00</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="bg-white rounded-2xl p-4 border border-orange-100 shadow-md">
+                  <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Quick Actions
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link
+                      to="/driver/available"
+                      className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 rounded-xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-r from-[#F85606] to-[#FF7420] rounded-xl flex items-center justify-center shadow-lg">
+                        <MdOutlineDeliveryDining className="text-white text-xl" />
+                      </div>
+                      <span className="text-xs font-bold text-gray-800 text-center">View Available</span>
+                    </Link>
+                    
+                    <Link
+                      to="/driver/track"
+                      className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 rounded-xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-r from-[#F85606] to-[#FF7420] rounded-xl flex items-center justify-center shadow-lg">
+                        <MdHistory className="text-white text-xl" />
+                      </div>
+                      <span className="text-xs font-bold text-gray-800 text-center">Track Delivery</span>
+                    </Link>
+                    
+                    <Link
+                      to="/driver/profile"
+                      className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 rounded-xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-r from-[#F85606] to-[#FF7420] rounded-xl flex items-center justify-center shadow-lg">
+                        <MdPerson className="text-white text-xl" />
+                      </div>
+                      <span className="text-xs font-bold text-gray-800 text-center">My Profile</span>
+                    </Link>
+                    
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-200 rounded-xl p-4 flex flex-col items-center gap-2 active:scale-95 transition-transform cursor-pointer">
+                      <div className="w-12 h-12 bg-gradient-to-r from-[#F85606] to-[#FF7420] rounded-xl flex items-center justify-center shadow-lg">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-xs font-bold text-gray-800 text-center">Work History</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -93,30 +189,33 @@ export default function DriverPage() {
         </Routes>
       </main>
 
-      {/* Facebook-like Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
-        <div className="flex justify-around items-center py-2">
+      {/* Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-orange-100 shadow-2xl z-40">
+        <div className="flex justify-around items-center">
           {navItems.map((item) => (
             <Link
               key={item.id}
               to={item.to}
-              className={`flex flex-col items-center justify-center w-16 py-1 ${
+              className={`flex flex-col items-center justify-center flex-1 py-2 relative transition-all duration-200 ${
                 activeTab === item.id 
-                  ? "text-[#32CD32]" 
+                  ? "text-[#F85606]" 
                   : "text-gray-500"
               }`}
               onClick={() => setActiveTab(item.id)}
             >
-              <div className={`p-2 rounded-full transition-all duration-200 ${
+              {activeTab === item.id && (
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-[#F85606] to-[#FF7420] rounded-b-full"></div>
+              )}
+              <div className={`p-2 rounded-xl transition-all duration-200 ${
                 activeTab === item.id 
-                  ? "bg-[#32CD32]/10" 
-                  : "hover:bg-gray-100"
+                  ? "bg-orange-100" 
+                  : ""
               }`}>
                 {item.icon}
               </div>
               <span className={`text-xs mt-1 transition-all duration-200 ${
                 activeTab === item.id 
-                  ? "font-semibold" 
+                  ? "font-bold" 
                   : "font-medium"
               }`}>
                 {item.label}

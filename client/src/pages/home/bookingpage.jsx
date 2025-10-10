@@ -21,6 +21,8 @@ export function BookingPage() {
     lng: "",
   });
 
+  let  updateData;
+
   const navigate = useNavigate();
 
   // Shipping fee: Rs. 250 if total is under Rs. 599
@@ -187,14 +189,16 @@ export function BookingPage() {
     }
 
     try {
-      const updateData = {
+       updateData = {
         address: formData.address,
         lat: formData.lat,
         lng: formData.lng,
       };
 
+      
+
       await axios.put(
-        `h${import.meta.env.VITE_BACKEND_URL}/api/v1/users/update/${user.id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/update/${user.id}`,
         updateData,
         {
           headers: {
@@ -232,6 +236,8 @@ export function BookingPage() {
     };
     
     const token = localStorage.getItem("token");
+
+    console.log("Placing order with items:", selectedCartItems);
 
     axios
       .post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/orders`, selectedCartItems, {
