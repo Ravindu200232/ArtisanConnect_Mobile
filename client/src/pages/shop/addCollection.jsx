@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
 import mediaUpload from "../../utils/mediaUpload";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import Swal from "sweetalert2";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 const geminiApiKey = "AIzaSyAVgz2HPFXDfUQLLOaiGVvwbtuqJDisLbA";
@@ -50,6 +51,131 @@ const tourismCategories = [
   { value: "budget", label: "Budget Travel", descPrompt: "affordable travel package" },
   { value: "luxury", label: "Luxury Experiences", descPrompt: "premium luxury tour" }
 ];
+
+// Notification Utilities
+const showSuccessNotification = (title, message, timer = 3000) => {
+  return Swal.fire({
+    title,
+    text: message,
+    icon: "success",
+    timer,
+    showConfirmButton: false,
+    position: "top-end",
+    toast: true,
+    background: "#f0fdf4",
+    color: "#065f46",
+    iconColor: "#10b981",
+    customClass: {
+      popup: "rounded-2xl shadow-2xl border-2 border-green-200",
+      title: "text-green-800 font-bold text-sm",
+      htmlContainer: "text-green-700 text-xs"
+    }
+  });
+};
+
+const showErrorNotification = (title, message, timer = 4000) => {
+  return Swal.fire({
+    title,
+    text: message,
+    icon: "error",
+    timer,
+    showConfirmButton: false,
+    position: "top-end",
+    toast: true,
+    background: "#fef2f2",
+    color: "#7f1d1d",
+    iconColor: "#ef4444",
+    customClass: {
+      popup: "rounded-2xl shadow-2xl border-2 border-red-200",
+      title: "text-red-800 font-bold text-sm",
+      htmlContainer: "text-red-700 text-xs"
+    }
+  });
+};
+
+const showWarningNotification = (title, message, timer = 3500) => {
+  return Swal.fire({
+    title,
+    text: message,
+    icon: "warning",
+    timer,
+    showConfirmButton: false,
+    position: "top-end",
+    toast: true,
+    background: "#fffbeb",
+    color: "#92400e",
+    iconColor: "#f59e0b",
+    customClass: {
+      popup: "rounded-2xl shadow-2xl border-2 border-amber-200",
+      title: "text-amber-800 font-bold text-sm",
+      htmlContainer: "text-amber-700 text-xs"
+    }
+  });
+};
+
+const showInfoNotification = (title, message, timer = 3000) => {
+  return Swal.fire({
+    title,
+    text: message,
+    icon: "info",
+    timer,
+    showConfirmButton: false,
+    position: "top-end",
+    toast: true,
+    background: "#f0f9ff",
+    color: "#0c4a6e",
+    iconColor: "#3b82f6",
+    customClass: {
+      popup: "rounded-2xl shadow-2xl border-2 border-blue-200",
+      title: "text-blue-800 font-bold text-sm",
+      htmlContainer: "text-blue-700 text-xs"
+    }
+  });
+};
+
+const showConfirmationDialog = (title, text, confirmText = "Yes", cancelText = "Cancel") => {
+  return Swal.fire({
+    title,
+    text,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: confirmText,
+    cancelButtonText: cancelText,
+    confirmButtonColor: "#f97316",
+    cancelButtonColor: "#6b7280",
+    background: "#fffbeb",
+    color: "#92400e",
+    iconColor: "#f59e0b",
+    customClass: {
+      popup: "rounded-2xl shadow-2xl border-2 border-amber-200",
+      title: "text-amber-800 font-bold text-lg",
+      htmlContainer: "text-amber-700",
+      confirmButton: "rounded-xl font-bold px-6 py-2",
+      cancelButton: "rounded-xl font-bold px-6 py-2"
+    }
+  });
+};
+
+const showLoadingNotification = (title, text) => {
+  return Swal.fire({
+    title,
+    text,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    allowEnterKey: false,
+    showConfirmButton: false,
+    willOpen: () => {
+      Swal.showLoading();
+    },
+    background: "#f0f9ff",
+    color: "#0c4a6e",
+    customClass: {
+      popup: "rounded-2xl shadow-2xl border-2 border-blue-200",
+      title: "text-blue-800 font-bold text-sm",
+      htmlContainer: "text-blue-700 text-xs"
+    }
+  });
+};
 
 export default function AddCollection() {
   const navigate = useNavigate();
@@ -116,11 +242,12 @@ export default function AddCollection() {
   // Generate Complete Tourism Package with AI
   const generateTourismPackage = async () => {
     if (!itemName.trim()) {
-      toast.error("Please enter package name first");
+      showErrorNotification("Package Name Required", "Please enter package name first");
       return;
     }
 
     setIsGeneratingPackage(true);
+    const loadingNotification = showLoadingNotification("Generating Package", "AI is creating your complete tourism package...");
     
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
@@ -177,12 +304,14 @@ Respond in JSON format:
         setPackageGroupSize(packageData.groupSize);
         setPackageDifficulty(packageData.difficulty || 'easy');
         
-        toast.success("✨ Complete tourism package generated!");
+        Swal.close();
+        showSuccessNotification("Package Generated!", "Complete tourism package created successfully!");
         if (isNarratorEnabled) speakText("AI has generated a complete tourism package with itinerary, inclusions, and all details");
       }
     } catch (error) {
       console.error("Package generation error:", error);
-      toast.error("Failed to generate package. Please fill manually.");
+      Swal.close();
+      showErrorNotification("Generation Failed", "Failed to generate package. Please fill manually.");
     } finally {
       setIsGeneratingPackage(false);
     }
@@ -239,26 +368,27 @@ Respond JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions
     if (files.length === 0) return;
     
     setIsAnalyzingImage(true);
-    toast.loading("🔍 AI analyzing images...", { id: 'analyzing' });
+    const loadingNotification = showLoadingNotification("Analyzing Images", `AI is analyzing ${files.length} image${files.length > 1 ? 's' : ''} for quality...`);
     if (isNarratorEnabled) speakText(`Analyzing ${files.length} image${files.length > 1 ? 's' : ''}`);
 
     const qualities = await Promise.all(files.map(f => analyzeImageQuality(f)));
     setItemImages(prev => [...prev, ...files]);
     setImageQualityScores(prev => [...prev, ...qualities]);
-    toast.dismiss('analyzing');
+    
+    Swal.close();
     
     const avgRating = qualities.reduce((sum, q) => sum + (q?.rating || 0), 0) / qualities.length;
     const excellentCount = qualities.filter(q => q?.rating >= 8).length;
     const poorCount = qualities.filter(q => q?.rating < 6).length;
     
     if (avgRating >= 8) {
-      toast.success(`✨ Excellent! ${excellentCount} image${excellentCount > 1 ? 's' : ''} rated 8+`);
+      showSuccessNotification("Excellent Quality!", `${excellentCount} image${excellentCount > 1 ? 's' : ''} rated 8+`);
       if (isNarratorEnabled) speakText(`Excellent image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
     } else if (avgRating >= 6) {
-      toast.success("✓ Good quality images");
+      showInfoNotification("Good Quality", "Images meet quality standards");
       if (isNarratorEnabled) speakText(`Good image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
     } else {
-      toast.error(`⚠️ ${poorCount} low quality image${poorCount > 1 ? 's' : ''} detected`);
+      showWarningNotification("Quality Warning", `${poorCount} low quality image${poorCount > 1 ? 's' : ''} detected`);
       if (isNarratorEnabled) speakText(`Warning: Low quality images. Average rating ${avgRating.toFixed(1)} out of 10`);
     }
     setIsAnalyzingImage(false);
@@ -267,12 +397,13 @@ Respond JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions
   // Generate 3 AI description options
   const generateDescriptionOptions = async () => {
     if (!itemName.trim()) {
-      toast.error("Please enter item name first");
+      showErrorNotification("Item Name Required", "Please enter item name first");
       return;
     }
 
     setIsGeneratingDescription(true);
     setShowDescriptionOptions(true);
+    const loadingNotification = showLoadingNotification("Generating Descriptions", "AI is creating 3 description options for you...");
     
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
@@ -293,12 +424,14 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         setAiDescriptionOptions(parsed.options);
-        toast.success("✨ 3 AI description options generated!");
+        Swal.close();
+        showSuccessNotification("Descriptions Ready!", "3 AI description options generated successfully!");
         if (isNarratorEnabled) speakText("Three AI description options generated successfully");
       }
     } catch (error) {
       console.error("Description generation error:", error);
-      toast.error("Failed to generate options. Try manual.");
+      Swal.close();
+      showErrorNotification("Generation Failed", "Failed to generate options. Try manual.");
     } finally {
       setIsGeneratingDescription(false);
     }
@@ -307,34 +440,52 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
   const selectDescriptionOption = (option) => {
     setSelectedDescriptionOption(option);
     setItemDescription(option.description);
-    toast.success(`${option.style} description selected!`);
+    showSuccessNotification("Description Selected!", `${option.style} description applied`);
     if (isNarratorEnabled) speakText(`${option.style} description selected`);
   };
 
-  const removeLowQualityImages = () => {
+  const removeLowQualityImages = async () => {
     const lowIndices = imageQualityScores
       .map((q, idx) => q && q.rating < 5 ? idx : -1)
       .filter(idx => idx !== -1);
     
     if (lowIndices.length === 0) {
-      toast.info("No low quality images to remove");
+      showInfoNotification("No Action Needed", "No low quality images to remove");
       return;
     }
     
-    if (window.confirm(`Remove ${lowIndices.length} low quality image(s)?`)) {
+    const result = await showConfirmationDialog(
+      "Remove Low Quality Images", 
+      `Remove ${lowIndices.length} low quality image${lowIndices.length > 1 ? 's' : ''}?`,
+      "Remove Now",
+      "Keep Them"
+    );
+    
+    if (result.isConfirmed) {
       setItemImages(itemImages.filter((_, idx) => !lowIndices.includes(idx)));
       setImageQualityScores(imageQualityScores.filter((_, idx) => !lowIndices.includes(idx)));
-      toast.success(`Removed ${lowIndices.length} low quality image(s)`);
+      showSuccessNotification("Images Removed", `${lowIndices.length} low quality image${lowIndices.length > 1 ? 's' : ''} removed`);
       if (isNarratorEnabled) speakText(`Removed ${lowIndices.length} low quality images`);
     }
   };
 
-  const clearAllImages = () => {
-    if (itemImages.length === 0) return;
-    if (window.confirm(`Remove all ${itemImages.length} image(s)?`)) {
+  const clearAllImages = async () => {
+    if (itemImages.length === 0) {
+      showInfoNotification("No Images", "No images to clear");
+      return;
+    }
+
+    const result = await showConfirmationDialog(
+      "Clear All Images", 
+      `Remove all ${itemImages.length} image${itemImages.length > 1 ? 's' : ''}?`,
+      "Clear All",
+      "Cancel"
+    );
+    
+    if (result.isConfirmed) {
       setItemImages([]);
       setImageQualityScores([]);
-      toast.success("All images cleared");
+      showSuccessNotification("Cleared All", "All images removed successfully");
       if (isNarratorEnabled) speakText("All images cleared");
     }
   };
@@ -343,34 +494,45 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
     const token = localStorage.getItem("token");
 
     if (!token) {
-      toast.error("Please login first");
+      showErrorNotification("Authentication Required", "Please login first");
       return;
     }
 
     if (!itemName || !itemPrice || !itemDescription) {
-      toast.error("Please fill all required fields");
+      showErrorNotification("Missing Information", "Please fill all required fields");
       return;
     }
 
     if (itemImages.length === 0) {
-      toast.error("Please add at least one image");
+      showErrorNotification("Images Required", "Please add at least one image");
       return;
     }
 
     // Tourism package validation
     if (sellerType === "tourism") {
       if (!packageDuration || !packageInclusions || !packageItinerary) {
-        toast.error("Please fill all tourism package required fields");
+        showErrorNotification("Package Details Required", "Please fill all tourism package required fields");
         return;
       }
     }
 
     const lowQuality = imageQualityScores.filter(q => q && q.rating < 5);
     if (lowQuality.length > 0) {
-      if (!window.confirm(`${lowQuality.length} image(s) have low quality. Continue?`)) return;
+      const result = await showConfirmationDialog(
+        "Low Quality Images", 
+        `${lowQuality.length} image${lowQuality.length > 1 ? 's' : ''} have low quality. Continue anyway?`,
+        "Continue Anyway",
+        "Cancel"
+      );
+      if (!result.isConfirmed) return;
     }
 
     setIsLoading(true);
+    const loadingNotification = showLoadingNotification(
+      "Adding Item", 
+      `${sellerType === 'tourism' ? 'Package' : 'Item'} is being added to your collection...`
+    );
+    
     if (isNarratorEnabled) speakText("Submitting your item. Please wait.");
 
     try {
@@ -408,11 +570,29 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      toast.success(result.data.message || "Item added successfully");
+      Swal.close();
+      showSuccessNotification(
+        "Success!", 
+        `${sellerType === 'tourism' ? 'Package' : 'Item'} added successfully!`,
+        2000
+      );
+      
       if (isNarratorEnabled) speakText("Item added successfully! Redirecting.");
-      setTimeout(() => navigate("/shopC/shop"), 1500);
+      
+      // Show success confirmation before redirecting
+      setTimeout(() => {
+        showSuccessNotification(
+          "Redirecting...", 
+          `Taking you back to your ${sellerType} collection`,
+          1000
+        );
+        setTimeout(() => navigate("/shopC/shop"), 1200);
+      }, 1500);
+      
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to add item");
+      Swal.close();
+      const errorMessage = err.response?.data?.error || "Failed to add item. Please try again.";
+      showErrorNotification("Failed to Add", errorMessage);
       if (isNarratorEnabled) speakText("Failed to add item. Please try again.");
     } finally {
       setIsLoading(false);
@@ -444,7 +624,22 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
       setPackageDifficulty("easy");
     }
     
+    showInfoNotification("Mode Changed", `${type.charAt(0).toUpperCase() + type.slice(1)} seller mode activated`);
     if (isNarratorEnabled) speakText(`${type} seller selected`);
+  };
+
+  // Handle narrator toggle with notification
+  const handleNarratorToggle = () => {
+    const newState = !isNarratorEnabled;
+    setIsNarratorEnabled(newState);
+    
+    if (newState) {
+      showSuccessNotification("Narrator Enabled", "Voice guidance is now active");
+      speakText("Narrator enabled. You will now receive audio feedback for your actions.");
+    } else {
+      stopSpeaking();
+      showInfoNotification("Narrator Disabled", "Voice guidance turned off");
+    }
   };
 
   return (
@@ -453,7 +648,10 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
         <div className="p-4 pb-5">
           <div className="flex items-center justify-between">
-            <button onClick={() => navigate("/shopC/shop")}
+            <button onClick={() => {
+                if (isNarratorEnabled) speakText("Returning to shop");
+                navigate("/shopC/shop");
+              }}
               className="w-9 h-9 bg-white bg-opacity-20 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-95 transition-transform">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -463,15 +661,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               <h1 className="text-xl font-bold text-white">Add New Item</h1>
               <p className="text-orange-100 text-xs mt-0.5">✨ AI Quality Check</p>
             </div>
-            <button onClick={() => {
-                setIsNarratorEnabled(!isNarratorEnabled);
-                if (!isNarratorEnabled) {
-                  speakText("Narrator enabled");
-                } else {
-                  stopSpeaking();
-                  toast.success("Narrator disabled");
-                }
-              }}
+            <button onClick={handleNarratorToggle}
               className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
                 isNarratorEnabled ? 'bg-green-500' : 'bg-white bg-opacity-20'
               }`}>
@@ -789,6 +979,10 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               onClick={() => {
                 setUseManualDescription(!useManualDescription);
                 setShowDescriptionOptions(false);
+                showInfoNotification(
+                  "Mode Changed", 
+                  useManualDescription ? "Switched to AI description mode" : "Switched to manual description mode"
+                );
                 if (isNarratorEnabled) speakText(useManualDescription ? "Switched to AI mode" : "Switched to manual mode");
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -914,10 +1108,18 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs font-bold text-gray-800 truncate">Image {idx + 1}</p>
                           <button type="button"
-                            onClick={() => {
-                              setItemImages(itemImages.filter((_, i) => i !== idx));
-                              setImageQualityScores(imageQualityScores.filter((_, i) => i !== idx));
-                              toast.success("Image removed");
+                            onClick={async () => {
+                              const result = await showConfirmationDialog(
+                                "Remove Image", 
+                                "Remove this image from your uploads?",
+                                "Remove",
+                                "Keep"
+                              );
+                              if (result.isConfirmed) {
+                                setItemImages(itemImages.filter((_, i) => i !== idx));
+                                setImageQualityScores(imageQualityScores.filter((_, i) => i !== idx));
+                                showSuccessNotification("Image Removed", "Image removed from uploads");
+                              }
                             }}
                             className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                             ×
@@ -1041,9 +1243,18 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 pt-2">
           <button type="button"
-            onClick={() => {
+            onClick={async () => {
               if (isNarratorEnabled) speakText("Canceling");
-              navigate("/shopC/shop");
+              const result = await showConfirmationDialog(
+                "Cancel Creation", 
+                "Are you sure you want to cancel? All unsaved changes will be lost.",
+                "Yes, Cancel",
+                "Continue Editing"
+              );
+              if (result.isConfirmed) {
+                showInfoNotification("Cancelled", "Item creation cancelled");
+                navigate("/shopC/shop");
+              }
             }}
             className="bg-gray-400 text-white py-4 px-6 rounded-xl font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

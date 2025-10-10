@@ -1,7 +1,11 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import Swal from "sweetalert2";
+import { 
+  showSuccessAlert, 
+  showErrorAlert, 
+  showConfirmationAlert,
+  showLoadingAlert 
+} from "../../components/showSuccessAlert";
 
 export default function ShopOrder() {
   const [bookingData, setBookingData] = useState([]);
@@ -32,7 +36,7 @@ export default function ShopOrder() {
         setDrivers(driversResponse.data || []);
       } catch (error) {
         console.error("Error fetching data:", error);
-        toast.error("Failed to load orders");
+        showErrorAlert("Failed to Load Orders", "Please check your connection and try again.");
       } finally {
         setLoading(false);
       }
@@ -66,6 +70,8 @@ export default function ShopOrder() {
       setLoading(true);
       const token = localStorage.getItem("token");
 
+      const loadingAlert = showLoadingAlert("Updating Order Status", "Please wait while we update the order...");
+
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/status/${orderId}`,
         { status: newStatus },
@@ -77,25 +83,35 @@ export default function ShopOrder() {
         }
       );
 
+      loadingAlert.close();
+
       setBookingData((prevData) =>
         prevData.map((order) =>
           order.orderId === orderId ? { ...order, status: newStatus } : order
         )
       );
 
-      toast.success(`Order status updated to ${newStatus}`);
+      showSuccessAlert(
+        "✅ Status Updated!", 
+        `Order status changed to ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`
+      );
 
       if (newStatus === "confirmed") {
         const order = bookingData.find((o) => o.orderId === orderId);
         const driverId = order?.assignedDriver;
 
         if (!driverId) {
-          toast.error("Please select a driver before confirming.");
+          showErrorAlert(
+            "Driver Required", 
+            "Please select a driver before confirming this order."
+          );
           return;
         }
 
         const driver = drivers.find((driver) => driver._id === driverId);
         
+        const deliveryAlert = showLoadingAlert("Assigning Driver", "Setting up delivery information...");
+
         await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/delivery`,
           {
@@ -149,31 +165,40 @@ export default function ShopOrder() {
           }
         );
 
-        toast.success("Delivery info saved to database.");
+        deliveryAlert.close();
+        showSuccessAlert(
+          "🚚 Delivery Assigned!", 
+          `Driver ${driver?.firstName} ${driver?.lastName} has been assigned to this order.`
+        );
       }
     } catch (error) {
       console.error("Error updating status or saving delivery:", error);
-      toast.error("Failed to update status or assign delivery.");
+      showErrorAlert(
+        "Update Failed", 
+        "Failed to update order status or assign delivery. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteOrder = async (orderId) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!",
-    });
+    const order = bookingData.find(o => o._id === orderId);
+    
+    const result = await showConfirmationAlert(
+      "🗑️ Delete Order?",
+      `Are you sure you want to delete Order #${order?.orderId || orderId}? This action cannot be undone.`,
+      "Yes, Delete Order",
+      "Cancel"
+    );
 
     if (result.isConfirmed) {
       try {
         setLoading(true);
         const token = localStorage.getItem("token");
+        
+        const loadingAlert = showLoadingAlert("Deleting Order", "Removing order from system...");
+        
         await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/delete/${orderId}`,
           {
@@ -181,14 +206,22 @@ export default function ShopOrder() {
           }
         );
 
+        loadingAlert.close();
+
         setBookingData((prevData) =>
           prevData.filter((order) => order._id !== orderId)
         );
 
-        Swal.fire("Deleted!", "Order has been deleted.", "success");
+        showSuccessAlert(
+          "✅ Order Deleted!", 
+          `Order #${order?.orderId || orderId} has been successfully removed from the system.`
+        );
       } catch (error) {
         console.error("Error deleting order:", error);
-        Swal.fire("Error!", "Failed to delete order.", "error");
+        showErrorAlert(
+          "Deletion Failed", 
+          "Failed to delete the order. Please try again or contact support."
+        );
       } finally {
         setLoading(false);
       }
@@ -210,8 +243,20 @@ export default function ShopOrder() {
     }
   };
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "pending": return "⏳";
+      case "confirmed": return "✅";
+      case "preparing": return "👨‍🍳";
+      case "dispatched": return "🚚";
+      case "delivered": return "📦";
+      default: return "📋";
+    }
+  };
+
   const clearSearch = () => {
     setSearchTerm("");
+    showSuccessAlert("Search Cleared", "Showing all orders");
   };
 
   if (loading && bookingData.length === 0) {
@@ -220,6 +265,7 @@ export default function ShopOrder() {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-[#F85606] font-semibold text-lg">Loading orders...</p>
+          <p className="text-gray-500 text-sm mt-2">Preparing your order dashboard</p>
         </div>
       </div>
     );
@@ -233,10 +279,10 @@ export default function ShopOrder() {
           <div className="flex items-center justify-between mb-2">
             <div>
               <h1 className="text-2xl font-bold text-white">
-                Shop Orders
+                🛍️ Shop Orders
               </h1>
               <p className="text-orange-100 text-sm mt-1">
-                Manage incoming orders
+                Manage incoming orders & deliveries
               </p>
             </div>
             <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-full p-3">
@@ -308,18 +354,18 @@ export default function ShopOrder() {
               )}
             </div>
             <h3 className="text-lg font-semibold text-gray-800 mb-2">
-              {searchTerm ? "No Orders Found" : "No Orders Yet"}
+              {searchTerm ? "🔍 No Orders Found" : "📦 No Orders Yet"}
             </h3>
             <p className="text-gray-500 text-sm">
               {searchTerm 
                 ? `No orders found for "${searchTerm}". Try different search terms.`
-                : "Customer orders will appear here"
+                : "Customer orders will appear here once they start placing orders."
               }
             </p>
             {searchTerm && (
               <button
                 onClick={clearSearch}
-                className="mt-4 bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white px-6 py-2.5 rounded-lg font-medium text-sm"
+                className="mt-4 bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white px-6 py-2.5 rounded-lg font-medium text-sm hover:shadow-lg transition-all"
               >
                 Clear Search
               </button>
@@ -347,9 +393,15 @@ export default function ShopOrder() {
                     </div>
                   </div>
                   
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${getStatusColor(order.status)}`}>
-                    {order.status}
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold text-white ${getStatusColor(order.status)} flex items-center gap-1 mb-1`}>
+                      <span className="text-xs">{getStatusIcon(order.status)}</span>
+                      {order.status}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {order.createdAt ? new Date(order.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ""}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 bg-white rounded-lg p-3 border border-orange-100">
@@ -441,16 +493,32 @@ export default function ShopOrder() {
                               : o
                           )
                         );
+                        
+                        if (updatedDriverId) {
+                          const driver = drivers.find(d => d._id === updatedDriverId);
+                          showSuccessAlert(
+                            "🚗 Driver Assigned", 
+                            `${driver?.firstName} ${driver?.lastName} is now assigned to this order.`
+                          );
+                        }
                       }}
                       className="w-full p-3 border-2 border-orange-200 rounded-xl bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#F85606]"
                     >
                       <option value="">Select Driver</option>
                       {drivers.map((driver) => (
                         <option key={driver._id} value={driver._id}>
-                          {driver.firstName} {driver.lastName}
+                          {driver.firstName} {driver.lastName} - {driver.phone}
                         </option>
                       ))}
                     </select>
+                    {!order.assignedDriver && (
+                      <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        Select a driver to enable order confirmation
+                      </p>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -470,17 +538,17 @@ export default function ShopOrder() {
                         }}
                         className="w-full p-3 border-2 border-orange-200 rounded-xl bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#F85606]"
                       >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="preparing">Preparing</option>
-                        <option value="dispatched">Dispatched</option>
-                        <option value="delivered">Delivered</option>
+                        <option value="pending">⏳ Pending</option>
+                        <option value="confirmed">✅ Confirmed</option>
+                        <option value="preparing">👨‍🍳 Preparing</option>
+                        <option value="dispatched">🚚 Dispatched</option>
+                        <option value="delivered">📦 Delivered</option>
                       </select>
                     </div>
 
                     <button
                       onClick={() => handleDeleteOrder(order._id)}
-                      className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
+                      className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -494,7 +562,7 @@ export default function ShopOrder() {
               {/* Expand/Collapse Button */}
               <button
                 onClick={() => toggleOrderExpand(order.orderId)}
-                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-3 font-bold text-sm active:opacity-90 transition-all flex items-center justify-center gap-2 hover:shadow-lg"
               >
                 {expandedOrder === order.orderId ? (
                   <>
@@ -517,22 +585,16 @@ export default function ShopOrder() {
         )}
       </div>
 
-      {/* Mobile Bottom Toast Position */}
-      <style>{`
-        .go2072408551 {
-          bottom: 90px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          width: calc(100% - 2rem) !important;
-          max-width: 400px !important;
-        }
-        
-        .go685806154 {
-          border-radius: 12px !important;
-          font-weight: 600 !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        }
-      `}</style>
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 text-center max-w-xs mx-4">
+            <div className="w-12 h-12 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-[#F85606] font-semibold">Processing...</p>
+            <p className="text-gray-500 text-sm mt-1">Please wait</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

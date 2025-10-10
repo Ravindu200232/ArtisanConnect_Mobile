@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showLoadingAlert,
+  showNotificationAlert
+} from "../../components/showSuccessAlert";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
-  };
 
   const googleLogin = async () => {
     try {
-      showToast("Google login initiated...");
+      setIsLoading(true);
+      showNotificationAlert("Google Login", "Initiating Google login...", "info");
 
       const mockAccessToken = "mock_google_token_" + Date.now();
 
@@ -32,7 +34,8 @@ export default function Login() {
 
       if (!response.ok) throw new Error(data.message);
 
-      showToast("Login successful");
+      showSuccessAlert("Success", "Login successful!", 1500);
+
       const user = data.user;
 
       localStorage.setItem("token", data.token);
@@ -50,7 +53,6 @@ export default function Login() {
         })
       );
 
-      console.log(user.role);
       setTimeout(() => {
         if (user.role === "admin") {
           window.location.href = "/admin/";
@@ -66,14 +68,27 @@ export default function Login() {
       }, 1500);
     } catch (err) {
       console.error(err);
-      showToast("Google login failed", "error");
+      showErrorAlert("Login Failed", "Google login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleOnSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      showErrorAlert("Missing Information", "Please fill in all fields");
+      return;
+    }
+
+    setIsLoading(true);
+    let loadingAlert;
 
     try {
+      // Show loading alert
+      loadingAlert = showLoadingAlert("Logging in", "Please wait...");
+
       const response = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/login`,
         {
@@ -86,16 +101,17 @@ export default function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        showToast(data.message || "Login failed", "error");
+        showErrorAlert("Login Failed", data.message || "Invalid email or password");
         return;
       }
 
       if (data.message === "User is blocked") {
-        showToast(data.message, "error");
+        showErrorAlert("Account Blocked", "Your account has been temporarily suspended");
         return;
       }
 
-      showToast(data.message || "Login successful");
+      showSuccessAlert("Welcome Back!", "Login successful!", 1500);
+      
       const user = data.user;
 
       localStorage.setItem("token", data.token);
@@ -116,18 +132,18 @@ export default function Login() {
       );
 
       if (user.emailVerified === false) {
-        showToast("Please verify your email first", "error");
-        setTimeout(() => (window.location.href = "/verify-email"), 1500);
+        showErrorAlert("Email Verification Required", "Please verify your email before logging in");
+        setTimeout(() => (window.location.href = "/verify-email"), 2000);
         return;
       }
-      console.log("user role", user.role);
+
       setTimeout(() => {
         if (user.role === "admin") {
           window.location.href = "/admin/";
         } else if (user.role === "artisan") {
-          window.location.href = "/shopC//";
+          window.location.href = "/shopC/";
         } else if (user.role === "supplier") {
-          window.location.href = "/shopC//";
+          window.location.href = "/shopC/";
         } else if (user.role === "delivery") {
           window.location.href = "/driver/";
         } else {
@@ -136,28 +152,25 @@ export default function Login() {
       }, 1500);
     } catch (err) {
       console.error(err);
-      showToast("An error occurred. Please try again.", "error");
+      showErrorAlert("Connection Error", "Unable to connect to server. Please check your internet connection.");
+    } finally {
+      setIsLoading(false);
+      // Close loading alert if it's still open
+      if (loadingAlert && Swal.isLoading()) {
+        Swal.close();
+      }
     }
   };
 
   return (
     <div className="w-full min-h-screen bg-gray-50 flex flex-col">
-      {toast.show && (
-        <div
-          className={`fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-xl z-50 ${
-            toast.type === "error" ? "bg-red-500" : "bg-green-500"
-          } text-white font-semibold`}
-        >
-          {toast.message}
-        </div>
-      )}
-
       {/* Header */}
       <div className="bg-white px-4 py-3 shadow-sm">
         <div className="flex items-center">
           <button
             onClick={() => navigate(-1)}
-            className="w-9 h-9 flex items-center justify-center"
+            className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors"
+            disabled={isLoading}
           >
             <svg
               className="w-6 h-6 text-gray-800"
@@ -210,9 +223,10 @@ export default function Login() {
                 required
                 type="email"
                 placeholder="Enter your email"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606] text-sm"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606] text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 onChange={(e) => setEmail(e.target.value)}
                 value={email}
+                disabled={isLoading}
               />
             </div>
 
@@ -225,14 +239,16 @@ export default function Login() {
                   required
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606] text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606] text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                   onChange={(e) => setPassword(e.target.value)}
                   value={password}
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                  disabled={isLoading}
                 >
                   {showPassword ? (
                     <svg
@@ -275,9 +291,20 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-[#F85606] hover:bg-[#E04D05] text-white font-semibold rounded-lg shadow-md transition-colors mt-6"
+              disabled={isLoading}
+              className="w-full py-3 bg-[#F85606] hover:bg-[#E04D05] disabled:bg-orange-300 text-white font-semibold rounded-lg shadow-md transition-colors mt-6 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              Login
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
             </button>
 
             {/* Divider */}
@@ -291,7 +318,8 @@ export default function Login() {
             <button
               type="button"
               onClick={googleLogin}
-              className="w-full py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors"
+              disabled={isLoading}
+              className="w-full py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg flex items-center justify-center gap-3 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -320,8 +348,8 @@ export default function Login() {
             <p className="text-gray-600 text-sm">
               Don't have an account?{" "}
               <span
-                className="text-[#F85606] font-semibold cursor-pointer"
-                onClick={() => navigate("/register")}
+                className="text-[#F85606] font-semibold cursor-pointer hover:underline"
+                onClick={() => !isLoading && navigate("/register")}
               >
                 Sign Up
               </span>

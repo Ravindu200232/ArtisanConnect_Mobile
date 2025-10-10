@@ -2,8 +2,13 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import mediaUpload from "../../utils/mediaUpload";
-import toast from "react-hot-toast";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { 
+  showSuccessAlert, 
+  showErrorAlert, 
+  showConfirmationAlert,
+  showLoadingAlert 
+} from "../../components/showSuccessAlert";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 const geminiApiKey = "AIzaSyCMY7C8g_LSES9IB9BHS8DQVGdrSLXr08I";
@@ -63,42 +68,8 @@ export default function AddShop() {
   const [useManualDescription, setUseManualDescription] = useState(false);
   const [isNarratorEnabled, setIsNarratorEnabled] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [notifications, setNotifications] = useState([]);
   
   const speechSynthesis = window.speechSynthesis;
-
-  // Mobile-style notification system
-  const showNotification = (message, type = "info", duration = 4000) => {
-    const id = Date.now().toString();
-    const notification = {
-      id,
-      message,
-      type,
-      visible: true
-    };
-    
-    setNotifications(prev => [...prev, notification]);
-    
-    // Auto remove after duration
-    setTimeout(() => {
-      hideNotification(id);
-    }, duration);
-    
-    return id;
-  };
-
-  const hideNotification = (id) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, visible: false } : notif
-      )
-    );
-    
-    // Remove from array after fade out
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(notif => notif.id !== id));
-    }, 300);
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -178,26 +149,30 @@ Respond in JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensi
     if (files.length === 0) return;
     
     setIsAnalyzingImage(true);
-    const notifId = showNotification("🔍 AI analyzing image quality...", "info");
     if (isNarratorEnabled) speakText(`Analyzing ${files.length} image${files.length > 1 ? 's' : ''}`);
 
     const qualities = await Promise.all(files.map(f => analyzeImageQuality(f)));
     setImageFiles(prev => [...prev, ...files]);
     setImageQualityScores(prev => [...prev, ...qualities]);
-    hideNotification(notifId);
     
     const avgRating = qualities.reduce((sum, q) => sum + (q?.rating || 0), 0) / qualities.length;
     const excellentCount = qualities.filter(q => q?.rating >= 8).length;
     const poorCount = qualities.filter(q => q?.rating < 6).length;
     
     if (avgRating >= 8) {
-      showNotification(`✨ Excellent! ${excellentCount} image${excellentCount > 1 ? 's' : ''} rated 8+`, "success");
+      showSuccessAlert(
+        `✨ Excellent Image Quality!`, 
+        `${excellentCount} image${excellentCount > 1 ? 's' : ''} rated 8+ out of 10`
+      );
       if (isNarratorEnabled) speakText(`Excellent image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
     } else if (avgRating >= 6) {
-      showNotification("✓ Good quality images", "success");
+      showSuccessAlert("✓ Good Quality Images", "Your images meet the recommended standards");
       if (isNarratorEnabled) speakText(`Good image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
     } else {
-      showNotification(`⚠️ ${poorCount} low quality image${poorCount > 1 ? 's' : ''} detected`, "warning");
+      showErrorAlert(
+        `⚠️ Low Quality Images Detected`, 
+        `${poorCount} image${poorCount > 1 ? 's' : ''} need improvement for better presentation`
+      );
       if (isNarratorEnabled) speakText(`Warning: Low quality images. Average rating ${avgRating.toFixed(1)} out of 10`);
     }
     setIsAnalyzingImage(false);
@@ -205,7 +180,7 @@ Respond in JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensi
 
   const generateDescriptionOptions = async () => {
     if (!shopData.name.trim()) {
-      showNotification("Please enter shop name first", "warning");
+      showErrorAlert("Shop Name Required", "Please enter shop name first to generate descriptions");
       return;
     }
 
@@ -229,11 +204,11 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         setAiDescriptionOptions(parsed.options);
-        showNotification("✨ 3 AI description options generated!", "success");
+        showSuccessAlert("✨ AI Descriptions Generated!", "3 professional description options ready for you!");
       }
     } catch (error) {
       console.error("Description generation error:", error);
-      showNotification("Failed to generate options. Try manual.", "error");
+      showErrorAlert("AI Generation Failed", "Failed to generate descriptions. Please try manual entry or try again.");
     } finally {
       setIsGeneratingDescription(false);
     }
@@ -242,46 +217,48 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
   const selectDescriptionOption = (option) => {
     setSelectedDescriptionOption(option);
     setShopData(prev => ({ ...prev, description: option.description }));
-    showNotification(`${option.style} description selected!`, "success");
+    showSuccessAlert("✓ Description Selected!", `${option.style} description applied successfully!`);
   };
 
-  const removeLowQualityImages = () => {
+  const removeLowQualityImages = async () => {
     const lowIndices = imageQualityScores
       .map((q, idx) => q && q.rating < 5 ? idx : -1)
       .filter(idx => idx !== -1);
     
     if (lowIndices.length === 0) {
-      showNotification("No low quality images to remove", "info");
+      showSuccessAlert("No Low Quality Images", "All your images meet the quality standards!");
       return;
     }
     
-    showNotification(
-      `Remove ${lowIndices.length} low quality image(s)?`,
-      "confirm",
-      5000
+    const result = await showConfirmationAlert(
+      "Remove Low Quality Images?",
+      `Remove ${lowIndices.length} image${lowIndices.length > 1 ? 's' : ''} with quality rating below 5?`,
+      "Yes, Remove",
+      "Keep Them"
     );
     
-    // In a real app, you'd use a proper confirmation dialog
-    if (window.confirm(`Remove ${lowIndices.length} low quality image(s) (rating < 5)?`)) {
+    if (result.isConfirmed) {
       setImageFiles(imageFiles.filter((_, idx) => !lowIndices.includes(idx)));
       setImageQualityScores(imageQualityScores.filter((_, idx) => !lowIndices.includes(idx)));
-      showNotification(`Removed ${lowIndices.length} low quality image(s)`, "success");
+      showSuccessAlert("✓ Images Removed", `${lowIndices.length} low quality image${lowIndices.length > 1 ? 's' : ''} removed successfully`);
       if (isNarratorEnabled) speakText(`Removed ${lowIndices.length} low quality images`);
     }
   };
 
-  const clearAllImages = () => {
+  const clearAllImages = async () => {
     if (imageFiles.length === 0) return;
-    showNotification(
-      `Remove all ${imageFiles.length} image(s)?`,
-      "confirm",
-      5000
+    
+    const result = await showConfirmationAlert(
+      "Clear All Images?",
+      `Remove all ${imageFiles.length} uploaded image${imageFiles.length > 1 ? 's' : ''}?`,
+      "Yes, Clear All",
+      "Cancel"
     );
     
-    if (window.confirm(`Remove all ${imageFiles.length} image(s)?`)) {
+    if (result.isConfirmed) {
       setImageFiles([]);
       setImageQualityScores([]);
-      showNotification("All images cleared", "success");
+      showSuccessAlert("✓ Images Cleared", "All images have been removed successfully");
       if (isNarratorEnabled) speakText("All images cleared");
     }
   };
@@ -291,16 +268,19 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
     
     const lowQuality = imageQualityScores.filter(q => q && q.rating < 5);
     if (lowQuality.length > 0) {
-      showNotification(
-        `${lowQuality.length} image(s) have low quality. Continue?`,
-        "warning",
-        5000
+      const result = await showConfirmationAlert(
+        "Low Quality Images Detected",
+        `${lowQuality.length} image${lowQuality.length > 1 ? 's' : ''} have quality rating below 5. Continue with submission?`,
+        "Yes, Continue",
+        "Improve Images"
       );
-      if (!window.confirm(`${lowQuality.length} image(s) have low quality. Continue?`)) return;
+      if (!result.isConfirmed) return;
     }
 
     setIsLoading(true);
     if (isNarratorEnabled) speakText("Submitting your shop details. Please wait.");
+
+    const loadingAlert = showLoadingAlert("Adding Your Shop", "Setting up your shop profile...");
 
     try {
       const token = localStorage.getItem("token");
@@ -315,12 +295,15 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      showNotification("Shop added successfully!", "success");
-      if (isNarratorEnabled) speakText("Shop added successfully! Redirecting.");
-      setTimeout(() => navigate("/shopC/shop"), 1500);
+      loadingAlert.close();
+      showSuccessAlert("🎉 Shop Added Successfully!", "Your shop is now live and ready for customers!");
+      
+      if (isNarratorEnabled) speakText("Shop added successfully! Redirecting to your shop page.");
+      setTimeout(() => navigate("/shopC/shop"), 2000);
     } catch (error) {
       console.error("Error:", error);
-      showNotification("Failed to add shop. Please try again.", "error");
+      loadingAlert.close();
+      showErrorAlert("Failed to Add Shop", "Please check your connection and try again.");
       if (isNarratorEnabled) speakText("Failed to add shop. Please try again.");
     } finally {
       setIsLoading(false);
@@ -329,57 +312,6 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-6">
-      {/* Mobile-style Notifications */}
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 space-y-2 pointer-events-none">
-        {notifications.map((notification) => (
-          <div
-            key={notification.id}
-            className={`flex items-center justify-between p-4 rounded-2xl shadow-lg border-2 transform transition-all duration-300 pointer-events-auto ${
-              notification.visible 
-                ? 'translate-y-0 opacity-100 scale-100' 
-                : 'translate-y-2 opacity-0 scale-95'
-            } ${
-              notification.type === 'success' 
-                ? 'bg-green-50 border-green-300 text-green-800' 
-                : notification.type === 'warning' 
-                ? 'bg-yellow-50 border-yellow-300 text-yellow-800'
-                : notification.type === 'error'
-                ? 'bg-red-50 border-red-300 text-red-800'
-                : notification.type === 'confirm'
-                ? 'bg-blue-50 border-blue-300 text-blue-800'
-                : 'bg-white border-gray-300 text-gray-800'
-            }`}
-          >
-            <div className="flex items-center gap-3 flex-1">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                notification.type === 'success' 
-                  ? 'bg-green-100 text-green-600' 
-                  : notification.type === 'warning' 
-                  ? 'bg-yellow-100 text-yellow-600'
-                  : notification.type === 'error'
-                  ? 'bg-red-100 text-red-600'
-                  : notification.type === 'confirm'
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'bg-gray-100 text-gray-600'
-              }`}>
-                {notification.type === 'success' && '✓'}
-                {notification.type === 'warning' && '⚠'}
-                {notification.type === 'error' && '✕'}
-                {notification.type === 'confirm' && '?'}
-                {notification.type === 'info' && '💡'}
-              </div>
-              <p className="text-sm font-medium flex-1">{notification.message}</p>
-            </div>
-            <button
-              onClick={() => hideNotification(notification.id)}
-              className="ml-2 w-6 h-6 rounded-full bg-black bg-opacity-10 flex items-center justify-center text-xs font-bold hover:bg-opacity-20 transition-all"
-            >
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
-
       {/* Header */}
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
         <div className="p-4 pb-5">
@@ -398,10 +330,10 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                 setIsNarratorEnabled(!isNarratorEnabled);
                 if (!isNarratorEnabled) {
                   speakText("Narrator enabled. I will read important updates for you.");
-                  showNotification("Narrator enabled", "success");
+                  showSuccessAlert("🔊 Narrator Enabled", "Voice guidance is now active");
                 } else {
                   stopSpeaking();
-                  showNotification("Narrator disabled", "info");
+                  showSuccessAlert("🔇 Narrator Disabled", "Voice guidance turned off");
                 }
               }}
               className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
@@ -584,7 +516,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
             placeholder="Enter contact number" required />
         </div>
 
-        {/* AI Description Options - Keep existing code */}
+        {/* AI Description Options */}
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl shadow-md p-4 border-2 border-purple-200">
           <div className="flex items-center justify-between mb-3">
             <label className="block text-sm font-bold text-gray-800">
@@ -658,7 +590,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           <p className="text-xs text-gray-600 mt-2">{shopData.description.length} characters</p>
         </div>
 
-        {/* Image Upload Section - Keep existing code */}
+        {/* Image Upload Section */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
             <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -684,7 +616,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           </div>
         </div>
 
-        {/* Image Quality Report - Keep existing code */}
+        {/* Image Quality Report */}
         {imageFiles.length > 0 && (
           <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
             <div className="flex items-center justify-between mb-3">
@@ -724,7 +656,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                             onClick={() => {
                               setImageFiles(imageFiles.filter((_, i) => i !== idx));
                               setImageQualityScores(imageQualityScores.filter((_, i) => i !== idx));
-                              showNotification("Image removed", "success");
+                              showSuccessAlert("Image Removed", "Image has been removed from your uploads");
                             }}
                             className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                             ×
@@ -945,34 +877,6 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           </ul>
         </div>
       </form>
-
-      <style>{`
-        .Toastify__toast-container,
-        .go2072408551 {
-          bottom: 20px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          width: calc(100% - 2rem) !important;
-          max-width: 400px !important;
-        }
-        .Toastify__toast,
-        .go685806154 {
-          border-radius: 12px !important;
-          font-weight: 600 !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        }
-        
-        /* Color utility classes for dynamic ratings */
-        .bg-green-500 { background-color: #10b981; }
-        .bg-yellow-500 { background-color: #f59e0b; }
-        .bg-red-500 { background-color: #ef4444; }
-        .text-green-600 { color: #059669; }
-        .text-yellow-600 { color: #d97706; }
-        .text-red-600 { color: #dc2626; }
-        .text-green-700 { color: #047857; }
-        .text-yellow-700 { color: #b45309; }
-        .text-red-700 { color: #b91c1c; }
-      `}</style>
     </div>
   );
 }
