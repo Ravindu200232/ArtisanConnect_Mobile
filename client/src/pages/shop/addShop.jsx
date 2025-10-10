@@ -6,366 +6,322 @@ import toast from "react-hot-toast";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
-const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
 const geminiApiKey = "AIzaSyCMY7C8g_LSES9IB9BHS8DQVGdrSLXr08I";
-
-// Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(geminiApiKey);
 
-// Business types for AI image generation with detailed photorealistic prompts
-const businessTypes = [
-  { 
-    value: "bakery", 
-    label: "🥖 Bakery", 
-    prompt: "A photorealistic interior shot of a warm, inviting artisan bakery shop. Golden-brown fresh baked bread loaves are displayed on rustic wooden shelves. Elegant glass cases showcase colorful pastries, croissants, and decorated cakes. The scene is illuminated by soft, warm overhead lighting that creates a cozy atmosphere. A vintage-style counter with a modern espresso machine is visible in the background. The setting conveys craftsmanship and quality, with flour-dusted surfaces and the ambiance of a bustling neighborhood bakery. Shot with a 35mm wide-angle lens to capture the inviting atmosphere." 
-  },
-  { 
-    value: "traditional_cloth", 
-    label: "👘 Traditional Clothing", 
-    prompt: "A photorealistic view of an elegant traditional clothing boutique interior. Vibrant ethnic garments in rich colors - deep reds, royal blues, and golden yellows - hang gracefully on polished wooden racks. Intricately embroidered fabrics and silk textiles are artfully displayed. Traditional mannequins showcase complete outfits with cultural accessories. The shop features ornate mirrors with traditional frames and warm ambient lighting that highlights the textures and patterns of the garments. The floor has traditional rugs, creating an authentic cultural shopping experience. Captured with soft, diffused lighting to emphasize fabric details." 
-  },
-  { 
-    value: "modern_fashion", 
-    label: "👔 Modern Fashion", 
-    prompt: "A photorealistic interior of a contemporary fashion boutique with minimalist design. Sleek white walls with stylish mannequins displaying the latest trendy clothing collections. Modern lighting fixtures create dramatic shadows. Chrome clothing racks hold carefully curated pieces. A central display table features folded designer items. The space has polished concrete floors and large mirrors with LED backlighting. The aesthetic is clean, sophisticated, and Instagram-worthy. Shot with professional retail photography lighting, creating a bright, aspirational shopping environment that appeals to fashion-forward customers." 
-  },
-  { 
-    value: "grocery", 
-    label: "🛒 Grocery Store", 
-    prompt: "A photorealistic view of a well-organized, modern grocery store interior. Fresh produce section in the foreground displays vibrant fruits and vegetables in wooden crates and refrigerated cases. Neat aisles with organized shelves stocked with products extend into the background. Bright, even overhead LED lighting illuminates the entire space. Clean white floors reflect the lights. Shopping carts are arranged neatly near the entrance. Colorful product packaging and clear price labels create an inviting retail environment. The scene conveys cleanliness, organization, and abundance. Captured with a wide-angle lens to show the spacious, customer-friendly layout." 
-  },
-  { 
-    value: "electronics", 
-    label: "📱 Electronics Shop", 
-    prompt: "A photorealistic interior of a modern electronics retail store. Sleek display tables showcase the latest smartphones, tablets, and laptops under bright, focused LED spotlights. Large TV screens mounted on the walls display vibrant demos. Glass cases contain accessories like headphones, smartwatches, and charging devices. The aesthetic is futuristic with dark gray walls, white display units, and blue accent lighting. Modern floating shelves display gadgets in an organized, accessible manner. The space feels tech-savvy and cutting-edge. Shot with professional retail photography lighting to make products appear premium and desirable." 
-  },
-  { 
-    value: "coffee_shop", 
-    label: "☕ Coffee Shop", 
-    prompt: "A photorealistic interior of a cozy, artisan coffee shop. A professional espresso machine gleams on a wooden counter, with a barista craft station visible. Warm Edison bulb string lights create ambient lighting. Rustic wooden tables and comfortable leather chairs invite customers to relax. Exposed brick walls feature local artwork and chalkboard menus. A glass pastry case displays fresh baked goods. Potted plants add greenery. The atmosphere is warm and inviting with soft, golden lighting streaming through large windows. Steam rises from fresh coffee cups. Shot with natural, warm tones that evoke comfort and community." 
-  },
-  { 
-    value: "bookstore", 
-    label: "📚 Bookstore", 
-    prompt: "A photorealistic interior of a charming independent bookstore. Floor-to-ceiling wooden bookshelves are filled with colorful spines of books organized by genre. A cozy reading nook with a comfortable armchair and floor lamp sits in one corner. Warm overhead lighting creates an inviting glow. A vintage wooden ladder leans against the shelves for reaching high books. A central display table features bestsellers and staff picks. The atmosphere is intellectual and peaceful, with warm wood tones throughout. Captured with soft, library-style lighting that emphasizes the welcoming, literary environment." 
-  },
-  { 
-    value: "jewelry", 
-    label: "💎 Jewelry Store", 
-    prompt: "A photorealistic interior of an upscale jewelry store. Elegant glass display cases with velvet-lined interiors showcase sparkling diamond rings, necklaces, and watches under precise LED spotlights. The cases are arranged in a sophisticated layout with polished marble countertops. Crystal chandeliers provide luxurious ambient lighting. Mirrors with ornate gold frames line the walls. The color palette is cream, gold, and deep burgundy, creating an atmosphere of luxury and exclusivity. High-end security features are subtly integrated. Shot with professional jewelry photography lighting to make gemstones sparkle and precious metals gleam." 
-  },
-  { 
-    value: "pharmacy", 
-    label: "💊 Pharmacy", 
-    prompt: "A photorealistic interior of a modern, professional pharmacy. Clean white shelves organized with clearly labeled medicine bottles and healthcare products. A consultation counter with privacy screens is visible in the background. Bright, clinical LED lighting ensures excellent visibility. The floor is spotless white tile. Digital displays show waiting numbers. A section displays vitamins, supplements, and first-aid supplies in organized categories. The atmosphere conveys trust, cleanliness, and healthcare professionalism. Everything is ADA-compliant and accessible. Shot with even, bright lighting that creates a sterile, trustworthy medical environment." 
-  },
-  { 
-    value: "flower_shop", 
-    label: "🌸 Flower Shop", 
-    prompt: "A photorealistic interior of a beautiful flower shop bursting with color and life. Vibrant fresh flowers in metal buckets and vases line the walls - roses, tulips, lilies, and sunflowers in every color. A central workbench displays floral arrangement supplies. Overhead, hanging plants add greenery. Large windows allow natural daylight to stream in, illuminating the blooms. Wooden shelves hold potted plants and decorative containers. The air seems filled with color and natural beauty. The atmosphere is fresh, vibrant, and artistic. Shot with natural lighting that makes colors pop and creates a garden-like indoor environment." 
-  },
-  { 
-    value: "restaurant", 
-    label: "🍽️ Restaurant", 
-    prompt: "A photorealistic interior of an upscale, inviting restaurant. Elegant dining tables with white tablecloths, polished silverware, and wine glasses are set throughout the space. Warm pendant lights hang above each table, creating intimate lighting zones. The background shows an open kitchen with chefs at work. Comfortable upholstered chairs in rich colors surround each table. Subtle wall sconces provide ambient lighting. Fresh flowers in vases add color. The atmosphere is sophisticated yet welcoming, perfect for a memorable dining experience. Shot during the golden hour with warm, ambient lighting that creates an inviting, high-end dining atmosphere." 
-  },
-  { 
-    value: "hardware", 
-    label: "🔧 Hardware Store", 
-    prompt: "A photorealistic interior of a well-stocked hardware store. Organized aisles with clearly labeled signs extend into the background. Shelves are filled with tools, paint cans, lumber, and building supplies arranged in logical categories. The main aisle displays power tools and equipment on secure hooks. Overhead industrial lighting provides bright, even illumination. The floor is polished concrete. A helpful service counter is visible in the background. The environment conveys organization, expertise, and everything a DIY enthusiast or professional would need. Shot with bright, functional lighting that emphasizes the store's comprehensive inventory and helpful layout." 
-  }
-];
+// Enhanced business types for artisan and material suppliers
+const businessCategories = {
+  artisan: [
+    { value: "pottery", label: "🏺 Pottery & Ceramics" },
+    { value: "batik", label: "🎨 Batik & Textile Art" },
+    { value: "wood_carving", label: "🪵 Wood Carving" },
+    { value: "basket_weaving", label: "🧺 Basket Weaving" },
+    { value: "jewelry_making", label: "💎 Jewelry Making" },
+    { value: "blacksmith", label: "🔥 Blacksmithing" },
+    { value: "leather_work", label: "👜 Leather Work" },
+    { value: "weaving", label: "🧵 Weaving & Spinning" },
+    { value: "carpentry", label: "🪑 Carpentry & Woodwork" },
+    { value: "metalwork", label: "🔨 Metalwork & Welding" },
+    { value: "tailoring", label: "✂️ Tailoring & Sewing" },
+    { value: "furniture_making", label: "🛋️ Furniture Making" },
+    { value: "glass_aluminum", label: "🪟 Glass & Aluminum Work" },
+    { value: "tile_marble", label: "⬜ Tiles & Marble Work" },
+    { value: "painting", label: "🎨 Painting & Decoration" }
+  ],
+  material: [
+    { value: "building_materials", label: "🏗️ Building Materials" },
+    { value: "hardware", label: "🔩 Hardware & Tools" },
+    { value: "fabric_supply", label: "🧵 Fabric & Textile Supply" },
+    { value: "clay_supply", label: "🪨 Clay & Pottery Materials" },
+    { value: "wood_supply", label: "🪵 Wood & Timber Supply" },
+    { value: "metal_supply", label: "🔩 Metal & Raw Materials" },
+    { value: "paint_supply", label: "🎨 Paint & Coating Supply" },
+    { value: "electrical_supply", label: "⚡ Electrical Supplies" },
+    { value: "plumbing_supply", label: "🔧 Plumbing Supplies" },
+    { value: "auto_parts", label: "🚗 Auto Parts & Accessories" }
+  ]
+};
 
 export default function AddShop() {
   const navigate = useNavigate();
-
   const [shopData, setShopData] = useState({
-    name: "",
-    address: "",
-    phone: "",
-    description: "",
-    images: [],
+    name: "", address: "", phone: "", description: "", images: []
   });
-
+  
   const [imageFiles, setImageFiles] = useState([]);
+  const [imageQualityScores, setImageQualityScores] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  
-  // AI Image Generation States
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [selectedBusinessType, setSelectedBusinessType] = useState("");
-  const [customImagePrompt, setCustomImagePrompt] = useState("");
-  const [generatedImages, setGeneratedImages] = useState([]);
-  const [showAIImageSection, setShowAIImageSection] = useState(false);
+  const [selectedCategoryType, setSelectedCategoryType] = useState("artisan");
+  const [customCategory, setCustomCategory] = useState("");
+  const [showCustomCategory, setShowCustomCategory] = useState(false);
+  const [aiDescriptionOptions, setAiDescriptionOptions] = useState([]);
+  const [selectedDescriptionOption, setSelectedDescriptionOption] = useState(null);
+  const [showDescriptionOptions, setShowDescriptionOptions] = useState(false);
+  const [useManualDescription, setUseManualDescription] = useState(false);
+  const [isNarratorEnabled, setIsNarratorEnabled] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  
+  const speechSynthesis = window.speechSynthesis;
+
+  // Mobile-style notification system
+  const showNotification = (message, type = "info", duration = 4000) => {
+    const id = Date.now().toString();
+    const notification = {
+      id,
+      message,
+      type,
+      visible: true
+    };
+    
+    setNotifications(prev => [...prev, notification]);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+      hideNotification(id);
+    }, duration);
+    
+    return id;
+  };
+
+  const hideNotification = (id) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === id ? { ...notif, visible: false } : notif
+      )
+    );
+    
+    // Remove from array after fade out
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(notif => notif.id !== id));
+    }, 300);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setShopData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setShopData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
-    setImageFiles([...e.target.files]);
+  const speakText = (text) => {
+    if (!isNarratorEnabled || !text?.trim()) return;
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    utterance.lang = 'en-US';
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    speechSynthesis.speak(utterance);
   };
 
-  // Gemini AI Description Generation (Primary)
-  const generateGeminiDescription = async () => {
-    if (!shopData.name.trim()) {
-      toast.error("Please enter shop name first");
-      return;
-    }
+  const stopSpeaking = () => {
+    speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
 
-    setIsGeneratingDescription(true);
-    
+  const handleFieldFocus = (fieldName) => {
+    if (isNarratorEnabled) speakText(`${fieldName} field focused`);
+  };
+
+  const analyzeImageQuality = async (file) => {
     try {
-      // Use Gemini 2.0 Flash for text generation
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
       
-      const businessInfo = selectedBusinessType 
-        ? `This is a ${businessTypes.find(b => b.value === selectedBusinessType)?.label} business.` 
-        : '';
-      
-      const prompt = `Create a compelling and professional shop description (150-200 characters) for a shop called "${shopData.name}" located at "${shopData.address}". ${businessInfo}
-      Make it welcoming, highlight quality service, and appeal to customers. Keep it concise and engaging.`;
+      const reader = new FileReader();
+      const base64Promise = new Promise((resolve) => {
+        reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+      const base64Data = await base64Promise;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const aiDescription = response.text().trim();
+      const img = new Image();
+      const dimensionsPromise = new Promise((resolve) => {
+        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.src = URL.createObjectURL(file);
+      });
+      const dimensions = await dimensionsPromise;
+
+      const prompt = `Analyze this image for shop listing quality. Rate 1-10.
+Consider: resolution (${dimensions.width}x${dimensions.height}), lighting, professional appearance, focus, sharpness.
+Respond in JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions.height}", "fileSize": "${(file.size/1024).toFixed(1)}KB", "quality": "<excellent/good/fair/poor>", "feedback": "<brief assessment>", "recommendations": "<suggestions>"}`;
+
+      const result = await model.generateContent([
+        prompt,
+        { inlineData: { mimeType: file.type, data: base64Data } }
+      ]);
+
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) return JSON.parse(jsonMatch[0]);
       
-      setShopData(prev => ({
-        ...prev,
-        description: aiDescription
-      }));
-      
-      toast.success("✨ AI description generated with Gemini!");
-      
+      return {
+        rating: dimensions.width >= 1024 && dimensions.height >= 768 ? 8 : 6,
+        resolution: `${dimensions.width}x${dimensions.height}`,
+        fileSize: `${(file.size/1024).toFixed(1)}KB`,
+        quality: dimensions.width >= 1024 ? "good" : "fair",
+        feedback: "Image uploaded successfully",
+        recommendations: dimensions.width < 1024 ? "Use higher resolution (1024x768+)" : "Good quality"
+      };
     } catch (error) {
-      console.error("Error generating Gemini description:", error);
-      toast.error("Gemini unavailable. Trying backup AI...");
-      generateGroqDescription(); // Fallback to Groq
-    } finally {
-      setIsGeneratingDescription(false);
+      console.error("Image analysis error:", error);
+      return null;
     }
   };
 
-  // Groq AI Description Generation (Backup)
-  const generateGroqDescription = async () => {
-    setIsGeneratingDescription(true);
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
     
-    try {
-      const response = await axios.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        {
-          model: "llama-3.1-8b-instant",
-          messages: [
-            {
-              role: "user",
-              content: `Create a short shop description (120-180 characters) for a shop called "${shopData.name}" located at "${shopData.address}". Make it welcoming and professional.`
-            }
-          ],
-          max_tokens: 100,
-          temperature: 0.7,
-        },
-        {
-          headers: {
-            "Authorization": `Bearer ${groqApiKey}`,
-            "Content-Type": "application/json"
-          },
-          timeout: 10000
-        }
-      );
+    setIsAnalyzingImage(true);
+    const notifId = showNotification("🔍 AI analyzing image quality...", "info");
+    if (isNarratorEnabled) speakText(`Analyzing ${files.length} image${files.length > 1 ? 's' : ''}`);
 
-      if (response.data.choices && response.data.choices[0]) {
-        const aiDescription = response.data.choices[0].message.content.trim();
-        setShopData(prev => ({
-          ...prev,
-          description: aiDescription
-        }));
-        
-        toast.success("AI description generated!");
-      }
-      
-    } catch (error) {
-      console.error("Error generating Groq description:", error);
-      toast.error("AI service unavailable. Using smart templates.");
-      generateSmartDescription();
-    } finally {
-      setIsGeneratingDescription(false);
+    const qualities = await Promise.all(files.map(f => analyzeImageQuality(f)));
+    setImageFiles(prev => [...prev, ...files]);
+    setImageQualityScores(prev => [...prev, ...qualities]);
+    hideNotification(notifId);
+    
+    const avgRating = qualities.reduce((sum, q) => sum + (q?.rating || 0), 0) / qualities.length;
+    const excellentCount = qualities.filter(q => q?.rating >= 8).length;
+    const poorCount = qualities.filter(q => q?.rating < 6).length;
+    
+    if (avgRating >= 8) {
+      showNotification(`✨ Excellent! ${excellentCount} image${excellentCount > 1 ? 's' : ''} rated 8+`, "success");
+      if (isNarratorEnabled) speakText(`Excellent image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
+    } else if (avgRating >= 6) {
+      showNotification("✓ Good quality images", "success");
+      if (isNarratorEnabled) speakText(`Good image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
+    } else {
+      showNotification(`⚠️ ${poorCount} low quality image${poorCount > 1 ? 's' : ''} detected`, "warning");
+      if (isNarratorEnabled) speakText(`Warning: Low quality images. Average rating ${avgRating.toFixed(1)} out of 10`);
     }
+    setIsAnalyzingImage(false);
   };
 
-  // Fallback smart description generator
-  const generateSmartDescription = () => {
-    const locationPart = shopData.address ? ` at ${shopData.address}` : "";
-    const city = shopData.address.split(',')[0] || "your area";
-    
-    const shopName = shopData.name.toLowerCase();
-    let shopType = "products";
-    
-    if (shopName.includes('grocery') || shopName.includes('market')) shopType = "groceries";
-    else if (shopName.includes('cloth') || shopName.includes('fashion')) shopType = "clothing";
-    else if (shopName.includes('electronic') || shopName.includes('tech')) shopType = "electronics";
-    else if (shopName.includes('book') || shopName.includes('stationery')) shopType = "books";
-    else if (shopName.includes('pharma') || shopName.includes('medical')) shopType = "health products";
-    else if (shopName.includes('hardware') || shopName.includes('tools')) shopType = "hardware";
-    else if (shopName.includes('beauty') || shopName.includes('cosmetic')) shopType = "beauty products";
-    else if (shopName.includes('coffee') || shopName.includes('cafe')) shopType = "coffee";
-    else if (shopName.includes('bakery') || shopName.includes('bread')) shopType = "bakery items";
-
-    const templates = [
-      `Welcome to ${shopData.name}${locationPart}! Quality ${shopType} and friendly service. Visit us today!`,
-      `${shopData.name} - Your trusted ${shopType} shop in ${city}. Great products, better service!`,
-      `Discover ${shopData.name}${locationPart}. Premium ${shopType} and excellent customer care.`,
-      `${shopData.name} in ${city} - Quality ${shopType} and exceptional service await you!`
-    ];
-    
-    const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
-    setShopData(prev => ({
-      ...prev,
-      description: randomTemplate
-    }));
-  };
-
-  // Gemini AI Image Generation
-  const generateShopImage = async () => {
-    if (!selectedBusinessType && !customImagePrompt.trim()) {
-      toast.error("Please select a business type or enter a custom prompt");
+  const generateDescriptionOptions = async () => {
+    if (!shopData.name.trim()) {
+      showNotification("Please enter shop name first", "warning");
       return;
     }
 
-    setIsGeneratingImage(true);
+    setIsGeneratingDescription(true);
+    setShowDescriptionOptions(true);
     
     try {
-      // Use Gemini 2.5 Flash Image model
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash-image"
-      });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+      const businessInfo = selectedBusinessType 
+        ? `This is a ${businessCategories[selectedCategoryType].find(b => b.value === selectedBusinessType)?.label} business.` 
+        : '';
       
-      const businessType = businessTypes.find(b => b.value === selectedBusinessType);
-      
-      // Build the prompt - use custom or business type template
-      let fullPrompt = "";
-      if (customImagePrompt.trim()) {
-        // User provided custom prompt - enhance it with photorealistic details
-        fullPrompt = `A photorealistic, professional photograph of ${customImagePrompt.trim()}. 
-        ${shopData.name ? `This shop is called "${shopData.name}".` : ''} 
-        The scene should be well-lit with natural or professional lighting, clean, inviting, and attractive to customers. 
-        Shot with professional commercial photography equipment, bright colors, clear details, and an aspirational atmosphere that makes customers want to visit.`;
-      } else if (businessType) {
-        // Use pre-built detailed prompt
-        fullPrompt = businessType.prompt;
-        if (shopData.name) {
-          fullPrompt += ` A subtle sign or branding element shows the shop name "${shopData.name}".`;
-        }
-      }
+      const prompt = `Create 3 professional shop descriptions for "${shopData.name}" at "${shopData.address}". ${businessInfo}
+Generate: 1. Professional (150-180 chars), 2. Friendly (150-180 chars), 3. Detailed (150-180 chars)
+JSON format: {"options": [{"style": "Professional", "description": "..."}, {"style": "Friendly", "description": "..."}, {"style": "Detailed", "description": "..."}]}`;
 
-      toast.loading("🎨 Gemini AI is creating your shop image...", { id: 'generating-image' });
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
       
-      const result = await model.generateContent(fullPrompt);
-      const response = await result.response;
-      
-      // Check for image data in response
-      if (response.candidates && response.candidates[0]) {
-        const parts = response.candidates[0].content.parts;
-        
-        let imageGenerated = false;
-        for (const part of parts) {
-          if (part.inlineData) {
-            // Convert base64 to blob and create file
-            const imageData = part.inlineData.data;
-            const mimeType = part.inlineData.mimeType || 'image/png';
-            
-            // Convert base64 to blob
-            const byteCharacters = atob(imageData);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: mimeType });
-            
-            // Create file from blob
-            const timestamp = Date.now();
-            const file = new File([blob], `gemini-generated-${timestamp}.png`, { type: mimeType });
-            
-            // Add to image files
-            setImageFiles(prev => [...prev, file]);
-            setGeneratedImages(prev => [...prev, URL.createObjectURL(blob)]);
-            
-            imageGenerated = true;
-            toast.dismiss('generating-image');
-            toast.success("✨ AI image generated and added to gallery!");
-            break;
-          }
-        }
-        
-        if (!imageGenerated) {
-          // If no image in response, show text response
-          const textContent = parts.find(p => p.text)?.text || "Image generation in progress...";
-          console.log("Gemini response:", textContent);
-          toast.dismiss('generating-image');
-          toast.error("Image generation not supported yet. Please upload images manually.");
-        }
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        setAiDescriptionOptions(parsed.options);
+        showNotification("✨ 3 AI description options generated!", "success");
       }
-      
     } catch (error) {
-      console.error("Error generating image:", error);
-      
-      toast.dismiss('generating-image');
-      
-      // Check for specific error types
-      const errorMessage = error.message?.toLowerCase() || '';
-      
-      if (errorMessage.includes("api key") || errorMessage.includes("authentication")) {
-        toast.error("Invalid Gemini API key. Please check configuration.");
-      } else if (errorMessage.includes("quota") || errorMessage.includes("rate limit")) {
-        toast.error("API quota exceeded. Please try again later.");
-      } else if (errorMessage.includes("safety") || errorMessage.includes("policy") || errorMessage.includes("blocked")) {
-        toast.error("Content policy issue detected. Try rephrasing your prompt or select a business type.", { duration: 5000 });
-        console.log("Tip: Use descriptive scene descriptions rather than simple keywords. Example: 'A photorealistic interior of a cozy coffee shop with wooden tables'");
-      } else if (errorMessage.includes("model not found")) {
-        toast.error("Image generation model unavailable. Feature coming soon!");
-      } else {
-        toast.error("Image generation unavailable. Please upload images manually.");
-      }
+      console.error("Description generation error:", error);
+      showNotification("Failed to generate options. Try manual.", "error");
     } finally {
-      setIsGeneratingImage(false);
+      setIsGeneratingDescription(false);
+    }
+  };
+
+  const selectDescriptionOption = (option) => {
+    setSelectedDescriptionOption(option);
+    setShopData(prev => ({ ...prev, description: option.description }));
+    showNotification(`${option.style} description selected!`, "success");
+  };
+
+  const removeLowQualityImages = () => {
+    const lowIndices = imageQualityScores
+      .map((q, idx) => q && q.rating < 5 ? idx : -1)
+      .filter(idx => idx !== -1);
+    
+    if (lowIndices.length === 0) {
+      showNotification("No low quality images to remove", "info");
+      return;
+    }
+    
+    showNotification(
+      `Remove ${lowIndices.length} low quality image(s)?`,
+      "confirm",
+      5000
+    );
+    
+    // In a real app, you'd use a proper confirmation dialog
+    if (window.confirm(`Remove ${lowIndices.length} low quality image(s) (rating < 5)?`)) {
+      setImageFiles(imageFiles.filter((_, idx) => !lowIndices.includes(idx)));
+      setImageQualityScores(imageQualityScores.filter((_, idx) => !lowIndices.includes(idx)));
+      showNotification(`Removed ${lowIndices.length} low quality image(s)`, "success");
+      if (isNarratorEnabled) speakText(`Removed ${lowIndices.length} low quality images`);
+    }
+  };
+
+  const clearAllImages = () => {
+    if (imageFiles.length === 0) return;
+    showNotification(
+      `Remove all ${imageFiles.length} image(s)?`,
+      "confirm",
+      5000
+    );
+    
+    if (window.confirm(`Remove all ${imageFiles.length} image(s)?`)) {
+      setImageFiles([]);
+      setImageQualityScores([]);
+      showNotification("All images cleared", "success");
+      if (isNarratorEnabled) speakText("All images cleared");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    const lowQuality = imageQualityScores.filter(q => q && q.rating < 5);
+    if (lowQuality.length > 0) {
+      showNotification(
+        `${lowQuality.length} image(s) have low quality. Continue?`,
+        "warning",
+        5000
+      );
+      if (!window.confirm(`${lowQuality.length} image(s) have low quality. Continue?`)) return;
+    }
+
     setIsLoading(true);
+    if (isNarratorEnabled) speakText("Submitting your shop details. Please wait.");
 
     try {
       const token = localStorage.getItem("token");
+      const uploadedUrls = await Promise.all(imageFiles.map(f => mediaUpload(f)));
 
-      // Upload all images (both uploaded and AI-generated)
-      const uploadedUrls = await Promise.all(
-        imageFiles.map((file) => mediaUpload(file))
-      );
+      await axios.post(`${backendUrl}/api/v1/owner`, {
+        ...shopData, 
+        images: uploadedUrls,
+        businessType: showCustomCategory ? customCategory : selectedBusinessType,
+        categoryType: selectedCategoryType
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-      // Send data to backend - unchanged structure
-      const response = await axios.post(
-        `${backendUrl}/api/v1/owner`,
-        {
-          ...shopData,
-          images: uploadedUrls,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      toast.success("Shop added successfully!");
-      navigate("/shopC/shop");
+      showNotification("Shop added successfully!", "success");
+      if (isNarratorEnabled) speakText("Shop added successfully! Redirecting.");
+      setTimeout(() => navigate("/shopC/shop"), 1500);
     } catch (error) {
-      console.error("Error adding shop:", error);
-      toast.error("Failed to add shop. Please try again.");
+      console.error("Error:", error);
+      showNotification("Failed to add shop. Please try again.", "error");
+      if (isNarratorEnabled) speakText("Failed to add shop. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -373,357 +329,556 @@ export default function AddShop() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-6">
-      {/* Header - Fixed */}
+      {/* Mobile-style Notifications */}
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 space-y-2 pointer-events-none">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`flex items-center justify-between p-4 rounded-2xl shadow-lg border-2 transform transition-all duration-300 pointer-events-auto ${
+              notification.visible 
+                ? 'translate-y-0 opacity-100 scale-100' 
+                : 'translate-y-2 opacity-0 scale-95'
+            } ${
+              notification.type === 'success' 
+                ? 'bg-green-50 border-green-300 text-green-800' 
+                : notification.type === 'warning' 
+                ? 'bg-yellow-50 border-yellow-300 text-yellow-800'
+                : notification.type === 'error'
+                ? 'bg-red-50 border-red-300 text-red-800'
+                : notification.type === 'confirm'
+                ? 'bg-blue-50 border-blue-300 text-blue-800'
+                : 'bg-white border-gray-300 text-gray-800'
+            }`}
+          >
+            <div className="flex items-center gap-3 flex-1">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                notification.type === 'success' 
+                  ? 'bg-green-100 text-green-600' 
+                  : notification.type === 'warning' 
+                  ? 'bg-yellow-100 text-yellow-600'
+                  : notification.type === 'error'
+                  ? 'bg-red-100 text-red-600'
+                  : notification.type === 'confirm'
+                  ? 'bg-blue-100 text-blue-600'
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
+                {notification.type === 'success' && '✓'}
+                {notification.type === 'warning' && '⚠'}
+                {notification.type === 'error' && '✕'}
+                {notification.type === 'confirm' && '?'}
+                {notification.type === 'info' && '💡'}
+              </div>
+              <p className="text-sm font-medium flex-1">{notification.message}</p>
+            </div>
+            <button
+              onClick={() => hideNotification(notification.id)}
+              className="ml-2 w-6 h-6 rounded-full bg-black bg-opacity-10 flex items-center justify-center text-xs font-bold hover:bg-opacity-20 transition-all"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Header */}
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
         <div className="p-4 pb-5">
           <div className="flex items-center justify-between">
-            <button 
-              onClick={() => navigate("/shopC/shop")}
-              className="w-9 h-9 bg-white bg-opacity-20 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-95 transition-transform"
-            >
+            <button onClick={() => navigate("/shopC/shop")}
+              className="w-9 h-9 bg-white bg-opacity-20 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-95 transition-transform">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div className="text-center flex-1">
-              <h1 className="text-xl font-bold text-white">
-                Add New Shop
-              </h1>
-              <p className="text-orange-100 text-xs mt-0.5">
-                ✨ Powered by Gemini AI
-              </p>
+              <h1 className="text-xl font-bold text-white">Add Artisan Shop</h1>
+              <p className="text-orange-100 text-xs mt-0.5">✨ AI-Powered Quality Check</p>
             </div>
-            <div className="w-9"></div>
+            <button onClick={() => {
+                setIsNarratorEnabled(!isNarratorEnabled);
+                if (!isNarratorEnabled) {
+                  speakText("Narrator enabled. I will read important updates for you.");
+                  showNotification("Narrator enabled", "success");
+                } else {
+                  stopSpeaking();
+                  showNotification("Narrator disabled", "info");
+                }
+              }}
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                isNarratorEnabled ? 'bg-green-500' : 'bg-white bg-opacity-20'
+              }`}>
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Form Container */}
       <form onSubmit={handleSubmit} className="p-4 space-y-3">
-        {/* Business Type Selection */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl shadow-md p-4 border-2 border-purple-200">
-          <label htmlFor="businessType" className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
-            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        {/* Narrator Status */}
+        {isNarratorEnabled && (
+          <div className="bg-green-50 border-2 border-green-300 rounded-xl p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className={`w-5 h-5 text-green-600 ${isSpeaking ? 'animate-pulse' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              <span className="text-sm font-bold text-green-800">
+                {isSpeaking ? "🔊 Speaking..." : "✓ Narrator Active"}
+              </span>
+            </div>
+            {isSpeaking && (
+              <button type="button" onClick={stopSpeaking}
+                className="text-xs bg-red-500 text-white px-3 py-1 rounded-lg font-bold">
+                Stop
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Business Category Type */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-md p-4 border-2 border-blue-200">
+          <label className="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            Business Type (Helps AI Generate Better Content)
+            Business Category Type <span className="text-blue-600">*</span>
           </label>
-          <select
-            id="businessType"
-            value={selectedBusinessType}
-            onChange={(e) => setSelectedBusinessType(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-purple-600 transition-all duration-200 bg-white text-sm font-medium"
-          >
-            <option value="">Select your business type...</option>
-            {businessTypes.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-600 mt-2">
-            💡 Selecting a business type helps AI generate relevant images and descriptions
-          </p>
+          
+          {/* Category Type Selector */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategoryType("artisan");
+                setSelectedBusinessType("");
+                setShowCustomCategory(false);
+                if (isNarratorEnabled) speakText("Artisan category selected");
+              }}
+              className={`p-3 rounded-xl border-2 text-sm font-bold transition-all ${
+                selectedCategoryType === "artisan"
+                  ? "border-blue-600 bg-blue-100 text-blue-800"
+                  : "border-gray-300 bg-white text-gray-700 hover:border-blue-400"
+              }`}
+            >
+              🎨 Artisan
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedCategoryType("material");
+                setSelectedBusinessType("");
+                setShowCustomCategory(false);
+                if (isNarratorEnabled) speakText("Material supplier category selected");
+              }}
+              className={`p-3 rounded-xl border-2 text-sm font-bold transition-all ${
+                selectedCategoryType === "material"
+                  ? "border-blue-600 bg-blue-100 text-blue-800"
+                  : "border-gray-300 bg-white text-gray-700 hover:border-blue-400"
+              }`}
+            >
+              🏗️ Material Supplier
+            </button>
+          </div>
+
+          {/* Business Type Selection */}
+          <label className="block text-sm font-bold text-gray-800 mb-2">
+            Specific Business Type <span className="text-blue-600">*</span>
+          </label>
+          
+          {!showCustomCategory ? (
+            <>
+              <select 
+                value={selectedBusinessType}
+                onChange={(e) => {
+                  setSelectedBusinessType(e.target.value);
+                  const selected = businessCategories[selectedCategoryType].find(b => b.value === e.target.value);
+                  if (isNarratorEnabled && selected) speakText(`Selected: ${selected.label}`);
+                }}
+                className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-sm font-medium mb-2"
+                required
+              >
+                <option value="">Select your {selectedCategoryType} category...</option>
+                {businessCategories[selectedCategoryType].map(type => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+                <option value="other">➕ Other (Specify your own)</option>
+              </select>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={customCategory}
+                onChange={(e) => setCustomCategory(e.target.value)}
+                placeholder="Enter your custom business category..."
+                className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-sm"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCustomCategory(false);
+                  setCustomCategory("");
+                  setSelectedBusinessType("");
+                }}
+                className="text-xs text-blue-600 font-bold hover:text-blue-800 transition-colors"
+              >
+                ← Back to category list
+              </button>
+            </div>
+          )}
+
+          {selectedBusinessType === "other" && !showCustomCategory && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowCustomCategory(true);
+                setSelectedBusinessType("");
+                if (isNarratorEnabled) speakText("Custom category field opened");
+              }}
+              className="w-full mt-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-3 rounded-xl text-sm font-bold transition-all hover:shadow-lg"
+            >
+              ✨ Add Custom Category
+            </button>
+          )}
         </div>
 
         {/* Shop Name */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-          <label htmlFor="name" className="block text-sm font-bold text-gray-800 mb-2">
-            Shop Name <span className="text-[#F85606]">*</span>
+          <label className="block text-sm font-bold text-gray-800 mb-2">
+            Shop/Business Name <span className="text-[#F85606]">*</span>
           </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={shopData.name}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all duration-200 bg-white text-sm"
-            placeholder="Enter your shop name"
-            required
-          />
+          <input type="text" name="name" value={shopData.name} onChange={handleChange}
+            onFocus={() => handleFieldFocus("Shop name")}
+            onBlur={() => isNarratorEnabled && shopData.name && speakText(`Shop name entered: ${shopData.name}`)}
+            className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+            placeholder="Enter your shop/business name" required />
         </div>
 
         {/* Address */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-          <label htmlFor="address" className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+          <label className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
             <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            Shop Address <span className="text-[#F85606]">*</span>
+            Address <span className="text-[#F85606]">*</span>
           </label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            value={shopData.address}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all duration-200 bg-white text-sm"
-            placeholder="Enter shop address"
-            required
-          />
+          <input type="text" name="address" value={shopData.address} onChange={handleChange}
+            onFocus={() => handleFieldFocus("Address")}
+            className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+            placeholder="Enter business address" required />
         </div>
 
-        {/* Phone Number */}
+        {/* Phone */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-          <label htmlFor="phone" className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+          <label className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
             <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
             </svg>
             Phone Number <span className="text-[#F85606]">*</span>
           </label>
-          <input
-            type="text"
-            id="phone"
-            name="phone"
-            value={shopData.phone}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all duration-200 bg-white text-sm"
-            placeholder="Enter phone number"
-            required
-          />
+          <input type="text" name="phone" value={shopData.phone} onChange={handleChange}
+            onFocus={() => handleFieldFocus("Phone number")}
+            className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+            placeholder="Enter contact number" required />
         </div>
 
-        {/* Description with Gemini AI Generation */}
-        <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-          <div className="flex items-center justify-between mb-2">
-            <label htmlFor="description" className="block text-sm font-bold text-gray-800 flex items-center gap-2">
-              <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-              </svg>
+        {/* AI Description Options - Keep existing code */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl shadow-md p-4 border-2 border-purple-200">
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-sm font-bold text-gray-800">
               Shop Description <span className="text-[#F85606]">*</span>
             </label>
-            <button
-              type="button"
-              onClick={generateGeminiDescription}
-              disabled={isGeneratingDescription || !shopData.name.trim()}
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-xl text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 shadow-md"
-            >
-              {isGeneratingDescription ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Gemini...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Gemini AI
-                </>
-              )}
-            </button>
-          </div>
-          <textarea
-            id="description"
-            name="description"
-            value={shopData.description}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] focus:border-[#F85606] transition-all duration-200 bg-white resize-none text-sm"
-            rows="4"
-            placeholder="Describe your shop, products, and services... or use Gemini AI"
-            required
-          ></textarea>
-          <div className="flex justify-between items-center mt-2">
-            <p className="text-xs text-gray-500">
-              {shopData.description.length} characters
-            </p>
-            {shopData.description && (
-              <p className="text-xs text-purple-600 font-medium">
-                ✨ Description Ready
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* AI Image Generation Section */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-md p-4 border-2 border-blue-200">
-          <div className="flex items-center justify-between mb-3">
-            <label className="block text-sm font-bold text-gray-800 flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              🎨 Gemini AI Image Generation
-            </label>
-            <button
-              type="button"
-              onClick={() => setShowAIImageSection(!showAIImageSection)}
-              className="text-blue-600 font-bold text-sm px-3 py-1 rounded-lg hover:bg-blue-100 transition-colors"
-            >
-              {showAIImageSection ? "Hide ▼" : "Show ▶"}
+            <button type="button"
+              onClick={() => {
+                setUseManualDescription(!useManualDescription);
+                setShowDescriptionOptions(false);
+                if (isNarratorEnabled) speakText(useManualDescription ? "Switched to AI mode" : "Switched to manual mode");
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                useManualDescription ? 'bg-gray-500 text-white' : 'bg-purple-600 text-white'
+              }`}>
+              {useManualDescription ? "📝 Manual" : "🤖 AI"}
             </button>
           </div>
 
-          {showAIImageSection && (
-            <div className="space-y-3">
-              <div className="bg-white bg-opacity-70 rounded-xl p-3 border border-blue-200">
-                <label className="block text-xs font-bold text-gray-700 mb-2">
-                  Custom Image Prompt (Optional)
-                </label>
-                <textarea
-                  value={customImagePrompt}
-                  onChange={(e) => setCustomImagePrompt(e.target.value)}
-                  className="w-full px-4 py-2.5 border-2 border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all duration-200 bg-white text-sm resize-none"
-                  rows="3"
-                  placeholder="Describe the scene in detail... e.g., 'a modern bakery with glass display cases showing fresh pastries, warm lighting, and wooden counters'"
-                />
-                <div className="mt-2 space-y-1">
-                  <p className="text-xs text-gray-600 flex items-start gap-1">
-                    <span className="font-bold text-green-600">✓</span>
-                    <span><span className="font-bold">Good:</span> "A cozy coffee shop interior with exposed brick walls, vintage furniture, and warm Edison bulb lighting"</span>
-                  </p>
-                  <p className="text-xs text-gray-600 flex items-start gap-1">
-                    <span className="font-bold text-red-600">✗</span>
-                    <span><span className="font-bold">Avoid:</span> "coffee shop, cozy, vintage" (too simple)</span>
-                  </p>
-                  <p className="text-xs text-blue-600 font-medium mt-2">
-                    💡 Describe the scene, don't just list keywords! Be specific about lighting, colors, and atmosphere.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={generateShopImage}
-                disabled={isGeneratingImage || (!selectedBusinessType && !customImagePrompt.trim())}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3.5 rounded-xl text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 shadow-lg hover:shadow-xl"
-              >
-                {isGeneratingImage ? (
+          {!useManualDescription && (
+            <>
+              <button type="button" onClick={generateDescriptionOptions}
+                disabled={isGeneratingDescription || !shopData.name.trim()}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-xl text-sm font-bold disabled:opacity-50 mb-3">
+                {isGeneratingDescription ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Generating Shop Image...
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Generating...
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    Generate Shop Image with Gemini AI
+                    Generate 3 AI Description Options
                   </>
                 )}
               </button>
 
-              <div className="bg-blue-100 bg-opacity-70 rounded-xl p-3 border border-blue-300">
-                <p className="text-xs text-gray-700 leading-relaxed">
-                  <span className="font-bold text-blue-800">✨ Powered by Gemini 2.5 Flash Image:</span> Creates professional shop images based on your business type or detailed custom prompts. Generated images are automatically added to your shop gallery. You can review, edit, or remove them before submitting.
-                </p>
-                <p className="text-xs text-gray-600 mt-2">
-                  <span className="font-bold">Pro tip:</span> For best results, describe lighting, colors, materials, and atmosphere in detail!
-                </p>
-              </div>
-            </div>
+              {showDescriptionOptions && aiDescriptionOptions.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  <p className="text-xs font-bold text-purple-800">Choose your preferred style:</p>
+                  {aiDescriptionOptions.map((option, idx) => (
+                    <button key={idx} type="button"
+                      onClick={() => {
+                        selectDescriptionOption(option);
+                        if (isNarratorEnabled) speakText(`Selected ${option.style} description`);
+                      }}
+                      className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+                        selectedDescriptionOption?.style === option.style
+                          ? 'border-purple-600 bg-purple-100'
+                          : 'border-purple-200 bg-white hover:border-purple-400'
+                      }`}>
+                      <p className="text-xs font-bold text-purple-700 mb-1">{idx + 1}. {option.style}</p>
+                      <p className="text-xs text-gray-700">{option.description}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
+
+          <textarea name="description" value={shopData.description} onChange={handleChange}
+            onFocus={() => isNarratorEnabled && speakText("Description field focused")}
+            readOnly={!useManualDescription && selectedDescriptionOption}
+            className={`w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 resize-none text-sm ${
+              !useManualDescription && selectedDescriptionOption ? 'bg-purple-50' : 'bg-white'
+            }`}
+            rows="4"
+            placeholder={useManualDescription ? "Write your shop description manually..." : "Generated description will appear here"}
+            required />
+          <p className="text-xs text-gray-600 mt-2">{shopData.description.length} characters</p>
         </div>
 
-        {/* Manual Image Upload */}
+        {/* Image Upload Section - Keep existing code */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-          <label htmlFor="images" className="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <label className="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
             <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             Upload Shop Images <span className="text-[#F85606]">*</span>
-            {imageFiles.length > 0 && (
-              <span className="text-[#F85606] ml-1">({imageFiles.length} selected)</span>
-            )}
+            {imageFiles.length > 0 && <span className="text-[#F85606]">({imageFiles.length})</span>}
           </label>
-          <div className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center transition-all duration-200 bg-orange-50/50 hover:bg-orange-50 hover:border-orange-400">
-            <input
-              type="file"
-              id="images"
-              multiple
-              onChange={handleImageChange}
-              className="hidden"
-              accept="image/*"
-              required
-            />
+          <div className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center bg-orange-50/50 hover:bg-orange-50 transition-all">
+            <input type="file" id="images" multiple onChange={handleImageChange}
+              className="hidden" accept="image/*" />
             <label htmlFor="images" className="cursor-pointer block">
-              <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center">
                 <div className="w-16 h-16 bg-gradient-to-br from-[#F85606] to-[#FF7420] rounded-2xl flex items-center justify-center mb-3 shadow-md">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <p className="text-gray-800 text-sm font-bold mb-1">
-                  Tap to upload shop images
-                </p>
-                <p className="text-gray-500 text-xs">
-                  PNG, JPG, JPEG up to 10MB each
-                </p>
+                <p className="text-gray-800 text-sm font-bold mb-1">Tap to upload shop images</p>
+                <p className="text-gray-500 text-xs">AI will analyze quality • 1024x768+ recommended</p>
               </div>
             </label>
           </div>
         </div>
 
-        {/* Image Previews */}
+        {/* Image Quality Report - Keep existing code */}
         {imageFiles.length > 0 && (
           <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-            <label className="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              Image Gallery ({imageFiles.length})
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              {Array.from(imageFiles).map((file, idx) => (
-                <div key={idx} className="relative group">
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={`preview-${idx}`}
-                    className="w-full h-24 object-cover rounded-xl border-2 border-orange-200 shadow-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newFiles = Array.from(imageFiles);
-                      newFiles.splice(idx, 1);
-                      setImageFiles(newFiles);
-                      toast.success("Image removed");
-                    }}
-                    className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg active:scale-95 transition-transform hover:from-red-600 hover:to-red-700"
-                  >
-                    ×
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-bold text-gray-800 flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Image Quality Report ({imageFiles.length})
+              </label>
+              <div className="flex gap-2">
+                {imageQualityScores.filter(q => q && q.rating < 5).length > 0 && (
+                  <button type="button" onClick={removeLowQualityImages}
+                    className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all"
+                    title="Remove images with rating < 5">
+                    Remove Poor
                   </button>
-                  <div className="absolute bottom-1 left-1 bg-black bg-opacity-70 text-white text-xs px-2 py-0.5 rounded-md font-medium">
-                    #{idx + 1}
-                  </div>
-                  {file.name.includes('gemini-generated') && (
-                    <div className="absolute top-1 left-1 bg-purple-600 bg-opacity-90 text-white text-xs px-2 py-0.5 rounded-md font-bold">
-                      ✨ AI
+                )}
+                <button type="button" onClick={clearAllImages}
+                  className="text-xs bg-gray-500 text-white px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all">
+                  Clear All
+                </button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              {imageFiles.map((file, idx) => {
+                const quality = imageQualityScores[idx];
+                return (
+                  <div key={idx} className="border-2 border-gray-200 rounded-xl p-3 bg-gray-50">
+                    <div className="flex gap-3">
+                      <img src={URL.createObjectURL(file)} alt={`preview-${idx}`}
+                        className="w-20 h-20 object-cover rounded-lg border-2 border-gray-300" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-bold text-gray-800 truncate">Image {idx + 1}</p>
+                          <button type="button"
+                            onClick={() => {
+                              setImageFiles(imageFiles.filter((_, i) => i !== idx));
+                              setImageQualityScores(imageQualityScores.filter((_, i) => i !== idx));
+                              showNotification("Image removed", "success");
+                            }}
+                            className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            ×
+                          </button>
+                        </div>
+                        
+                        {quality ? (
+                          <>
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div className={`h-2 rounded-full transition-all duration-500 ${
+                                    quality.rating >= 8 ? 'bg-green-500' : 
+                                    quality.rating >= 6 ? 'bg-yellow-500' : 'bg-red-500'
+                                  }`} style={{ width: `${quality.rating * 10}%` }} />
+                              </div>
+                              <span className={`text-xs font-bold ${
+                                  quality.rating >= 8 ? 'text-green-600' : 
+                                  quality.rating >= 6 ? 'text-yellow-600' : 'text-red-600'
+                                }`}>
+                                {quality.rating}/10
+                              </span>
+                            </div>
+                            
+                            <div className="space-y-0.5">
+                              <p className="text-xs text-gray-600">
+                                <span className="font-bold">📐 Resolution:</span> {quality.resolution}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                <span className="font-bold">💾 Size:</span> {quality.fileSize}
+                              </p>
+                              <p className={`text-xs font-medium ${
+                                  quality.rating >= 8 ? 'text-green-700' : 
+                                  quality.rating >= 6 ? 'text-yellow-700' : 'text-red-700'
+                                }`}>
+                                <span className="font-bold">⭐ Quality:</span> {quality.quality.toUpperCase()}
+                              </p>
+                              {quality.feedback && (
+                                <p className="text-xs text-gray-700 mt-1 italic">💬 {quality.feedback}</p>
+                              )}
+                              {quality.recommendations && quality.rating < 8 && (
+                                <p className="text-xs text-orange-600 mt-1 font-medium bg-orange-50 p-2 rounded border border-orange-200">
+                                  💡 <span className="font-bold">Tip:</span> {quality.recommendations}
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-xs text-gray-500">Analyzing...</p>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Overall Quality Summary */}
+            <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 border-2 border-blue-200">
+              <p className="text-xs font-bold text-gray-800 mb-2 flex items-center justify-between">
+                <span>📊 Overall Quality Analysis</span>
+                {isNarratorEnabled && (
+                  <button type="button"
+                    onClick={() => {
+                      const avgRating = (imageQualityScores.reduce((sum, q) => sum + (q?.rating || 0), 0) / imageQualityScores.filter(q => q).length).toFixed(1);
+                      const excellent = imageQualityScores.filter(q => q?.rating >= 8).length;
+                      const good = imageQualityScores.filter(q => q?.rating >= 6 && q?.rating < 8).length;
+                      const poor = imageQualityScores.filter(q => q?.rating < 6).length;
+                      speakText(`Quality summary: Average rating ${avgRating} out of 10. ${excellent} excellent, ${good} good, ${poor} poor quality images`);
+                    }}
+                    className="text-xs bg-blue-500 text-white px-2 py-1 rounded flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                    Read
+                  </button>
+                )}
+              </p>
+              {imageQualityScores.filter(q => q).length > 0 ? (
+                <>
+                  <div className="grid grid-cols-3 gap-2 text-center mb-3">
+                    <div className="bg-green-50 rounded-lg p-2 border border-green-200">
+                      <p className="text-2xl font-bold text-green-600">
+                        {imageQualityScores.filter(q => q?.rating >= 8).length}
+                      </p>
+                      <p className="text-xs text-gray-600 font-medium">Excellent</p>
+                      <p className="text-xs text-green-600">8-10★</p>
+                    </div>
+                    <div className="bg-yellow-50 rounded-lg p-2 border border-yellow-200">
+                      <p className="text-2xl font-bold text-yellow-600">
+                        {imageQualityScores.filter(q => q?.rating >= 6 && q?.rating < 8).length}
+                      </p>
+                      <p className="text-xs text-gray-600 font-medium">Good</p>
+                      <p className="text-xs text-yellow-600">6-7★</p>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-2 border border-red-200">
+                      <p className="text-2xl font-bold text-red-600">
+                        {imageQualityScores.filter(q => q?.rating < 6).length}
+                      </p>
+                      <p className="text-xs text-gray-600 font-medium">Poor</p>
+                      <p className="text-xs text-red-600">1-5★</p>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-blue-300">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-700">
+                        Average Rating: <span className="font-bold text-blue-600 text-sm">
+                          {(imageQualityScores.reduce((sum, q) => sum + (q?.rating || 0), 0) / imageQualityScores.filter(q => q).length).toFixed(1)}/10
+                        </span>
+                      </p>
+                      <div className="flex items-center gap-1">
+                        {[...Array(10)].map((_, i) => (
+                          <div key={i} className={`w-2 h-2 rounded-full ${
+                              i < Math.round((imageQualityScores.reduce((sum, q) => sum + (q?.rating || 0), 0) / imageQualityScores.filter(q => q).length))
+                                ? 'bg-blue-600' : 'bg-gray-300'
+                            }`} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-center py-4">
+                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
+                  <p className="text-xs text-gray-600">Quality analysis in progress...</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Submit Buttons */}
         <div className="grid grid-cols-2 gap-3 pt-2">
-          <button
-            type="button"
-            onClick={() => navigate("/shopC/shop")}
-            className="bg-gray-400 text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:bg-gray-500"
-          >
+          <button type="button"
+            onClick={() => {
+              if (isNarratorEnabled) speakText("Canceling and going back");
+              navigate("/shopC/shop");
+            }}
+            className="bg-gray-400 text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:bg-gray-500">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
-          >
+          <button type="submit" disabled={isLoading || imageFiles.length === 0}
+            className="bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2 hover:shadow-lg">
             {isLoading ? (
               <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Adding Shop...
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Adding...
               </>
             ) : (
               <>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Add Shop
               </>
@@ -731,36 +886,66 @@ export default function AddShop() {
           </button>
         </div>
 
-        {/* AI Features Info */}
+        {/* Feature Info Card */}
         <div className="bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 rounded-xl p-4 border-2 border-purple-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            <p className="text-sm font-bold text-gray-800">✨ Gemini 2.5 Flash Powered Features</p>
+            <p className="text-sm font-bold text-gray-800">✨ Gemini AI-Powered Features</p>
           </div>
           <div className="space-y-1.5 text-xs text-gray-700">
             <p className="flex items-start gap-2">
-              <span className="text-lg">🎨</span>
-              <span><span className="font-bold">AI Image Generation:</span> Photorealistic shop images using Gemini 2.5 Flash Image model</span>
+              <span className="text-lg">🎯</span>
+              <span><span className="font-bold">Smart Descriptions:</span> Generate 3 AI description options (Professional, Friendly, Detailed) - choose your favorite or write manually</span>
             </p>
             <p className="flex items-start gap-2">
-              <span className="text-lg">📝</span>
-              <span><span className="font-bold">Smart Descriptions:</span> Gemini-powered compelling shop descriptions with context</span>
+              <span className="text-lg">📸</span>
+              <span><span className="font-bold">Image Quality Check:</span> AI analyzes resolution, clarity, lighting & provides quality ratings (1-10) with recommendations</span>
             </p>
             <p className="flex items-start gap-2">
-              <span className="text-lg">🏪</span>
-              <span><span className="font-bold">Business Templates:</span> 12 pre-optimized photorealistic scene descriptions</span>
+              <span className="text-lg">🔊</span>
+              <span><span className="font-bold">Voice Narrator:</span> Enable narrator for audio feedback on your actions and form updates</span>
             </p>
             <p className="flex items-start gap-2">
-              <span className="text-lg">⚡</span>
-              <span><span className="font-bold">Fast Processing:</span> Get professional AI-generated content in seconds</span>
+              <span className="text-lg">🏗️</span>
+              <span><span className="font-bold">Dual Categories:</span> Choose between Artisan (pottery, batik, wood carving) or Material Supplier categories</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <span className="text-lg">✅</span>
+              <span><span className="font-bold">Quality Assurance:</span> System warns about low-quality images before submission</span>
             </p>
           </div>
         </div>
+
+        {/* Tips Section */}
+        <div className="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
+          <p className="text-sm font-bold text-blue-900 mb-2">💡 Pro Tips for Best Results</p>
+          <ul className="space-y-1 text-xs text-gray-700">
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Upload images with <span className="font-bold">1024x768 resolution or higher</span> for best quality ratings</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Use <span className="font-bold">well-lit, clear photos</span> of your workspace, products, or services</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Try all 3 AI description options before choosing or creating manually</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Enable narrator mode for <span className="font-bold">hands-free guidance</span> through the form</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Review AI quality feedback and improve low-rated images before submitting</span>
+            </li>
+          </ul>
+        </div>
       </form>
 
-      {/* Mobile Bottom Toast Position */}
       <style>{`
         .Toastify__toast-container,
         .go2072408551 {
@@ -776,6 +961,17 @@ export default function AddShop() {
           font-weight: 600 !important;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
         }
+        
+        /* Color utility classes for dynamic ratings */
+        .bg-green-500 { background-color: #10b981; }
+        .bg-yellow-500 { background-color: #f59e0b; }
+        .bg-red-500 { background-color: #ef4444; }
+        .text-green-600 { color: #059669; }
+        .text-yellow-600 { color: #d97706; }
+        .text-red-600 { color: #dc2626; }
+        .text-green-700 { color: #047857; }
+        .text-yellow-700 { color: #b45309; }
+        .text-red-700 { color: #b91c1c; }
       `}</style>
     </div>
   );
