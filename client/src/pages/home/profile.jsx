@@ -27,6 +27,8 @@ export function Profile() {
   const [expandedDeliveryId, setExpandedDeliveryId] = useState(null);
   const mapRefs = useRef({});
 
+  const statusSteps = ["pending", "confirmed", "preparing", "dispatched", "delivered"];
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -69,7 +71,7 @@ export function Profile() {
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/orders`, {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/orders/customer`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userOrders = response.data.filter(order => order.email === user?.email);
@@ -193,21 +195,21 @@ export function Profile() {
     );
   };
 
-const handleLogout = () => {
-  Swal.fire({
-    title: "Are you sure?",
-    text: "You will be logged out.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, logout",
-  }).then((result) => {
-    if (result.isConfirmed) {
-      localStorage.clear();
-      Swal.fire("Logged out", "See you again!", "success");
-      window.location.href = "/login";
-    }
-  });
-};
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, logout",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.clear();
+        Swal.fire("Logged out", "See you again!", "success");
+        window.location.href = "/login";
+      }
+    });
+  };
 
   const handleChangePassword = async () => {
     try {
@@ -241,11 +243,108 @@ const handleLogout = () => {
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'delivered': return 'bg-green-600';
-      case 'picked up': return 'bg-blue-500';
       case 'dispatched': return 'bg-purple-500';
+      case 'preparing': return 'bg-yellow-500';
+      case 'confirmed': return 'bg-blue-500';
       case 'pending': return 'bg-orange-500';
       default: return 'bg-gray-500';
     }
+  };
+
+  const getCurrentStepIndex = (status) => {
+    const normalizedStatus = status?.toLowerCase() || 'pending';
+    const index = statusSteps.indexOf(normalizedStatus);
+    return index === -1 ? 0 : index;
+  };
+
+  const StatusTracker = ({ status }) => {
+    const currentStep = getCurrentStepIndex(status);
+    
+    const getStepIcon = (step) => {
+      switch(step) {
+        case 'pending':
+          return (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          );
+        case 'confirmed':
+          return (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          );
+        case 'preparing':
+          return (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          );
+        case 'dispatched':
+          return (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+            </svg>
+          );
+        case 'delivered':
+          return (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          );
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <div className="py-4">
+        <div className="flex items-center justify-between relative">
+          {/* Progress Line */}
+          <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200">
+            <div 
+              className="h-full bg-gradient-to-r from-[#F85606] to-[#FF6B2C] transition-all duration-1000 ease-out"
+              style={{ width: `${(currentStep / (statusSteps.length - 1)) * 100}%` }}
+            />
+          </div>
+
+          {statusSteps.map((step, index) => {
+            const isCompleted = index <= currentStep;
+            const isCurrent = index === currentStep;
+            
+            return (
+              <div key={step} className="flex flex-col items-center relative z-10" style={{ width: `${100 / statusSteps.length}%` }}>
+                {/* Step Circle */}
+                <div className={`
+                  w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 mb-2
+                  ${isCompleted 
+                    ? 'bg-gradient-to-br from-[#F85606] to-[#FF6B2C] text-white shadow-lg scale-110' 
+                    : 'bg-white border-2 border-gray-300 text-gray-400'
+                  }
+                  ${isCurrent ? 'animate-pulse ring-4 ring-orange-100' : ''}
+                `}>
+                  {getStepIcon(step)}
+                </div>
+
+                {/* Step Label */}
+                <span className={`
+                  text-xs font-medium text-center capitalize transition-colors duration-300
+                  ${isCompleted ? 'text-[#F85606]' : 'text-gray-400'}
+                  ${isCurrent ? 'font-bold' : ''}
+                `}>
+                  {step}
+                </span>
+
+                {/* Active Indicator */}
+                {isCurrent && (
+                  <div className="absolute -bottom-1 w-2 h-2 bg-[#F85606] rounded-full animate-bounce" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   if (!user) {
@@ -457,7 +556,7 @@ const handleLogout = () => {
                 {orders.map((order) => (
                   <div key={order._id} className="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div className="p-4">
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 mb-4">
                         {order.image && (
                           <img
                             src={order.image}
@@ -483,6 +582,11 @@ const handleLogout = () => {
                             <p className="text-base font-bold text-[#F85606]">Rs.{order.totalAmount}</p>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Animated Status Tracker */}
+                      <div className="border-t border-gray-100 pt-4">
+                        <StatusTracker status={order.status} />
                       </div>
                     </div>
                   </div>
@@ -524,6 +628,11 @@ const handleLogout = () => {
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(delivery.status)}`}>
                           {delivery.status}
                         </span>
+                      </div>
+
+                      {/* Animated Status Tracker for Delivery */}
+                      <div className="mb-4">
+                        <StatusTracker status={delivery.status} />
                       </div>
 
                       <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">

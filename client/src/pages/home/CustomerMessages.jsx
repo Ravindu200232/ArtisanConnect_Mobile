@@ -211,7 +211,7 @@ export default function CustomerMessages() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 relative">
+    <div className="min-h-screen bg-gradient-to-br relative">
       {/* Unread Badge */}
       {totalUnreadCount > 0 && (
         <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
@@ -336,15 +336,7 @@ export default function CustomerMessages() {
         )}
       </div>
 
-      {/* New Chat Floating Button */}
-      <Link
-        to="/"
-        className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-[#F85606] to-[#FF7420] rounded-full flex items-center justify-center shadow-2xl hover:shadow-orange-400/50 hover:scale-110 transition-all duration-200 z-40"
-      >
-        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-        </svg>
-      </Link>
+      
     </div>
   );
 }

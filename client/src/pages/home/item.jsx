@@ -15,12 +15,13 @@ export default function Item() {
   const [searchResults, setSearchResults] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
 
-  // Seller Type Options with attractive designs
+  // Seller Type Options with images
   const sellerTypes = [
     {
       id: "all",
       label: "All Items",
       icon: "🛍️",
+      image: "/allItem.png",
       gradient: "from-purple-500 to-pink-500",
       bgLight: "bg-purple-50",
       textColor: "text-purple-600",
@@ -30,6 +31,7 @@ export default function Item() {
       id: "product",
       label: "Products",
       icon: "📦",
+      image: "/product.png",
       gradient: "from-orange-500 to-red-500",
       bgLight: "bg-orange-50",
       textColor: "text-orange-600",
@@ -39,6 +41,7 @@ export default function Item() {
       id: "material",
       label: "Materials",
       icon: "🧵",
+      image: "/matrieal.png",
       gradient: "from-blue-500 to-cyan-500",
       bgLight: "bg-blue-50",
       textColor: "text-blue-600",
@@ -48,6 +51,7 @@ export default function Item() {
       id: "tourism",
       label: "Tourism Packages",
       icon: "✈️",
+      image: "/toursim.png",
       gradient: "from-green-500 to-teal-500",
       bgLight: "bg-green-50",
       textColor: "text-green-600",
@@ -92,8 +96,8 @@ export default function Item() {
           setCategories(categoryData);
           setState("success");
           
-          // Load recent searches from localStorage
-          const saved = localStorage.getItem("recentSearches");
+          // Load recent searches
+          const saved = sessionStorage.getItem("recentSearches");
           if (saved) {
             setRecentSearches(JSON.parse(saved));
           }
@@ -175,7 +179,7 @@ export default function Item() {
     if (query.trim().length > 0) {
       const updated = [query, ...recentSearches.filter(s => s !== query)].slice(0, 5);
       setRecentSearches(updated);
-      localStorage.setItem("recentSearches", JSON.stringify(updated));
+      sessionStorage.setItem("recentSearches", JSON.stringify(updated));
     }
   };
 
@@ -189,7 +193,7 @@ export default function Item() {
   // Clear recent searches
   const clearRecentSearches = () => {
     setRecentSearches([]);
-    localStorage.removeItem("recentSearches");
+    sessionStorage.removeItem("recentSearches");
   };
 
   const handleCategoryFilter = (categoryId) => {
@@ -635,61 +639,47 @@ export default function Item() {
         </div>
       )}
 
-      {/* Rest of the original content */}
-      {/* Promotional Banner */}
-      <div className="px-4 py-3">
-        <div className="bg-gradient-to-r from-orange-400 to-red-500 rounded-2xl p-4 shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-          <div className="relative z-10">
-            <p className="text-white text-2xl font-bold mb-1">Flat 15% Off</p>
-            <p className="text-white text-sm mb-3">On your First order Today</p>
-            <button className="bg-white text-orange-600 px-4 py-2 rounded-full text-sm font-semibold shadow-md">
-              Shop Now
-            </button>
-          </div>
-          <div className="absolute bottom-0 right-4">
-            <div className="bg-yellow-400 rounded-full px-3 py-1 text-xs font-bold text-orange-800">
-              Limited Time
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Seller Type Filter */}
-      <div className="px-4 py-4 bg-white">
-        <h3 className="text-lg font-bold text-gray-800 mb-3">Shop By Type</h3>
-        <div className="grid grid-cols-2 gap-3">
+      {/* Seller Type Filter with Images */}
+      <div className="px-4 py-4 bg-white mt-3">
+        <h3 className="text-lg font-bold text-gray-800 mb-4">Shop By Type</h3>
+        <div className="grid grid-cols-2 gap-4">
           {sellerTypes.map((type) => (
             <button
               key={type.id}
               onClick={() => handleSellerTypeFilter(type.id)}
-              className={`relative overflow-hidden rounded-2xl p-4 shadow-lg transition-all duration-300 ${
+              className={`relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 ${
                 selectedSellerType === type.id
                   ? `ring-4 ${type.borderColor} scale-105`
                   : "hover:scale-105"
               }`}
             >
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${type.gradient} ${
-                  selectedSellerType === type.id ? "opacity-100" : "opacity-90"
-                }`}
-              ></div>
-              <div className="absolute -top-8 -right-8 w-24 h-24 bg-white opacity-20 rounded-full"></div>
-              <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="text-5xl mb-2">{type.icon}</div>
-                <p className="text-white font-bold text-sm mb-1">
-                  {type.label}
-                </p>
-                <div className="bg-white/30 backdrop-blur-sm rounded-full px-3 py-1">
-                  <p className="text-white text-xs font-semibold">
-                    {sellerTypeCounts[type.id] || 0} items
+              <div className="relative h-32">
+                <img
+                  src={type.image}
+                  alt={type.label}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }}
+                />
+                <div
+                  className={`hidden absolute inset-0 bg-gradient-to-br ${type.gradient} items-center justify-center`}
+                >
+                  <span className="text-5xl">{type.icon}</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <p className="text-white font-bold text-sm mb-1">
+                    {type.label}
                   </p>
+                  
                 </div>
               </div>
               {selectedSellerType === type.id && (
-                <div className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
+                <div className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-lg">
                   <svg
-                    className="w-4 h-4 text-green-600"
+                    className="w-5 h-5 text-green-600"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >

@@ -19,17 +19,7 @@ function App() {
   return (
     <GoogleOAuthProvider clientId="964342724823-b4bjne48paevmqpvbi48b5ebepjsiefe.apps.googleusercontent.com">
       <BrowserRouter>
-      <div 
-          style={{
-            height: "30px",
-            width: "100%",
-            background: "linear-gradient(to right,#F85606, #FF7420 )",
-            position: "",
-            top: 0,
-            left: 0,
-            zIndex: 1000
-          }}
-        />
+      
         <Toaster position="top-right" />
         <Routes path="/">
           <Route path="/*" element={<HomePage />} />

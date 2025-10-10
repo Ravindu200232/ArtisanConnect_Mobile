@@ -38,6 +38,19 @@ const materialCategories = [
   { value: "packaging", label: "Packaging Materials", descPrompt: "packaging materials" }
 ];
 
+const tourismCategories = [
+  { value: "cultural", label: "Cultural Tours", descPrompt: "cultural heritage tour" },
+  { value: "adventure", label: "Adventure Tours", descPrompt: "adventure experience" },
+  { value: "beach", label: "Beach Holidays", descPrompt: "beach vacation" },
+  { value: "wildlife", label: "Wildlife Safaris", descPrompt: "wildlife safari" },
+  { value: "hillCountry", label: "Hill Country Tours", descPrompt: "hill country exploration" },
+  { value: "ayurveda", label: "Ayurveda & Wellness", descPrompt: "wellness retreat" },
+  { value: "honeymoon", label: "Honeymoon Packages", descPrompt: "romantic getaway" },
+  { value: "family", label: "Family Vacations", descPrompt: "family-friendly tour" },
+  { value: "budget", label: "Budget Travel", descPrompt: "affordable travel package" },
+  { value: "luxury", label: "Luxury Experiences", descPrompt: "premium luxury tour" }
+];
+
 export default function AddCollection() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,6 +73,20 @@ export default function AddCollection() {
   const [selectedDescriptionOption, setSelectedDescriptionOption] = useState(null);
   const [showDescriptionOptions, setShowDescriptionOptions] = useState(false);
   const [useManualDescription, setUseManualDescription] = useState(false);
+
+  // Tourism Package Specific Fields
+  const [packageDuration, setPackageDuration] = useState("");
+  const [packageInclusions, setPackageInclusions] = useState("");
+  const [packageExclusions, setPackageExclusions] = useState("");
+  const [packageItinerary, setPackageItinerary] = useState("");
+  const [packageHighlights, setPackageHighlights] = useState("");
+  const [packageAccommodation, setPackageAccommodation] = useState("");
+  const [packageTransport, setPackageTransport] = useState("");
+  const [packageMeals, setPackageMeals] = useState("");
+  const [packageGroupSize, setPackageGroupSize] = useState("");
+  const [packageDifficulty, setPackageDifficulty] = useState("easy");
+
+  const [isGeneratingPackage, setIsGeneratingPackage] = useState(false);
 
   const speechSynthesis = window.speechSynthesis;
 
@@ -86,6 +113,81 @@ export default function AddCollection() {
     if (isNarratorEnabled) speakText(`${fieldName} field focused`);
   };
 
+  // Generate Complete Tourism Package with AI
+  const generateTourismPackage = async () => {
+    if (!itemName.trim()) {
+      toast.error("Please enter package name first");
+      return;
+    }
+
+    setIsGeneratingPackage(true);
+    
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+      const categoryInfo = tourismCategories.find(c => c.value === itemCategory);
+      
+      const prompt = `Create a comprehensive tourism package for "${itemName}" in Sri Lanka. Category: ${categoryInfo?.label || 'General Tour'}.
+Price: ${itemPrice ? `Rs. ${itemPrice}` : 'Not specified'}
+
+Generate a complete package with:
+1. Package Description (200-250 chars)
+2. Duration (e.g., "3 days 2 nights")
+3. Key Highlights (3-5 bullet points)
+4. Detailed Itinerary (day-by-day)
+5. Inclusions (what's included)
+6. Exclusions (what's not included)
+7. Accommodation details
+8. Transport details
+9. Meals included
+10. Recommended group size
+11. Difficulty level (easy/moderate/difficult)
+
+Respond in JSON format:
+{
+  "description": "comprehensive package description",
+  "duration": "package duration",
+  "highlights": ["highlight1", "highlight2", "highlight3"],
+  "itinerary": "detailed day-by-day itinerary",
+  "inclusions": ["inclusion1", "inclusion2", "inclusion3"],
+  "exclusions": ["exclusion1", "exclusion2"],
+  "accommodation": "accommodation details",
+  "transport": "transport details", 
+  "meals": "meals included",
+  "groupSize": "recommended group size",
+  "difficulty": "easy/moderate/difficult"
+}`;
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      
+      if (jsonMatch) {
+        const packageData = JSON.parse(jsonMatch[0]);
+        
+        // Set all package fields
+        setItemDescription(packageData.description);
+        setPackageDuration(packageData.duration);
+        setPackageHighlights(packageData.highlights?.join('\n• ') || '');
+        setPackageItinerary(packageData.itinerary);
+        setPackageInclusions(packageData.inclusions?.join('\n• ') || '');
+        setPackageExclusions(packageData.exclusions?.join('\n• ') || '');
+        setPackageAccommodation(packageData.accommodation);
+        setPackageTransport(packageData.transport);
+        setPackageMeals(packageData.meals);
+        setPackageGroupSize(packageData.groupSize);
+        setPackageDifficulty(packageData.difficulty || 'easy');
+        
+        toast.success("✨ Complete tourism package generated!");
+        if (isNarratorEnabled) speakText("AI has generated a complete tourism package with itinerary, inclusions, and all details");
+      }
+    } catch (error) {
+      console.error("Package generation error:", error);
+      toast.error("Failed to generate package. Please fill manually.");
+    } finally {
+      setIsGeneratingPackage(false);
+    }
+  };
+
   // Image quality analysis
   const analyzeImageQuality = async (file) => {
     try {
@@ -105,8 +207,8 @@ export default function AddCollection() {
       });
       const dimensions = await dimensionsPromise;
 
-      const prompt = `Analyze this product image for quality. Rate 1-10.
-Consider: resolution (${dimensions.width}x${dimensions.height}), lighting, product clarity, professional appearance.
+      const prompt = `Analyze this ${sellerType === 'tourism' ? 'tourism destination' : 'product'} image for quality. Rate 1-10.
+Consider: resolution (${dimensions.width}x${dimensions.height}), lighting, clarity, professional appearance.
 Respond JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions.height}", "fileSize": "${(file.size/1024).toFixed(1)}KB", "quality": "<excellent/good/fair/poor>", "feedback": "<brief assessment>", "recommendations": "<suggestions>"}`;
 
       const result = await model.generateContent([
@@ -124,7 +226,7 @@ Respond JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions
         fileSize: `${(file.size/1024).toFixed(1)}KB`,
         quality: dimensions.width >= 800 ? "good" : "fair",
         feedback: "Image uploaded",
-        recommendations: dimensions.width < 800 ? "Use 800x600+ for products" : "Good quality"
+        recommendations: dimensions.width < 800 ? "Use 800x600+ for better quality" : "Good quality"
       };
     } catch (error) {
       console.error("Image analysis error:", error);
@@ -137,8 +239,8 @@ Respond JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions
     if (files.length === 0) return;
     
     setIsAnalyzingImage(true);
-    toast.loading("🔍 AI analyzing product images...", { id: 'analyzing' });
-    if (isNarratorEnabled) speakText(`Analyzing ${files.length} product image${files.length > 1 ? 's' : ''}`);
+    toast.loading("🔍 AI analyzing images...", { id: 'analyzing' });
+    if (isNarratorEnabled) speakText(`Analyzing ${files.length} image${files.length > 1 ? 's' : ''}`);
 
     const qualities = await Promise.all(files.map(f => analyzeImageQuality(f)));
     setItemImages(prev => [...prev, ...files]);
@@ -151,7 +253,7 @@ Respond JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions
     
     if (avgRating >= 8) {
       toast.success(`✨ Excellent! ${excellentCount} image${excellentCount > 1 ? 's' : ''} rated 8+`);
-      if (isNarratorEnabled) speakText(`Excellent product image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
+      if (isNarratorEnabled) speakText(`Excellent image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
     } else if (avgRating >= 6) {
       toast.success("✓ Good quality images");
       if (isNarratorEnabled) speakText(`Good image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
@@ -174,7 +276,8 @@ Respond JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions
     
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-      const categories = sellerType === "product" ? productCategories : materialCategories;
+      const categories = sellerType === "product" ? productCategories : 
+                        sellerType === "material" ? materialCategories : tourismCategories;
       const categoryInfo = categories.find(c => c.value === itemCategory);
       
       const prompt = `Create 3 professional ${sellerType} descriptions for "${itemName}". ${categoryInfo ? `Category: ${categoryInfo.label}. ${categoryInfo.descPrompt}` : ''}
@@ -254,6 +357,14 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
       return;
     }
 
+    // Tourism package validation
+    if (sellerType === "tourism") {
+      if (!packageDuration || !packageInclusions || !packageItinerary) {
+        toast.error("Please fill all tourism package required fields");
+        return;
+      }
+    }
+
     const lowQuality = imageQualityScores.filter(q => q && q.rating < 5);
     if (lowQuality.length > 0) {
       if (!window.confirm(`${lowQuality.length} image(s) have low quality. Continue?`)) return;
@@ -277,6 +388,22 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         sellerType: sellerType
       };
 
+      // Add tourism package specific fields
+      if (sellerType === "tourism") {
+        payload.tourismPackage = {
+          duration: packageDuration,
+          inclusions: packageInclusions,
+          exclusions: packageExclusions,
+          itinerary: packageItinerary,
+          highlights: packageHighlights,
+          accommodation: packageAccommodation,
+          transport: packageTransport,
+          meals: packageMeals,
+          groupSize: packageGroupSize,
+          difficulty: packageDifficulty
+        };
+      }
+
       const result = await axios.post(`${backendUrl}/api/v1/collection`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -291,6 +418,34 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
       setIsLoading(false);
     }
   }
+
+  // Reset form when seller type changes
+  const handleSellerTypeChange = (type) => {
+    setSellerType(type);
+    if (type === "product") {
+      setItemCategory("bathics");
+    } else if (type === "material") {
+      setItemCategory("fabric");
+    } else if (type === "tourism") {
+      setItemCategory("cultural");
+    }
+    
+    // Clear tourism specific fields when switching away from tourism
+    if (type !== "tourism") {
+      setPackageDuration("");
+      setPackageInclusions("");
+      setPackageExclusions("");
+      setPackageItinerary("");
+      setPackageHighlights("");
+      setPackageAccommodation("");
+      setPackageTransport("");
+      setPackageMeals("");
+      setPackageGroupSize("");
+      setPackageDifficulty("easy");
+    }
+    
+    if (isNarratorEnabled) speakText(`${type} seller selected`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 pb-6">
@@ -354,48 +509,55 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           <label className="block text-sm font-bold text-gray-800 mb-3">
             Seller Type <span className="text-[#F85606]">*</span>
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <button type="button"
-              onClick={() => {
-                setSellerType("product");
-                setItemCategory("bathics");
-                if (isNarratorEnabled) speakText("Product seller selected");
-              }}
-              className={`p-4 rounded-xl border-2 transition-all active:scale-95 ${
+              onClick={() => handleSellerTypeChange("product")}
+              className={`p-3 rounded-xl border-2 transition-all active:scale-95 ${
                 sellerType === "product" ? "border-[#F85606] bg-orange-50" : "border-gray-200 bg-gray-50"
               }`}>
               <div className="text-center">
-                <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center ${
+                <div className={`w-10 h-10 mx-auto mb-1 rounded-full flex items-center justify-center ${
                   sellerType === "product" ? "bg-[#F85606]" : "bg-gray-300"
                 }`}>
-                  <span className="text-white text-xl">🛍️</span>
+                  <span className="text-white text-lg">🛍️</span>
                 </div>
-                <span className={`text-sm font-bold block ${
+                <span className={`text-xs font-bold block ${
                   sellerType === "product" ? "text-[#F85606]" : "text-gray-600"
-                }`}>Product Seller</span>
-                <p className="text-xs text-gray-500 mt-1">Finished goods</p>
+                }`}>Products</span>
               </div>
             </button>
             
             <button type="button"
-              onClick={() => {
-                setSellerType("material");
-                setItemCategory("fabric");
-                if (isNarratorEnabled) speakText("Material seller selected");
-              }}
-              className={`p-4 rounded-xl border-2 transition-all active:scale-95 ${
+              onClick={() => handleSellerTypeChange("material")}
+              className={`p-3 rounded-xl border-2 transition-all active:scale-95 ${
                 sellerType === "material" ? "border-[#F85606] bg-orange-50" : "border-gray-200 bg-gray-50"
               }`}>
               <div className="text-center">
-                <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center ${
+                <div className={`w-10 h-10 mx-auto mb-1 rounded-full flex items-center justify-center ${
                   sellerType === "material" ? "bg-[#F85606]" : "bg-gray-300"
                 }`}>
-                  <span className="text-white text-xl">⚒️</span>
+                  <span className="text-white text-lg">⚒️</span>
                 </div>
-                <span className={`text-sm font-bold block ${
+                <span className={`text-xs font-bold block ${
                   sellerType === "material" ? "text-[#F85606]" : "text-gray-600"
-                }`}>Material Seller</span>
-                <p className="text-xs text-gray-500 mt-1">Raw materials</p>
+                }`}>Materials</span>
+              </div>
+            </button>
+
+            <button type="button"
+              onClick={() => handleSellerTypeChange("tourism")}
+              className={`p-3 rounded-xl border-2 transition-all active:scale-95 ${
+                sellerType === "tourism" ? "border-[#F85606] bg-orange-50" : "border-gray-200 bg-gray-50"
+              }`}>
+              <div className="text-center">
+                <div className={`w-10 h-10 mx-auto mb-1 rounded-full flex items-center justify-center ${
+                  sellerType === "tourism" ? "bg-[#F85606]" : "bg-gray-300"
+                }`}>
+                  <span className="text-white text-lg">✈️</span>
+                </div>
+                <span className={`text-xs font-bold block ${
+                  sellerType === "tourism" ? "text-[#F85606]" : "text-gray-600"
+                }`}>Tourism</span>
               </div>
             </button>
           </div>
@@ -404,14 +566,14 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         {/* Item Name */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-2">
-            Item Name <span className="text-[#F85606]">*</span>
+            {sellerType === 'tourism' ? 'Package Name' : 'Item Name'} <span className="text-[#F85606]">*</span>
           </label>
           <input type="text"
-            placeholder={`Enter ${sellerType === 'product' ? 'product' : 'material'} name`}
+            placeholder={sellerType === 'tourism' ? 'Enter tour package name' : `Enter ${sellerType} name`}
             value={itemName}
             onChange={(e) => setItemName(e.target.value)}
-            onFocus={() => handleFieldFocus("Item name")}
-            onBlur={() => isNarratorEnabled && itemName && speakText(`Item name entered: ${itemName}`)}
+            onFocus={() => handleFieldFocus(sellerType === 'tourism' ? "Package name" : "Item name")}
+            onBlur={() => isNarratorEnabled && itemName && speakText(`${sellerType === 'tourism' ? 'Package' : 'Item'} name entered: ${itemName}`)}
             className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm" />
         </div>
 
@@ -438,11 +600,184 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           <select value={itemCategory}
             onChange={(e) => setItemCategory(e.target.value)}
             className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm appearance-none">
-            {(sellerType === "product" ? productCategories : materialCategories).map((cat) => (
+            {(sellerType === "product" ? productCategories : 
+              sellerType === "material" ? materialCategories : tourismCategories).map((cat) => (
               <option key={cat.value} value={cat.value}>{cat.label}</option>
             ))}
           </select>
         </div>
+
+        {/* Tourism Package Generator */}
+        {sellerType === "tourism" && (
+          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl shadow-md p-4 border-2 border-blue-200">
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-bold text-gray-800 flex items-center gap-2">
+                <span className="text-lg">✨</span>
+                AI Tourism Package Generator
+              </label>
+              <button type="button"
+                onClick={generateTourismPackage}
+                disabled={isGeneratingPackage || !itemName.trim()}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg text-xs font-bold disabled:opacity-50 flex items-center gap-2">
+                {isGeneratingPackage ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <span>🤖</span>
+                    Generate Package
+                  </>
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-gray-600 mb-3">
+              AI will create complete package with itinerary, inclusions, accommodation, and all details automatically.
+            </p>
+          </div>
+        )}
+
+        {/* Tourism Package Specific Fields */}
+        {sellerType === "tourism" && (
+          <div className="space-y-3">
+            {/* Package Duration */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+              <label className="block text-sm font-bold text-gray-800 mb-2">
+                Package Duration <span className="text-[#F85606]">*</span>
+              </label>
+              <input type="text"
+                placeholder="e.g., 3 days 2 nights"
+                value={packageDuration}
+                onChange={(e) => setPackageDuration(e.target.value)}
+                onFocus={() => handleFieldFocus("Package duration")}
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm" />
+            </div>
+
+            {/* Package Highlights */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+              <label className="block text-sm font-bold text-gray-800 mb-2">
+                Key Highlights
+              </label>
+              <textarea
+                placeholder="• Visit ancient temples&#10;• Wildlife safari experience&#10;• Beach relaxation"
+                value={packageHighlights}
+                onChange={(e) => setPackageHighlights(e.target.value)}
+                onFocus={() => handleFieldFocus("Package highlights")}
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm resize-none"
+                rows="3" />
+            </div>
+
+            {/* Package Itinerary */}
+            <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+              <label className="block text-sm font-bold text-gray-800 mb-2">
+                Detailed Itinerary <span className="text-[#F85606]">*</span>
+              </label>
+              <textarea
+                placeholder="Day 1: Arrival and city tour...&#10;Day 2: Cultural sites visit...&#10;Day 3: Departure..."
+                value={packageItinerary}
+                onChange={(e) => setPackageItinerary(e.target.value)}
+                onFocus={() => handleFieldFocus("Package itinerary")}
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm resize-none"
+                rows="4" />
+            </div>
+
+            {/* Package Inclusions & Exclusions */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">
+                  Inclusions <span className="text-[#F85606]">*</span>
+                </label>
+                <textarea
+                  placeholder="• Accommodation&#10;• Meals&#10;• Transport"
+                  value={packageInclusions}
+                  onChange={(e) => setPackageInclusions(e.target.value)}
+                  onFocus={() => handleFieldFocus("Package inclusions")}
+                  className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm resize-none"
+                  rows="3" />
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">
+                  Exclusions
+                </label>
+                <textarea
+                  placeholder="• Airfare&#10;• Personal expenses&#10;• Travel insurance"
+                  value={packageExclusions}
+                  onChange={(e) => setPackageExclusions(e.target.value)}
+                  onFocus={() => handleFieldFocus("Package exclusions")}
+                  className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm resize-none"
+                  rows="3" />
+              </div>
+            </div>
+
+            {/* Additional Package Details */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">
+                  Accommodation
+                </label>
+                <input type="text"
+                  placeholder="3-star hotels, resorts"
+                  value={packageAccommodation}
+                  onChange={(e) => setPackageAccommodation(e.target.value)}
+                  onFocus={() => handleFieldFocus("Accommodation")}
+                  className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm" />
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">
+                  Transport
+                </label>
+                <input type="text"
+                  placeholder="Private AC vehicle"
+                  value={packageTransport}
+                  onChange={(e) => setPackageTransport(e.target.value)}
+                  onFocus={() => handleFieldFocus("Transport")}
+                  className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">
+                  Meals
+                </label>
+                <input type="text"
+                  placeholder="Breakfast & dinner"
+                  value={packageMeals}
+                  onChange={(e) => setPackageMeals(e.target.value)}
+                  onFocus={() => handleFieldFocus("Meals")}
+                  className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm" />
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">
+                  Group Size
+                </label>
+                <input type="text"
+                  placeholder="2-15 people"
+                  value={packageGroupSize}
+                  onChange={(e) => setPackageGroupSize(e.target.value)}
+                  onFocus={() => handleFieldFocus("Group size")}
+                  className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm" />
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
+                <label className="block text-sm font-bold text-gray-800 mb-2">
+                  Difficulty
+                </label>
+                <select value={packageDifficulty}
+                  onChange={(e) => setPackageDifficulty(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm appearance-none">
+                  <option value="easy">Easy</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="difficult">Difficult</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* AI Description Options */}
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl shadow-md p-4 border-2 border-purple-200">
@@ -504,7 +839,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           )}
 
           <textarea
-            placeholder={`Describe this ${sellerType === 'product' ? 'product' : 'material'}...`}
+            placeholder={sellerType === 'tourism' ? 'Describe this tour package...' : `Describe this ${sellerType}...`}
             value={itemDescription}
             onChange={(e) => setItemDescription(e.target.value)}
             onFocus={() => isNarratorEnabled && speakText("Description field focused")}
@@ -522,7 +857,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
             <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            Upload Product Images <span className="text-[#F85606]">*</span>
+            Upload {sellerType === 'tourism' ? 'Tour' : 'Product'} Images <span className="text-[#F85606]">*</span>
             {itemImages.length > 0 && <span className="text-[#F85606]">({itemImages.length})</span>}
           </label>
           <div className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center bg-orange-50/50">
@@ -729,7 +1064,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                Add Item
+                Add {sellerType === 'tourism' ? 'Package' : 'Item'}
               </>
             )}
           </button>
@@ -748,6 +1083,12 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               <span className="text-lg">🎯</span>
               <span><span className="font-bold">Smart Descriptions:</span> Generate 3 AI styles - choose best or write manually</span>
             </p>
+            {sellerType === 'tourism' && (
+              <p className="flex items-start gap-2">
+                <span className="text-lg">✈️</span>
+                <span><span className="font-bold">Tourism Package AI:</span> Complete package generation with itinerary, inclusions & details</span>
+              </p>
+            )}
             <p className="flex items-start gap-2">
               <span className="text-lg">📸</span>
               <span><span className="font-bold">Image Quality Check:</span> AI analyzes resolution, clarity & provides ratings with tips</span>
@@ -758,7 +1099,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
             </p>
             <p className="flex items-start gap-2">
               <span className="text-lg">🛍️</span>
-              <span><span className="font-bold">Dual Mode:</span> Product seller or material supplier categories</span>
+              <span><span className="font-bold">Triple Mode:</span> Product seller, material supplier, or tourism package provider</span>
             </p>
             <p className="flex items-start gap-2">
               <span className="text-lg">✅</span>
@@ -773,8 +1114,14 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           <ul className="space-y-1 text-xs text-gray-700">
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>Upload <span className="font-bold">800x600+ resolution</span> product photos for best ratings</span>
+              <span>Upload <span className="font-bold">800x600+ resolution</span> photos for best ratings</span>
             </li>
+            {sellerType === 'tourism' && (
+              <li className="flex items-start gap-2">
+                <span className="text-blue-600 font-bold">•</span>
+                <span>Use <span className="font-bold">AI Package Generator</span> for complete tourism packages with itinerary</span>
+              </li>
+            )}
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
               <span>Use <span className="font-bold">well-lit, clear images</span> with neutral backgrounds</span>
