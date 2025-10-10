@@ -5,10 +5,12 @@ import Swal from "sweetalert2";
 
 export default function ShopOrder() {
   const [bookingData, setBookingData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -24,7 +26,9 @@ export default function ShopOrder() {
           }),
         ]);
 
-        setBookingData(ordersResponse.data || []);
+        const orders = ordersResponse.data || [];
+        setBookingData(orders);
+        setFilteredData(orders);
         setDrivers(driversResponse.data || []);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -36,6 +40,26 @@ export default function ShopOrder() {
 
     fetchBookingData();
   }, []);
+
+  // Filter orders based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredData(bookingData);
+    } else {
+      const filtered = bookingData.filter((order) => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          order.orderId?.toLowerCase().includes(searchLower) ||
+          order.customerName?.toLowerCase().includes(searchLower) ||
+          order.email?.toLowerCase().includes(searchLower) ||
+          order.phone?.toLowerCase().includes(searchLower) ||
+          order.Item_name?.toLowerCase().includes(searchLower) ||
+          order.status?.toLowerCase().includes(searchLower)
+        );
+      });
+      setFilteredData(filtered);
+    }
+  }, [searchTerm, bookingData]);
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
@@ -186,6 +210,10 @@ export default function ShopOrder() {
     }
   };
 
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
+
   if (loading && bookingData.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center p-4">
@@ -218,30 +246,87 @@ export default function ShopOrder() {
             </div>
           </div>
           
-          <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-white font-medium text-sm">Total Orders</span>
+          {/* Search Bar */}
+          <div className="relative mt-3">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-            <span className="text-white font-bold text-xl">{bookingData.length}</span>
+            <input
+              type="text"
+              placeholder="Search orders by ID, name, email, phone, item, or status..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-white text-gray-800 pl-10 pr-10 py-3.5 rounded-xl border-2 border-orange-200 focus:ring-2 focus:ring-white focus:border-white focus:outline-none placeholder-gray-500 text-sm font-medium"
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <svg className="w-5 h-5 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-white font-medium text-sm">Total Orders</span>
+              </div>
+              <span className="text-white font-bold text-xl">{bookingData.length}</span>
+            </div>
+            <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <span className="text-white font-medium text-sm">Showing</span>
+              </div>
+              <span className="text-white font-bold text-xl">{filteredData.length}</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Orders List */}
       <div className="p-4 space-y-3">
-        {bookingData.length === 0 ? (
+        {filteredData.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-md p-8 text-center mt-8">
             <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
+              {searchTerm ? (
+                <svg className="w-10 h-10 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              ) : (
+                <svg className="w-10 h-10 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              )}
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Orders Yet</h3>
-            <p className="text-gray-500 text-sm">Customer orders will appear here</p>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              {searchTerm ? "No Orders Found" : "No Orders Yet"}
+            </h3>
+            <p className="text-gray-500 text-sm">
+              {searchTerm 
+                ? `No orders found for "${searchTerm}". Try different search terms.`
+                : "Customer orders will appear here"
+              }
+            </p>
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="mt-4 bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white px-6 py-2.5 rounded-lg font-medium text-sm"
+              >
+                Clear Search
+              </button>
+            )}
           </div>
         ) : (
-          bookingData.map((order) => (
+          filteredData.map((order) => (
             <div key={order.orderId} className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100">
               {/* Order Header */}
               <div className="p-4 bg-gradient-to-r from-orange-50 to-white">

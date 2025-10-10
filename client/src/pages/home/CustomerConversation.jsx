@@ -56,12 +56,7 @@ export default function CustomerConversation() {
       if (silent && newMessages.length > messages.length) {
         const lastMessage = newMessages[newMessages.length - 1];
 
-        if (!lastMessage.isOwnMessage) {
-          toast.success(`New message from ${shop?.name || "Shop"}`, {
-            duration: 3000,
-            icon: "💬",
-          });
-        }
+       
       }
 
       setMessages(newMessages);

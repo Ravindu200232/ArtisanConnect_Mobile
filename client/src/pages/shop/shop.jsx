@@ -2,7 +2,7 @@ import { CgProfile } from "react-icons/cg";
 import { MdOutlinePayments, MdRateReview } from "react-icons/md";
 import { BsGraphDown } from "react-icons/bs";
 import { CiSpeaker, CiBookmarkCheck, CiUser } from "react-icons/ci";
-import { IoSend } from "react-icons/io5"; // Add message icon
+import { IoSend } from "react-icons/io5";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -19,18 +19,39 @@ import ShopOwnerMessages from "./ShopOwnerMessages";
 
 export default function Shop() {
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState("booking");
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [activeTab, setActiveTab] = useState("");
 
-  // Update active tab based on current route
+  // Update active tab based on current route - more precise matching
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes("/booking")) setActiveTab("booking");
-    else if (path.includes("/shop")) setActiveTab("shop");
-    else if (path.includes("/profile")) setActiveTab("profile");
-    else if (path.includes("/review")) setActiveTab("review");
-    else if (path.includes("/messages")) setActiveTab("messages"); // Add messages tab
-  }, [location]);
+    console.log("Current path:", path); // Debug log
+    
+    // Check exact matches and nested routes more carefully
+    if (path === "/shopC/messages" || path.startsWith("/shopC/messages/")) {
+      setActiveTab("messages");
+    } else if (path === "/shopC/profile" || path.startsWith("/shopC/profile/")) {
+      setActiveTab("profile");
+    } else if (path === "/shopC/review" || path.startsWith("/shopC/review/")) {
+      setActiveTab("review");
+    } else if (path === "/shopC/booking" || path.startsWith("/shopC/booking/")) {
+      setActiveTab("booking");
+    } else if (
+      path === "/shopC/shop" || 
+      path === "/shopC/shop/add" || 
+      path === "/shopC/shop/edit" || 
+      path.startsWith("/shopC/shop/collection")
+    ) {
+      setActiveTab("shop");
+    } else if (path === "/shopC" || path === "/shopC/") {
+      setActiveTab("booking"); // Default to booking
+    } else {
+      setActiveTab("booking"); // Fallback
+    }
+    
+    console.log("Active tab set to:", path); // Debug log
+  }, [location.pathname]);
+
+  const token = localStorage.getItem("token");
 
   if (!token) {
     window.location.href = "/login";
@@ -51,9 +72,9 @@ export default function Shop() {
       label: "Shop",
     },
     {
-      to: "/shopC/messages", // Add messages route
+      to: "/shopC/messages",
       id: "messages",
-      icon: <IoSend className="text-2xl" />, // Message icon
+      icon: <IoSend className="text-2xl" />,
       label: "Messages",
     },
     {
@@ -80,7 +101,7 @@ export default function Shop() {
           <Route path="/shop" element={<ShopCreate />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/review" element={<ShopReview />} />
-          <Route path="/messages" element={<ShopOwnerMessages />} /> {/* Add messages route */}
+          <Route path="/messages" element={<ShopOwnerMessages />} />
 
           {/* Shop Management Routes */}
           <Route path="/shop/add" element={<AddShop />} />
@@ -89,12 +110,9 @@ export default function Shop() {
           {/* Collection Management Routes */}
           <Route path="/shop/collection" element={<CollectionPage />} />
           <Route path="/shop/collection/add" element={<AddCollection />} />
-          <Route
-            path="/shop/collection/update"
-            element={<UpdateCollection />}
-          />
+          <Route path="/shop/collection/update" element={<UpdateCollection />} />
 
-          {/* Default route - redirect to shop */}
+          {/* Default route - redirect to booking */}
           <Route path="/" element={<ShopOrder />} />
         </Routes>
       </main>
@@ -102,40 +120,45 @@ export default function Shop() {
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-orange-100 shadow-2xl z-30">
         <div className="flex justify-around items-center h-20 px-2">
-          {navigationItems.map(({ to, id, icon, label }) => (
-            <Link
-              key={to}
-              to={to}
-              className="flex flex-col items-center justify-center flex-1 h-full transition-all active:scale-95"
-            >
-              <div
-                className={`flex flex-col items-center justify-center transition-all ${
-                  activeTab === id ? "text-[#F85606]" : "text-gray-500"
-                }`}
+          {navigationItems.map(({ to, id, icon, label }) => {
+            const isActive = activeTab === id;
+            
+            return (
+              <Link
+                key={id}
+                to={to}
+                className="relative flex flex-col items-center justify-center flex-1 h-full transition-all active:scale-95"
               >
                 <div
-                  className={`p-2 rounded-xl transition-all ${
-                    activeTab === id ? "bg-orange-100" : ""
+                  className={`flex flex-col items-center justify-center transition-all duration-300 ${
+                    isActive ? "text-[#F85606]" : "text-gray-500"
                   }`}
                 >
-                  {icon}
+                  <div
+                    className={`p-2 rounded-xl transition-all duration-300 ${
+                      isActive 
+                        ? "bg-orange-100 scale-110 shadow-lg" 
+                        : "hover:bg-gray-100 hover:scale-105"
+                    }`}
+                  >
+                    {icon}
+                  </div>
+                  <span
+                    className={`text-xs mt-1 font-bold transition-all duration-300 ${
+                      isActive ? "text-[#F85606]" : "text-gray-600"
+                    }`}
+                  >
+                    {label}
+                  </span>
                 </div>
-                <span
-                  className={`text-xs mt-1 font-bold ${
-                    activeTab === id ? "text-[#F85606]" : "text-gray-600"
-                  }`}
-                >
-                  {label}
-                </span>
-              </div>
-              {activeTab === id && (
-                <div className="absolute bottom-0 w-12 h-1 bg-gradient-to-r from-[#F85606] to-[#FF7420] rounded-t-full"></div>
-              )}
-            </Link>
-          ))}
-
-          {/* Logout Button */}
-          
+                
+                {/* Active Indicator */}
+                {isActive && (
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-[#F85606] to-[#FF7420] rounded-t-full animate-slideIn shadow-lg"></div>
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Decorative gradient bar */}
@@ -144,6 +167,21 @@ export default function Shop() {
 
       {/* Global Styles */}
       <style>{`
+        @keyframes slideIn {
+          from {
+            width: 0;
+            opacity: 0;
+          }
+          to {
+            width: 3rem;
+            opacity: 1;
+          }
+        }
+
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
+        }
+
         .Toastify__toast-container,
         .go2072408551 {
           bottom: 90px !important;

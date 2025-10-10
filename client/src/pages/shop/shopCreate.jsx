@@ -257,29 +257,7 @@ export default function ShopCreate() {
 
               {/* Action Buttons */}
               <div className="p-4 bg-gray-50 space-y-2">
-                {/* Toggle Open/Close */}
-                {shopItem.isOpen ? (
-                  <button
-                    onClick={() => handleToggleShop(shopItem._id, false)}
-                    className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Close Shop
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handleToggleShop(shopItem._id, true)}
-                    className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Open Shop
-                  </button>
-                )}
-
+                
                 {/* Edit and Delete Buttons */}
                 <div className="grid grid-cols-2 gap-2">
                   <button
