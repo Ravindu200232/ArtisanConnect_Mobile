@@ -169,6 +169,19 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br ">
+
+
+      <div 
+          style={{
+            height: "40px",
+            width: "100%",
+            background: "linear-gradient(to right,#F85606, #FF7420 )",
+            position: "",
+            top: 0,
+            left: 0,
+            zIndex: 1000
+          }}
+        />
      
       {/* Main Content */}
       <main className="p-0">

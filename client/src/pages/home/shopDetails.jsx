@@ -91,6 +91,7 @@ export default function ShopDetails() {
   if (!shop) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        
         <div className="bg-white rounded-xl shadow-lg p-6 text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
             <svg
@@ -116,7 +117,19 @@ export default function ShopDetails() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header - Daraz Orange */}
-      <div className="bg-gradient-to-r shadow-md sticky top-0 z-20">
+        <div 
+          style={{
+            height: "40px",
+            width: "100%",
+            backgroundColor: "white",
+            position: "",
+            top: 0,
+            left: 0,
+            zIndex: 1000
+          }}
+        />
+
+      <div className="bg-gradient-to-r  bg-white top-0 z-20">
         <div className="px-4 py-4 flex items-center gap-3">
           <Link to="/" className="text-black">
             <svg
@@ -391,7 +404,7 @@ export default function ShopDetails() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-baseline gap-2">
                             <span className="text-lg font-bold text-orange-600">
-                              ₹{parseFloat(item.price).toFixed(2)}
+                              Rs.{parseFloat(item.price).toFixed(2)}
                             </span>
                           </div>
 

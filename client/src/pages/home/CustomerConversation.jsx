@@ -125,6 +125,7 @@ export default function CustomerConversation() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex flex-col">
+        
       {/* Header */}
       <div className="sticky top-0 z-30 bg-gradient-to-r from-[#F85606] to-[#FF7420] px-4 py-4 shadow-lg">
         <div className="flex items-center gap-3">

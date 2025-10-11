@@ -15,6 +15,170 @@ import Messages from "./messages";
 import CustomerMessages from "./CustomerMessages";
 import CustomerConversation from "./CustomerConversation";
 
+
+// Splash Screen Component
+export function SplashScreen({ onFinish }) {
+  const [fadeOut, setFadeOut] = useState(false);
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => {
+      setFadeOut(true);
+    }, 4500);
+
+    const finishTimer = setTimeout(() => {
+      onFinish();
+    }, 5500);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(finishTimer);
+    };
+  }, [onFinish]);
+
+  return (
+    <div 
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-1000 ${
+        fadeOut ? 'opacity-0' : 'opacity-100'
+      }`}
+      style={{
+        background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
+      }}
+    >
+      {/* Background Image - Full opacity */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          backgroundImage: "url('/screenspalch.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          animation: 'zoomIn 5s ease-out'
+        }}
+      />
+      
+      {/* Dark Overlay for better text readability */}
+      <div className="absolute inset-0 bg-black/40" />
+      
+      {/* Content Container */}
+      <div className="relative z-10 flex flex-col items-center justify-center px-8">
+        {/* Logo with Animation */}
+        <div 
+          className="mb-20"
+          style={{
+            animation: 'fadeInScale 1.5s ease-out'
+          }}
+        >
+          
+        </div>
+        
+        {/* App Name */}
+        <h1 
+          className="text-4xl font-bold text-white mb-20 mt-40 tracking-wide"
+          style={{
+            animation: 'fadeInUp 1.5s ease-out 0.3s both',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+          }}
+        >
+          Welcome
+        </h1>
+        
+        {/* Tagline */}
+        <p 
+          className="text-lg text-white/95 text-center font-semibold mb-8"
+          style={{
+            animation: 'fadeInUp 1.5s ease-out 0.6s both',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
+          }}
+        >
+          Empowering Artisans. Enriching Culture
+        </p>
+        
+        {/* Loading Spinner */}
+        <div 
+          className="mt-4"
+          style={{
+            animation: 'fadeIn 1s ease-out 1s both'
+          }}
+        >
+          <div className="flex space-x-2">
+            <div 
+              className="w-3 h-3 bg-white rounded-full"
+              style={{
+                animation: 'bounce 1.4s infinite ease-in-out'
+              }}
+            />
+            <div 
+              className="w-3 h-3 bg-white rounded-full"
+              style={{
+                animation: 'bounce 1.4s infinite ease-in-out 0.2s'
+              }}
+            />
+            <div 
+              className="w-3 h-3 bg-white rounded-full"
+              style={{
+                animation: 'bounce 1.4s infinite ease-in-out 0.4s'
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes fadeInScale {
+          0% {
+            opacity: 0;
+            transform: scale(0.5);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes fadeInUp {
+          0% {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeIn {
+          0% {
+            opacity: 0;
+          }
+          100% {
+            opacity: 1;
+          }
+        }
+
+        @keyframes zoomIn {
+          0% {
+            transform: scale(1);
+          }
+          100% {
+            transform: scale(1.1);
+          }
+        }
+
+        @keyframes bounce {
+          0%, 80%, 100% {
+            transform: scale(0);
+            opacity: 0.5;
+          }
+          40% {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // Daraz-style Bottom Navigation Component
 function BottomNav() {
   const [user, setUser] = useState(null);
@@ -216,33 +380,42 @@ function BottomNav() {
         </Link>
       </div>
     </nav>
-  
   );
 }
 
 export default function HomePage() {
-  return (
-    <div className="w-screen h-screen flex flex-col bg-[#F5F5F5]">
-      {/* Main Content Area */}
-      <div className="flex-grow overflow-auto pb-20">
-        <Routes>
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/" element={<Main />} />
-          <Route path="/product" element={<Item />} />
-          <Route path="/product/:key" element={<ProductOverview />} />
-          <Route path="/cart" element={<BookingPage />} />
-          <Route path="/location" element={<Location />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/shop/:id" element={<ShopDetails />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/*" element={<ErrorNotFound />} />
-          <Route path="/my-messages" element={<CustomerMessages />} />
-          <Route path="/messages/customer/:customerId/shop/:shopId" element={<CustomerConversation />} />
-        </Routes>
-      </div>
+  const [showSplash, setShowSplash] = useState(true);
 
-      {/* Daraz-style Bottom Navigation */}
-      <BottomNav />
-    </div>
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+  };
+
+  return (
+    <>
+      {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+      
+      <div className="w-screen h-screen flex flex-col bg-[#F5F5F5]">
+        {/* Main Content Area */}
+        <div className="flex-grow overflow-auto pb-20">
+          <Routes>
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/" element={<Main />} />
+            <Route path="/product" element={<Item />} />
+            <Route path="/product/:key" element={<ProductOverview />} />
+            <Route path="/cart" element={<BookingPage />} />
+            <Route path="/location" element={<Location />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/shop/:id" element={<ShopDetails />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/*" element={<ErrorNotFound />} />
+            <Route path="/my-messages" element={<CustomerMessages />} />
+            <Route path="/messages/customer/:customerId/shop/:shopId" element={<CustomerConversation />} />
+          </Routes>
+        </div>
+
+        {/* Daraz-style Bottom Navigation */}
+        <BottomNav />
+      </div>
+    </>
   );
 }

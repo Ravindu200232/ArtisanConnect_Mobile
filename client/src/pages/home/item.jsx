@@ -254,33 +254,26 @@ export default function Item() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+        <div 
+          style={{
+            height: "40px",
+            width: "100%",
+            backgroundColor: "white",
+            position: "",
+            top: 0,
+            left: 0,
+            zIndex: 1000
+          }}
+        />
       {/* Top Bar with Location and Notifications */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
-              A
+            <div className="w-30 h-10 rounded-lg flex items-center justify-center">
+              <img src="/logo3r.png" className="w-[100px] object-cover"/>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Deliver to</p>
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-semibold text-gray-800">
-                  Sri Lanka
-                </span>
-                <svg
-                  className="w-3 h-3 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
+              {/* Location info removed as per your original code */}
             </div>
           </div>
 
@@ -301,21 +294,7 @@ export default function Item() {
               </svg>
               <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
-            <button>
-              <svg
-                className="w-6 h-6 text-gray-700"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                />
-              </svg>
-            </button>
+            
           </div>
         </div>
 

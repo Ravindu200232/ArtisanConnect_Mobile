@@ -93,6 +93,17 @@ export default function Shop() {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br ">
+      <div 
+          style={{
+            height: "40px",
+            width: "100%",
+            background: "linear-gradient(to right,#F85606, #FF7420 )",
+            position: "",
+            top: 0,
+            left: 0,
+            zIndex: 1000
+          }}
+        />
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20">
         <Routes>

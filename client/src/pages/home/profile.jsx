@@ -4,6 +4,9 @@ import Swal from "sweetalert2";
 import mediaUpload from "../../utils/mediaUpload";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { HiLocationMarker } from "react-icons/hi";
+import { AiOutlineMail } from "react-icons/ai";
+import { BiPhoneCall } from "react-icons/bi";
 
 export function Profile() {
   const [user, setUser] = useState(null);
@@ -21,11 +24,25 @@ export function Profile() {
   const [deliveries, setDeliveries] = useState([]);
   const [orders, setOrders] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
   const [deliveriesLoading, setDeliveriesLoading] = useState(true);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [inquiriesLoading, setInquiriesLoading] = useState(true);
   const [expandedDeliveryId, setExpandedDeliveryId] = useState(null);
+  const [inquiryMessage, setInquiryMessage] = useState("");
+  const [inquiryLoading, setInquiryLoading] = useState(false);
   const mapRefs = useRef({});
+
+  // Settings state
+  const [appSettings, setAppSettings] = useState({
+    notifications: true,
+    location: true,
+    biometric: false,
+    darkMode: false,
+    autoUpdate: true,
+    dataSaver: false
+  });
 
   const statusSteps = ["pending", "confirmed", "preparing", "dispatched", "delivered"];
 
@@ -43,13 +60,25 @@ export function Profile() {
         image: parsed.image,
       });
     }
+
+    // Load settings from localStorage
+    const savedSettings = localStorage.getItem("appSettings");
+    if (savedSettings) {
+      setAppSettings(JSON.parse(savedSettings));
+    }
   }, []);
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("appSettings", JSON.stringify(appSettings));
+  }, [appSettings]);
 
   useEffect(() => {
     if (user) {
       fetchDeliveries();
       fetchOrders();
       fetchNotifications();
+      fetchInquiries();
     }
   }, [user]);
 
@@ -94,6 +123,20 @@ export function Profile() {
       console.error("Error fetching notifications:", err);
     } finally {
       setNotificationsLoading(false);
+    }
+  };
+
+  const fetchInquiries = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/inquiry`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setInquiries(response.data || []);
+    } catch (err) {
+      console.error("Error fetching inquiries:", err);
+    } finally {
+      setInquiriesLoading(false);
     }
   };
 
@@ -183,6 +226,11 @@ export function Profile() {
   };
 
   const getLocation = () => {
+    if (!appSettings.location) {
+      Swal.fire("Location Disabled", "Please enable location services in settings to use this feature.", "warning");
+      return;
+    }
+
     navigator.geolocation?.getCurrentPosition(
       async ({ coords }) => {
         const res = await axios.get(
@@ -238,6 +286,115 @@ export function Profile() {
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
+  };
+
+  const handleInquirySubmit = async (e) => {
+    e.preventDefault();
+
+    if (!inquiryMessage.trim()) {
+      Swal.fire("Error", "Please enter your message.", "warning");
+      return;
+    }
+
+    try {
+      setInquiryLoading(true);
+      const token = localStorage.getItem("token");
+
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/inquiry`,
+        { message: inquiryMessage },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      Swal.fire("Success", "Your inquiry has been submitted.", "success");
+      setInquiryMessage("");
+      fetchInquiries();
+    } catch (error) {
+      console.error("Inquiry submission failed", error);
+      Swal.fire("Error", "Please login first.", "error");
+    } finally {
+      setInquiryLoading(false);
+    }
+  };
+
+  const handleInquiryUpdate = async (inquiryId, message) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!message.trim()) {
+        Swal.fire("Warning", "Message cannot be empty.", "warning");
+        return;
+      }
+
+      await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/${inquiryId}`,
+        { message },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      Swal.fire("Success", "Inquiry updated successfully.", "success");
+      fetchInquiries();
+    } catch (err) {
+      console.error("Failed to update inquiry", err);
+      Swal.fire("Error", "Failed to update inquiry.", "error");
+    }
+  };
+
+  const handleInquiryDelete = async (inquiryId) => {
+    const confirmed = await Swal.fire({
+      title: "Are you sure?",
+      text: "This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (confirmed.isConfirmed) {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.delete(
+          `${import.meta.env.VITE_BACKEND_URL}/api/inquiry/${inquiryId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        Swal.fire("Deleted!", "Your inquiry has been removed.", "success");
+        fetchInquiries();
+      } catch (err) {
+        console.error("Failed to delete inquiry", err);
+        Swal.fire("Error", "Failed to delete inquiry.", "error");
+      }
+    }
+  };
+
+  // Settings toggle handler
+  const handleSettingToggle = (settingId) => {
+    setAppSettings(prev => ({
+      ...prev,
+      [settingId]: !prev[settingId]
+    }));
+
+    // Show feedback for specific settings
+    const settingNames = {
+      notifications: "Push Notifications",
+      location: "Location Services",
+      biometric: "Biometric Login",
+      darkMode: "Dark Mode",
+      autoUpdate: "Auto Update",
+      dataSaver: "Data Saver"
+    };
+
+    const action = appSettings[settingId] ? "disabled" : "enabled";
+    Swal.fire("Success", `${settingNames[settingId]} ${action}`, "success");
   };
 
   const getStatusColor = (status) => {
@@ -347,6 +504,118 @@ export function Profile() {
     );
   };
 
+  // Settings configuration
+  const settingsConfig = [
+    {
+      id: "notifications",
+      title: "Push Notifications",
+      description: "Order updates, promotions, and alerts",
+      icon: "🔔",
+      type: "toggle"
+    },
+    {
+      id: "location",
+      title: "Location Services",
+      description: "For delivery tracking and nearby shops",
+      icon: "📍",
+      type: "toggle"
+    },
+    {
+      id: "biometric",
+      title: "Biometric Login",
+      description: "Use fingerprint or face ID",
+      icon: "👆",
+      type: "toggle"
+    },
+    {
+      id: "darkMode",
+      title: "Dark Mode",
+      description: "Switch to dark theme",
+      icon: "🌙",
+      type: "toggle"
+    },
+    {
+      id: "autoUpdate",
+      title: "Auto Update",
+      description: "Keep app updated automatically",
+      icon: "🔄",
+      type: "toggle"
+    },
+    {
+      id: "dataSaver",
+      title: "Data Saver",
+      description: "Reduce data usage",
+      icon: "📱",
+      type: "toggle"
+    }
+  ];
+
+  const accountSettings = [
+    {
+      id: "privacy",
+      title: "Privacy & Security",
+      description: "Manage your data and security settings",
+      icon: "🔒",
+      type: "link"
+    },
+    {
+      id: "language",
+      title: "Language",
+      description: "App language settings",
+      icon: "🌐",
+      value: "English",
+      type: "link"
+    },
+    {
+      id: "currency",
+      title: "Currency",
+      description: "Preferred currency for payments",
+      icon: "💵",
+      value: "LKR - Sri Lankan Rupee",
+      type: "link"
+    },
+    {
+      id: "theme",
+      title: "Theme",
+      description: "Appearance and theme settings",
+      icon: "🎨",
+      value: "Default",
+      type: "link"
+    }
+  ];
+
+  const supportSettings = [
+    {
+      id: "help",
+      title: "Help & Support",
+      description: "Get help with the app",
+      icon: "❓",
+      type: "link"
+    },
+    {
+      id: "about",
+      title: "About App",
+      description: "Version and app information",
+      icon: "ℹ️",
+      value: "Version 2.1.0",
+      type: "link"
+    },
+    {
+      id: "rate",
+      title: "Rate App",
+      description: "Share your experience",
+      icon: "⭐",
+      type: "link"
+    },
+    {
+      id: "share",
+      title: "Share App",
+      description: "Tell friends about us",
+      icon: "📤",
+      type: "link"
+    }
+  ];
+
   if (!user) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-50">
@@ -357,6 +626,17 @@ export function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div 
+          style={{
+            height: "40px",
+            width: "100%",
+            background: "linear-gradient(to right,#F85606, #FF7420 )",
+            position: "",
+            top: 0,
+            left: 0,
+            zIndex: 1000
+          }}
+        />
       {/* Daraz Orange Header */}
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF6B2C] text-white pt-6 pb-20 px-4">
         <div className="flex items-center justify-between mb-6">
@@ -395,7 +675,7 @@ export function Profile() {
       {/* Navigation Tabs */}
       <div className="px-4 pt-20 pb-4">
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="grid grid-cols-4 divide-x divide-gray-100">
+          <div className="grid grid-cols-5 divide-x divide-gray-100">
             <button
               onClick={() => setActiveTab("profile")}
               className={`py-4 px-2 text-center transition ${
@@ -430,18 +710,27 @@ export function Profile() {
               <span className={`text-xs font-medium ${activeTab === "deliveries" ? "text-[#F85606]" : "text-gray-600"}`}>Delivery</span>
             </button>
             <button
-              onClick={() => setActiveTab("notifications")}
-              className={`py-4 px-2 text-center transition relative ${
-                activeTab === "notifications" ? "bg-[#FFF5F0]" : ""
+              onClick={() => setActiveTab("inquiries")}
+              className={`py-4 px-2 text-center transition ${
+                activeTab === "inquiries" ? "bg-[#FFF5F0]" : ""
               }`}
             >
-              {notifications.filter(n => !n.read).length > 0 && (
-                <span className="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
-              <svg className={`w-6 h-6 mx-auto mb-1 ${activeTab === "notifications" ? "text-[#F85606]" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              <svg className={`w-6 h-6 mx-auto mb-1 ${activeTab === "inquiries" ? "text-[#F85606]" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
-              <span className={`text-xs font-medium ${activeTab === "notifications" ? "text-[#F85606]" : "text-gray-600"}`}>Alerts</span>
+              <span className={`text-xs font-medium ${activeTab === "inquiries" ? "text-[#F85606]" : "text-gray-600"}`}>Inquiries</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className={`py-4 px-2 text-center transition ${
+                activeTab === "settings" ? "bg-[#FFF5F0]" : ""
+              }`}
+            >
+              <svg className={`w-6 h-6 mx-auto mb-1 ${activeTab === "settings" ? "text-[#F85606]" : "text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className={`text-xs font-medium ${activeTab === "settings" ? "text-[#F85606]" : "text-gray-600"}`}>Settings</span>
             </button>
           </div>
         </div>
@@ -672,69 +961,236 @@ export function Profile() {
           </div>
         )}
 
-        {/* Notifications Tab */}
-        {activeTab === "notifications" && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-gray-800 flex items-center">
+        {/* Inquiries Tab */}
+        {activeTab === "inquiries" && (
+          <div className="space-y-4">
+            {/* Contact Information */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center">
                 <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
-                Notifications
+                Contact Information
               </h3>
+              <div className="space-y-3">
+                <div className="flex items-center text-gray-700">
+                  <BiPhoneCall className="text-xl text-[#F85606] mr-3" />
+                  <span className="text-sm font-medium">0789840996</span>
+                </div>
+
+                <div className="flex items-center text-gray-700">
+                  <AiOutlineMail className="text-xl text-[#F85606] mr-3" />
+                  <span className="text-sm font-medium">Ravindu2232@gmail.com</span>
+                </div>
+
+                <div className="flex items-center text-gray-700">
+                  <HiLocationMarker className="text-xl text-[#F85606] mr-3" />
+                  <span className="text-sm font-medium">Kahatagasdigiliya, Anuradhapura</span>
+                </div>
+              </div>
             </div>
-            {notificationsLoading ? (
-              <div className="flex justify-center items-center py-20">
-                <div className="w-10 h-10 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-                <div className="text-gray-300 text-6xl mb-4">🔔</div>
-                <h4 className="text-base font-semibold text-gray-700 mb-2">No notifications</h4>
-                <p className="text-sm text-gray-500">You're all caught up!</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification._id}
-                    className={`rounded-xl overflow-hidden cursor-pointer transition ${
-                      notification.read 
-                        ? 'bg-white' 
-                        : 'bg-[#FFF5F0]'
-                    }`}
-                    onClick={() => !notification.read && markNotificationAsRead(notification._id)}
-                  >
-                    <div className="p-4 flex gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        notification.read ? 'bg-gray-100' : 'bg-[#F85606]'
-                      }`}>
-                        <svg className={`w-5 h-5 ${notification.read ? 'text-gray-400' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
+
+            {/* Inquiry Form */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center">
+                <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
+                Send Inquiry
+              </h3>
+              <form className="space-y-3" onSubmit={handleInquirySubmit}>
+                <textarea
+                  name="message"
+                  value={inquiryMessage}
+                  onChange={(e) => setInquiryMessage(e.target.value)}
+                  placeholder="Type your message here..."
+                  rows="4"
+                  className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#F85606] focus:ring-1 focus:ring-[#F85606] resize-none"
+                ></textarea>
+
+                <button
+                  type="submit"
+                  disabled={inquiryLoading}
+                  className="w-full bg-[#F85606] hover:bg-[#E04E05] text-white py-3 rounded-lg font-medium transition disabled:opacity-50"
+                >
+                  {inquiryLoading ? "Sending..." : "Send Message"}
+                </button>
+              </form>
+            </div>
+
+            {/* Inquiry List */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center">
+                <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
+                Your Inquiries
+              </h3>
+              {inquiriesLoading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="w-8 h-8 border-4 border-[#F85606] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : inquiries.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-300 text-4xl mb-3">💬</div>
+                  <p className="text-sm text-gray-500">No inquiries yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {inquiries.map((inquiry, index) => (
+                    <div key={inquiry._id} className="border border-gray-200 rounded-lg p-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          inquiry.response 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {inquiry.response ? 'Replied' : 'Pending'}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className={`text-sm font-semibold ${notification.read ? 'text-gray-600' : 'text-gray-800'}`}>
-                            {notification.title}
-                          </h4>
-                          {!notification.read && (
-                            <span className="w-2 h-2 bg-[#F85606] rounded-full flex-shrink-0 ml-2 mt-1"></span>
-                          )}
+                      
+                      <textarea
+                        rows="2"
+                        className="w-full p-2 border border-gray-300 rounded text-sm mb-2 resize-none"
+                        value={inquiry.message}
+                        onChange={(e) => {
+                          const updated = [...inquiries];
+                          updated[index].message = e.target.value;
+                          setInquiries(updated);
+                        }}
+                      />
+
+                      {inquiry.response && (
+                        <div className="bg-gray-50 p-2 rounded text-sm">
+                          <p className="text-xs text-gray-500 mb-1">Response:</p>
+                          <p className="text-gray-700">{inquiry.response}</p>
                         </div>
-                        <p className="text-xs text-gray-600 mb-2 line-clamp-2">{notification.message}</p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(notification.createdAt).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
+                      )}
+
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={() => handleInquiryUpdate(inquiry._id, inquiry.message)}
+                          className="flex-1 bg-[#F85606] text-white py-2 rounded text-sm font-medium hover:bg-[#E04E05] transition"
+                        >
+                          Update
+                        </button>
+                        <button
+                          onClick={() => handleInquiryDelete(inquiry._id)}
+                          className="flex-1 bg-red-600 text-white py-2 rounded text-sm font-medium hover:bg-red-700 transition"
+                        >
+                          Delete
+                        </button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === "settings" && (
+          <div className="space-y-4">
+            {/* App Settings */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center">
+                <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
+                App Settings
+              </h3>
+              <div className="space-y-3">
+                {settingsConfig.map((setting) => (
+                  <div key={setting.id} className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{setting.icon}</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{setting.title}</p>
+                        <p className="text-xs text-gray-500">{setting.description}</p>
+                      </div>
+                    </div>
+                    {setting.type === "toggle" && (
+                      <button
+                        onClick={() => handleSettingToggle(setting.id)}
+                        className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition ${
+                          appSettings[setting.id] ? 'bg-[#F85606]' : 'bg-gray-300'
+                        }`}
+                      >
+                        <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition ${
+                          appSettings[setting.id] ? 'translate-x-6' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Account Settings */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center">
+                <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
+                Account Settings
+              </h3>
+              <div className="space-y-3">
+                {accountSettings.map((setting) => (
+                  <div key={setting.id} className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{setting.icon}</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{setting.title}</p>
+                        <p className="text-xs text-gray-500">{setting.description}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {setting.value && (
+                        <p className="text-sm text-gray-600">{setting.value}</p>
+                      )}
+                      <span className="text-gray-400">›</span>
                     </div>
                   </div>
                 ))}
               </div>
-            )}
+            </div>
+
+            {/* Support & About */}
+            <div className="bg-white rounded-xl shadow-sm p-4">
+              <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center">
+                <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
+                Support & About
+              </h3>
+              <div className="space-y-3">
+                {supportSettings.map((setting) => (
+                  <div key={setting.id} className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{setting.icon}</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{setting.title}</p>
+                        <p className="text-xs text-gray-500">{setting.description}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {setting.value && (
+                        <p className="text-sm text-gray-600">{setting.value}</p>
+                      )}
+                      <span className="text-gray-400">›</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="bg-white rounded-xl shadow-sm p-4 border border-red-200">
+              <h3 className="text-base font-bold text-red-700 mb-4 flex items-center">
+                <span className="w-1 h-5 bg-red-500 rounded mr-2"></span>
+                Danger Zone
+              </h3>
+              <div className="space-y-3">
+                <button
+                  onClick={handleDelete}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition"
+                >
+                  Delete Account
+                </button>
+                <p className="text-xs text-red-600 text-center">
+                  This action cannot be undone. All your data will be permanently deleted.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>

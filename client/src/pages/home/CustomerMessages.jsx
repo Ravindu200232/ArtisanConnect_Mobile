@@ -212,6 +212,18 @@ export default function CustomerMessages() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br relative">
+
+        <div 
+          style={{
+            height: "40px",
+            width: "100%",
+            background: "linear-gradient(to right,#F85606, #FF7420 )",
+            position: "",
+            top: 0,
+            left: 0,
+            zIndex: 1000
+          }}
+        />
       {/* Unread Badge */}
       {totalUnreadCount > 0 && (
         <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">

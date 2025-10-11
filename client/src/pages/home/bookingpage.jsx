@@ -285,8 +285,20 @@ export function BookingPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] pb-56">
+
+      <div 
+          style={{
+            height: "40px",
+            width: "100%",
+            background: "white",
+            position: "",
+            top: 0,
+            left: 0,
+            zIndex: 1000
+          }}
+        />
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white border-b border-[#E0E0E0] px-4 py-3">
+      <div className="sticky top-0 z-30 bg-white  border-[#E0E0E0] px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button

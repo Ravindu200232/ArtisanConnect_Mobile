@@ -210,7 +210,17 @@ export default function Main() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       
-      
+      <div 
+          style={{
+            height: "40px",
+            width: "100%",
+            backgroundColor: "white",
+            position: "",
+            top: 0,
+            left: 0,
+            zIndex: 1000
+          }}
+        />
       {/* Top Bar with Location and Notifications */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
