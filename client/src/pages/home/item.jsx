@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Item() {
   const [state, setState] = useState("loading");
@@ -8,12 +9,13 @@ export default function Item() {
   const [categoryFilters, setCategoryFilters] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedSellerType, setSelectedSellerType] = useState("all");
-  
+
   // Search Modal States
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
+  const navigate = useNavigate();
 
   // Seller Type Options with images
   const sellerTypes = [
@@ -95,7 +97,7 @@ export default function Item() {
 
           setCategories(categoryData);
           setState("success");
-          
+
           // Load recent searches
           const saved = sessionStorage.getItem("recentSearches");
           if (saved) {
@@ -161,12 +163,13 @@ export default function Item() {
   // Handle search in modal
   const handleSearchInModal = (value) => {
     setSearchQuery(value);
-    
+
     if (value.trim().length > 0) {
-      const filtered = items.filter((item) =>
-        item.name.toLowerCase().includes(value.toLowerCase()) ||
-        item.description?.toLowerCase().includes(value.toLowerCase()) ||
-        item.category?.toLowerCase().includes(value.toLowerCase())
+      const filtered = items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(value.toLowerCase()) ||
+          item.description?.toLowerCase().includes(value.toLowerCase()) ||
+          item.category?.toLowerCase().includes(value.toLowerCase())
       );
       setSearchResults(filtered);
     } else {
@@ -177,7 +180,10 @@ export default function Item() {
   // Save search to recent searches
   const saveRecentSearch = (query) => {
     if (query.trim().length > 0) {
-      const updated = [query, ...recentSearches.filter(s => s !== query)].slice(0, 5);
+      const updated = [
+        query,
+        ...recentSearches.filter((s) => s !== query),
+      ].slice(0, 5);
       setRecentSearches(updated);
       sessionStorage.setItem("recentSearches", JSON.stringify(updated));
     }
@@ -237,16 +243,23 @@ export default function Item() {
   };
 
   const handleItemClick = (item) => {
-    window.location.href = `/product/${item._id}`;
+   
+    navigate(`/product/${item._id}`);
   };
 
   // Get counts for each seller type
   const getSellerTypeCounts = () => {
     return {
       all: items.length,
-      product: items.filter((item) => item.sellerType?.toLowerCase() === "product").length,
-      material: items.filter((item) => item.sellerType?.toLowerCase() === "material").length,
-      tourism: items.filter((item) => item.sellerType?.toLowerCase() === "tourism").length,
+      product: items.filter(
+        (item) => item.sellerType?.toLowerCase() === "product"
+      ).length,
+      material: items.filter(
+        (item) => item.sellerType?.toLowerCase() === "material"
+      ).length,
+      tourism: items.filter(
+        (item) => item.sellerType?.toLowerCase() === "tourism"
+      ).length,
     };
   };
 
@@ -254,27 +267,25 @@ export default function Item() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-        <div 
-          style={{
-            height: "40px",
-            width: "100%",
-            backgroundColor: "white",
-            position: "",
-            top: 0,
-            left: 0,
-            zIndex: 1000
-          }}
-        />
+      <div
+        style={{
+          height: "40px",
+          width: "100%",
+          backgroundColor: "white",
+          position: "",
+          top: 0,
+          left: 0,
+          zIndex: 1000,
+        }}
+      />
       {/* Top Bar with Location and Notifications */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-30 h-10 rounded-lg flex items-center justify-center">
-              <img src="/logo3r.png" className="w-[100px] object-cover"/>
+              <img src="/logo3r.png" className="w-[100px] object-cover" />
             </div>
-            <div>
-              {/* Location info removed as per your original code */}
-            </div>
+            <div>{/* Location info removed as per your original code */}</div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -294,15 +305,11 @@ export default function Item() {
               </svg>
               <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
-            
           </div>
         </div>
 
         {/* Search Bar - Opens Modal */}
-        <button
-          onClick={openSearchModal}
-          className="w-full text-left"
-        >
+        <button onClick={openSearchModal} className="w-full text-left">
           <div className="relative">
             <div className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-gray-100 text-gray-500 flex items-center">
               Search products...
@@ -375,7 +382,7 @@ export default function Item() {
                 placeholder="Search for products, materials, tours..."
                 value={searchQuery}
                 onChange={(e) => handleSearchInModal(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearchSubmit()}
+                onKeyPress={(e) => e.key === "Enter" && handleSearchSubmit()}
                 autoFocus
                 className="w-full pl-12 pr-12 py-3 rounded-xl bg-white text-gray-800 placeholder-gray-500 outline-none shadow-lg"
               />
@@ -502,7 +509,10 @@ export default function Item() {
                     >
                       <div className="relative">
                         <img
-                          src={item.images?.[0] || "https://via.placeholder.com/200"}
+                          src={
+                            item.images?.[0] ||
+                            "https://via.placeholder.com/200"
+                          }
                           alt={item.name}
                           className="w-full h-40 object-cover"
                         />
@@ -638,8 +648,8 @@ export default function Item() {
                   alt={type.label}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextElementSibling.style.display = 'flex';
+                    e.target.style.display = "none";
+                    e.target.nextElementSibling.style.display = "flex";
                   }}
                 />
                 <div
@@ -652,7 +662,6 @@ export default function Item() {
                   <p className="text-white font-bold text-sm mb-1">
                     {type.label}
                   </p>
-                  
                 </div>
               </div>
               {selectedSellerType === type.id && (
@@ -777,7 +786,9 @@ export default function Item() {
                 />
               </svg>
             </div>
-            <p className="text-gray-500 text-lg font-semibold">No items found</p>
+            <p className="text-gray-500 text-lg font-semibold">
+              No items found
+            </p>
             <p className="text-gray-400 text-sm mt-2 mb-4">
               Try adjusting your search or filters
             </p>
@@ -842,8 +853,12 @@ export default function Item() {
 
                   {item.rating && (
                     <div className="flex items-center gap-1 mb-2">
-                      <div className="flex text-xs">{renderStars(item.rating)}</div>
-                      <span className="text-xs text-gray-500">({item.rating})</span>
+                      <div className="flex text-xs">
+                        {renderStars(item.rating)}
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        ({item.rating})
+                      </span>
                     </div>
                   )}
 

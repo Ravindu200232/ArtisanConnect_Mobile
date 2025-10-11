@@ -16,6 +16,8 @@ import CustomerMessages from "./CustomerMessages";
 import CustomerConversation from "./CustomerConversation";
 
 
+
+
 // Splash Screen Component
 export function SplashScreen({ onFinish }) {
   const [fadeOut, setFadeOut] = useState(false);
@@ -62,31 +64,39 @@ export function SplashScreen({ onFinish }) {
       <div className="relative z-10 flex flex-col items-center justify-center px-8">
         {/* Logo with Animation */}
         <div 
-          className="mb-20"
+          className="mb-8"
           style={{
             animation: 'fadeInScale 1.5s ease-out'
           }}
         >
-          
+          <img 
+            src="/logo3r.png" 
+            alt="ArtisanConnect Logo" 
+            className="w-32 h-32 object-contain drop-shadow-2xl"
+          />
         </div>
         
         {/* App Name */}
         <h1 
-          className="text-4xl font-bold text-white mb-20 mt-40 tracking-wide"
+          className="text-4xl font-bold text-white mb-3 tracking-wide"
           style={{
             animation: 'fadeInUp 1.5s ease-out 0.3s both',
             textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
           }}
         >
-          Welcome
+          ArtisanConnect
         </h1>
         
+      </div>
+
+      {/* Bottom Section - Tagline and Loading */}
+      <div className="absolute bottom-16 left-0 right-0 flex flex-col items-center px-8">
         {/* Tagline */}
         <p 
-          className="text-lg text-white/95 text-center font-semibold mb-8"
+          className="text-lg text-white/95 text-center font-medium mb-6"
           style={{
             animation: 'fadeInUp 1.5s ease-out 0.6s both',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.2)'
+            textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
           }}
         >
           Empowering Artisans. Enriching Culture
@@ -94,7 +104,6 @@ export function SplashScreen({ onFinish }) {
         
         {/* Loading Spinner */}
         <div 
-          className="mt-4"
           style={{
             animation: 'fadeIn 1s ease-out 1s both'
           }}
