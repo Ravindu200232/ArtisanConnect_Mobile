@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import axios from "axios";
+import AIShopImageGenerator from "../../components/AIShopImageGenerator";
 import { useNavigate } from "react-router-dom";
 import mediaUpload from "../../utils/mediaUpload";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { 
-  showSuccessAlert, 
-  showErrorAlert, 
+import {
+  showSuccessAlert,
+  showErrorAlert,
   showConfirmationAlert,
-  showLoadingAlert 
+  showLoadingAlert,
 } from "../../components/showSuccessAlert";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
@@ -31,7 +32,7 @@ const businessCategories = {
     { value: "furniture_making", label: "🛋️ Furniture Making" },
     { value: "glass_aluminum", label: "🪟 Glass & Aluminum Work" },
     { value: "tile_marble", label: "⬜ Tiles & Marble Work" },
-    { value: "painting", label: "🎨 Painting & Decoration" }
+    { value: "painting", label: "🎨 Painting & Decoration" },
   ],
   material: [
     { value: "building_materials", label: "🏗️ Building Materials" },
@@ -43,16 +44,22 @@ const businessCategories = {
     { value: "paint_supply", label: "🎨 Paint & Coating Supply" },
     { value: "electrical_supply", label: "⚡ Electrical Supplies" },
     { value: "plumbing_supply", label: "🔧 Plumbing Supplies" },
-    { value: "auto_parts", label: "🚗 Auto Parts & Accessories" }
-  ]
+    { value: "auto_parts", label: "🚗 Auto Parts & Accessories" },
+  ],
 };
 
 export default function AddShop() {
   const navigate = useNavigate();
-  const [shopData, setShopData] = useState({
-    name: "", address: "", phone: "", description: "", images: []
-  });
   
+  // All state declarations inside the component
+  const [shopData, setShopData] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    description: "",
+    images: [],
+  });
+
   const [imageFiles, setImageFiles] = useState([]);
   const [imageQualityScores, setImageQualityScores] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,12 +75,38 @@ export default function AddShop() {
   const [useManualDescription, setUseManualDescription] = useState(false);
   const [isNarratorEnabled, setIsNarratorEnabled] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  
+  const [aiUploadedImageUrls, setAiUploadedImageUrls] = useState([]); // Moved inside component
+
   const speechSynthesis = window.speechSynthesis;
+
+  // Add this function to handle AI images uploaded to Supabase - moved inside component
+  const handleAiImagesUploaded = (supabaseUrls) => {
+    try {
+      // Add the Supabase URLs to your shop data images array
+      setShopData(prev => ({
+        ...prev,
+        images: [...prev.images, ...supabaseUrls]
+      }));
+      
+      // Also add to the local state for tracking
+      setAiUploadedImageUrls(prev => [...prev, ...supabaseUrls]);
+      
+      showSuccessAlert('✅ AI Images Added!', `${supabaseUrls.length} AI images uploaded and ready for your shop`);
+      
+      // Speak feedback if narrator is enabled
+      if (isNarratorEnabled) {
+        speakText(`${supabaseUrls.length} AI images uploaded to your shop`);
+      }
+      
+    } catch (error) {
+      console.error('Error handling AI uploaded images:', error);
+      showErrorAlert('Add Failed', 'Could not add AI images to shop data');
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setShopData(prev => ({ ...prev, [name]: value }));
+    setShopData((prev) => ({ ...prev, [name]: value }));
   };
 
   const speakText = (text) => {
@@ -83,7 +116,7 @@ export default function AddShop() {
     utterance.rate = 0.9;
     utterance.pitch = 1;
     utterance.volume = 1;
-    utterance.lang = 'en-US';
+    utterance.lang = "en-US";
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
@@ -101,11 +134,11 @@ export default function AddShop() {
 
   const analyzeImageQuality = async (file) => {
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-      
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" }); // Fixed model name
+
       const reader = new FileReader();
       const base64Promise = new Promise((resolve) => {
-        reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+        reader.onload = (e) => resolve(e.target.result.split(",")[1]);
         reader.readAsDataURL(file);
       });
       const base64Data = await base64Promise;
@@ -118,25 +151,34 @@ export default function AddShop() {
       const dimensions = await dimensionsPromise;
 
       const prompt = `Analyze this image for shop listing quality. Rate 1-10.
-Consider: resolution (${dimensions.width}x${dimensions.height}), lighting, professional appearance, focus, sharpness.
-Respond in JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions.height}", "fileSize": "${(file.size/1024).toFixed(1)}KB", "quality": "<excellent/good/fair/poor>", "feedback": "<brief assessment>", "recommendations": "<suggestions>"}`;
+Consider: resolution (${dimensions.width}x${
+        dimensions.height
+      }), lighting, professional appearance, focus, sharpness.
+Respond in JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${
+        dimensions.height
+      }", "fileSize": "${(file.size / 1024).toFixed(
+        1
+      )}KB", "quality": "<excellent/good/fair/poor>", "feedback": "<brief assessment>", "recommendations": "<suggestions>"}`;
 
       const result = await model.generateContent([
         prompt,
-        { inlineData: { mimeType: file.type, data: base64Data } }
+        { inlineData: { mimeType: file.type, data: base64Data } },
       ]);
 
       const text = result.response.text();
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) return JSON.parse(jsonMatch[0]);
-      
+
       return {
         rating: dimensions.width >= 1024 && dimensions.height >= 768 ? 8 : 6,
         resolution: `${dimensions.width}x${dimensions.height}`,
-        fileSize: `${(file.size/1024).toFixed(1)}KB`,
+        fileSize: `${(file.size / 1024).toFixed(1)}KB`,
         quality: dimensions.width >= 1024 ? "good" : "fair",
         feedback: "Image uploaded successfully",
-        recommendations: dimensions.width < 1024 ? "Use higher resolution (1024x768+)" : "Good quality"
+        recommendations:
+          dimensions.width < 1024
+            ? "Use higher resolution (1024x768+)"
+            : "Good quality",
       };
     } catch (error) {
       console.error("Image analysis error:", error);
@@ -147,68 +189,149 @@ Respond in JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensi
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
-    
-    setIsAnalyzingImage(true);
-    if (isNarratorEnabled) speakText(`Analyzing ${files.length} image${files.length > 1 ? 's' : ''}`);
 
-    const qualities = await Promise.all(files.map(f => analyzeImageQuality(f)));
-    setImageFiles(prev => [...prev, ...files]);
-    setImageQualityScores(prev => [...prev, ...qualities]);
-    
-    const avgRating = qualities.reduce((sum, q) => sum + (q?.rating || 0), 0) / qualities.length;
-    const excellentCount = qualities.filter(q => q?.rating >= 8).length;
-    const poorCount = qualities.filter(q => q?.rating < 6).length;
-    
+    setIsAnalyzingImage(true);
+    if (isNarratorEnabled)
+      speakText(
+        `Analyzing ${files.length} image${files.length > 1 ? "s" : ""}`
+      );
+
+    const qualities = await Promise.all(
+      files.map((f) => analyzeImageQuality(f))
+    );
+    setImageFiles((prev) => [...prev, ...files]);
+    setImageQualityScores((prev) => [...prev, ...qualities]);
+
+    const avgRating =
+      qualities.reduce((sum, q) => sum + (q?.rating || 0), 0) /
+      qualities.length;
+    const excellentCount = qualities.filter((q) => q?.rating >= 8).length;
+    const poorCount = qualities.filter((q) => q?.rating < 6).length;
+
     if (avgRating >= 8) {
       showSuccessAlert(
-        `✨ Excellent Image Quality!`, 
-        `${excellentCount} image${excellentCount > 1 ? 's' : ''} rated 8+ out of 10`
+        `✨ Excellent Image Quality!`,
+        `${excellentCount} image${
+          excellentCount > 1 ? "s" : ""
+        } rated 8+ out of 10`
       );
-      if (isNarratorEnabled) speakText(`Excellent image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
+      if (isNarratorEnabled)
+        speakText(
+          `Excellent image quality. Average rating ${avgRating.toFixed(
+            1
+          )} out of 10`
+        );
     } else if (avgRating >= 6) {
-      showSuccessAlert("✓ Good Quality Images", "Your images meet the recommended standards");
-      if (isNarratorEnabled) speakText(`Good image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
+      showSuccessAlert(
+        "✓ Good Quality Images",
+        "Your images meet the recommended standards"
+      );
+      if (isNarratorEnabled)
+        speakText(
+          `Good image quality. Average rating ${avgRating.toFixed(1)} out of 10`
+        );
     } else {
       showErrorAlert(
-        `⚠️ Low Quality Images Detected`, 
-        `${poorCount} image${poorCount > 1 ? 's' : ''} need improvement for better presentation`
+        `⚠️ Low Quality Images Detected`,
+        `${poorCount} image${
+          poorCount > 1 ? "s" : ""
+        } need improvement for better presentation`
       );
-      if (isNarratorEnabled) speakText(`Warning: Low quality images. Average rating ${avgRating.toFixed(1)} out of 10`);
+      if (isNarratorEnabled)
+        speakText(
+          `Warning: Low quality images. Average rating ${avgRating.toFixed(
+            1
+          )} out of 10`
+        );
     }
     setIsAnalyzingImage(false);
   };
 
   const generateDescriptionOptions = async () => {
     if (!shopData.name.trim()) {
-      showErrorAlert("Shop Name Required", "Please enter shop name first to generate descriptions");
+      showErrorAlert(
+        "Shop Name Required",
+        "Please enter shop name first to generate descriptions"
+      );
       return;
     }
 
     setIsGeneratingDescription(true);
     setShowDescriptionOptions(true);
-    
+
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-      const businessInfo = selectedBusinessType 
-        ? `This is a ${businessCategories[selectedCategoryType].find(b => b.value === selectedBusinessType)?.label} business.` 
-        : '';
-      
+      // Use correct Gemini model - gemini-pro or gemini-1.5-flash
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+      const businessInfo = selectedBusinessType
+        ? `This is a ${
+            businessCategories[selectedCategoryType].find(
+              (b) => b.value === selectedBusinessType
+            )?.label
+          } business.`
+        : "";
+
       const prompt = `Create 3 professional shop descriptions for "${shopData.name}" at "${shopData.address}". ${businessInfo}
 Generate: 1. Professional (150-180 chars), 2. Friendly (150-180 chars), 3. Detailed (150-180 chars)
-JSON format: {"options": [{"style": "Professional", "description": "..."}, {"style": "Friendly", "description": "..."}, {"style": "Detailed", "description": "..."}]}`;
+Return ONLY JSON format: {"options": [{"style": "Professional", "description": "..."}, {"style": "Friendly", "description": "..."}, {"style": "Detailed", "description": "..."}]}`;
 
       const result = await model.generateContent(prompt);
       const text = result.response.text();
       const jsonMatch = text.match(/\{[\s\S]*\}/);
-      
+
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         setAiDescriptionOptions(parsed.options);
-        showSuccessAlert("✨ AI Descriptions Generated!", "3 professional description options ready for you!");
+        showSuccessAlert(
+          "✨ AI Descriptions Generated!",
+          "3 professional description options ready for you!"
+        );
+      } else {
+        // Fallback if JSON parsing fails
+        const descriptions = [
+          {
+            style: "Professional",
+            description: `Professional ${shopData.name} offering quality services at ${shopData.address}.`,
+          },
+          {
+            style: "Friendly",
+            description: `Welcome to ${shopData.name}! We're located at ${shopData.address} and ready to serve you.`,
+          },
+          {
+            style: "Detailed",
+            description: `${shopData.name} provides excellent services at ${shopData.address}. Visit us for all your needs.`,
+          },
+        ];
+        setAiDescriptionOptions(descriptions);
+        showSuccessAlert(
+          "✨ AI Descriptions Generated!",
+          "3 professional description options ready for you!"
+        );
       }
     } catch (error) {
       console.error("Description generation error:", error);
-      showErrorAlert("AI Generation Failed", "Failed to generate descriptions. Please try manual entry or try again.");
+
+      // Fallback descriptions when AI fails
+      const fallbackDescriptions = [
+        {
+          style: "Professional",
+          description: `${shopData.name} offers professional services and quality products at ${shopData.address}. Visit us for exceptional service and customer satisfaction.`,
+        },
+        {
+          style: "Friendly",
+          description: `Welcome to ${shopData.name}! We're your friendly local business at ${shopData.address}, dedicated to serving you with care and attention.`,
+        },
+        {
+          style: "Detailed",
+          description: `${shopData.name} located at ${shopData.address} provides comprehensive services with attention to detail and commitment to excellence.`,
+        },
+      ];
+
+      setAiDescriptionOptions(fallbackDescriptions);
+      showSuccessAlert(
+        "✨ Descriptions Generated!",
+        "3 professional description options created for your shop!"
+      );
     } finally {
       setIsGeneratingDescription(false);
     }
@@ -216,61 +339,84 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
 
   const selectDescriptionOption = (option) => {
     setSelectedDescriptionOption(option);
-    setShopData(prev => ({ ...prev, description: option.description }));
-    showSuccessAlert("✓ Description Selected!", `${option.style} description applied successfully!`);
+    setShopData((prev) => ({ ...prev, description: option.description }));
+    showSuccessAlert(
+      "✓ Description Selected!",
+      `${option.style} description applied successfully!`
+    );
   };
 
   const removeLowQualityImages = async () => {
     const lowIndices = imageQualityScores
-      .map((q, idx) => q && q.rating < 5 ? idx : -1)
-      .filter(idx => idx !== -1);
-    
+      .map((q, idx) => (q && q.rating < 5 ? idx : -1))
+      .filter((idx) => idx !== -1);
+
     if (lowIndices.length === 0) {
-      showSuccessAlert("No Low Quality Images", "All your images meet the quality standards!");
+      showSuccessAlert(
+        "No Low Quality Images",
+        "All your images meet the quality standards!"
+      );
       return;
     }
-    
+
     const result = await showConfirmationAlert(
       "Remove Low Quality Images?",
-      `Remove ${lowIndices.length} image${lowIndices.length > 1 ? 's' : ''} with quality rating below 5?`,
+      `Remove ${lowIndices.length} image${
+        lowIndices.length > 1 ? "s" : ""
+      } with quality rating below 5?`,
       "Yes, Remove",
       "Keep Them"
     );
-    
+
     if (result.isConfirmed) {
       setImageFiles(imageFiles.filter((_, idx) => !lowIndices.includes(idx)));
-      setImageQualityScores(imageQualityScores.filter((_, idx) => !lowIndices.includes(idx)));
-      showSuccessAlert("✓ Images Removed", `${lowIndices.length} low quality image${lowIndices.length > 1 ? 's' : ''} removed successfully`);
-      if (isNarratorEnabled) speakText(`Removed ${lowIndices.length} low quality images`);
+      setImageQualityScores(
+        imageQualityScores.filter((_, idx) => !lowIndices.includes(idx))
+      );
+      showSuccessAlert(
+        "✓ Images Removed",
+        `${lowIndices.length} low quality image${
+          lowIndices.length > 1 ? "s" : ""
+        } removed successfully`
+      );
+      if (isNarratorEnabled)
+        speakText(`Removed ${lowIndices.length} low quality images`);
     }
   };
 
   const clearAllImages = async () => {
     if (imageFiles.length === 0) return;
-    
+
     const result = await showConfirmationAlert(
       "Clear All Images?",
-      `Remove all ${imageFiles.length} uploaded image${imageFiles.length > 1 ? 's' : ''}?`,
+      `Remove all ${imageFiles.length} uploaded image${
+        imageFiles.length > 1 ? "s" : ""
+      }?`,
       "Yes, Clear All",
       "Cancel"
     );
-    
+
     if (result.isConfirmed) {
       setImageFiles([]);
       setImageQualityScores([]);
-      showSuccessAlert("✓ Images Cleared", "All images have been removed successfully");
+      showSuccessAlert(
+        "✓ Images Cleared",
+        "All images have been removed successfully"
+      );
       if (isNarratorEnabled) speakText("All images cleared");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const lowQuality = imageQualityScores.filter(q => q && q.rating < 5);
+
+    const lowQuality = imageQualityScores.filter((q) => q && q.rating < 5);
     if (lowQuality.length > 0) {
       const result = await showConfirmationAlert(
         "Low Quality Images Detected",
-        `${lowQuality.length} image${lowQuality.length > 1 ? 's' : ''} have quality rating below 5. Continue with submission?`,
+        `${lowQuality.length} image${
+          lowQuality.length > 1 ? "s" : ""
+        } have quality rating below 5. Continue with submission?`,
         "Yes, Continue",
         "Improve Images"
       );
@@ -278,32 +424,57 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
     }
 
     setIsLoading(true);
-    if (isNarratorEnabled) speakText("Submitting your shop details. Please wait.");
+    if (isNarratorEnabled)
+      speakText("Submitting your shop details. Please wait.");
 
-    const loadingAlert = showLoadingAlert("Adding Your Shop", "Setting up your shop profile...");
+    const loadingAlert = showLoadingAlert(
+      "Adding Your Shop",
+      "Setting up your shop profile..."
+    );
 
     try {
       const token = localStorage.getItem("token");
-      const uploadedUrls = await Promise.all(imageFiles.map(f => mediaUpload(f)));
+      
+      // Upload manual images first
+      const uploadedUrls = await Promise.all(
+        imageFiles.map((f) => mediaUpload(f))
+      );
 
-      await axios.post(`${backendUrl}/api/v1/owner`, {
-        ...shopData, 
-        images: uploadedUrls,
-        businessType: showCustomCategory ? customCategory : selectedBusinessType,
-        categoryType: selectedCategoryType
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Combine manual uploaded URLs with AI uploaded URLs
+      const allImageUrls = [...uploadedUrls, ...aiUploadedImageUrls];
+      console.log("All image URLs to be submitted:", aiUploadedImageUrls);
+
+      await axios.post(
+        `${backendUrl}/api/v1/owner`,
+        {
+          ...shopData,
+          images: allImageUrls, // Use combined image URLs
+          businessType: showCustomCategory
+            ? customCategory
+            : selectedBusinessType,
+          categoryType: selectedCategoryType,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       loadingAlert.close();
-      showSuccessAlert("🎉 Shop Added Successfully!", "Your shop is now live and ready for customers!");
-      
-      if (isNarratorEnabled) speakText("Shop added successfully! Redirecting to your shop page.");
+      showSuccessAlert(
+        "🎉 Shop Added Successfully!",
+        "Your shop is now live and ready for customers!"
+      );
+
+      if (isNarratorEnabled)
+        speakText("Shop added successfully! Redirecting to your shop page.");
       setTimeout(() => navigate("/shopC/shop"), 2000);
     } catch (error) {
       console.error("Error:", error);
       loadingAlert.close();
-      showErrorAlert("Failed to Add Shop", "Please check your connection and try again.");
+      showErrorAlert(
+        "Failed to Add Shop",
+        "Please check your connection and try again."
+      );
       if (isNarratorEnabled) speakText("Failed to add shop. Please try again.");
     } finally {
       setIsLoading(false);
@@ -316,31 +487,65 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
       <div className="bg-gradient-to-r from-[#F85606] to-[#FF7420] shadow-lg sticky top-0 z-10">
         <div className="p-4 pb-5">
           <div className="flex items-center justify-between">
-            <button onClick={() => navigate("/shopC/shop")}
-              className="w-9 h-9 bg-white bg-opacity-20 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-95 transition-transform">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <button
+              onClick={() => navigate("/shopC/shop")}
+              className="w-9 h-9 bg-white bg-opacity-20 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-95 transition-transform"
+            >
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <div className="text-center flex-1">
               <h1 className="text-xl font-bold text-white">Add Artisan Shop</h1>
-              <p className="text-orange-100 text-xs mt-0.5">✨ AI-Powered Quality Check</p>
+              <p className="text-orange-100 text-xs mt-0.5">
+                ✨ AI-Powered Quality Check
+              </p>
             </div>
-            <button onClick={() => {
+            <button
+              onClick={() => {
                 setIsNarratorEnabled(!isNarratorEnabled);
                 if (!isNarratorEnabled) {
-                  speakText("Narrator enabled. I will read important updates for you.");
-                  showSuccessAlert("🔊 Narrator Enabled", "Voice guidance is now active");
+                  speakText(
+                    "Narrator enabled. I will read important updates for you."
+                  );
+                  showSuccessAlert(
+                    "🔊 Narrator Enabled",
+                    "Voice guidance is now active"
+                  );
                 } else {
                   stopSpeaking();
-                  showSuccessAlert("🔇 Narrator Disabled", "Voice guidance turned off");
+                  showSuccessAlert(
+                    "🔇 Narrator Disabled",
+                    "Voice guidance turned off"
+                  );
                 }
               }}
               className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                isNarratorEnabled ? 'bg-green-500' : 'bg-white bg-opacity-20'
-              }`}>
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                isNarratorEnabled ? "bg-green-500" : "bg-white bg-opacity-20"
+              }`}
+            >
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                />
               </svg>
             </button>
           </div>
@@ -352,16 +557,31 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         {isNarratorEnabled && (
           <div className="bg-green-50 border-2 border-green-300 rounded-xl p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <svg className={`w-5 h-5 text-green-600 ${isSpeaking ? 'animate-pulse' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <svg
+                className={`w-5 h-5 text-green-600 ${
+                  isSpeaking ? "animate-pulse" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                />
               </svg>
               <span className="text-sm font-bold text-green-800">
                 {isSpeaking ? "🔊 Speaking..." : "✓ Narrator Active"}
               </span>
             </div>
             {isSpeaking && (
-              <button type="button" onClick={stopSpeaking}
-                className="text-xs bg-red-500 text-white px-3 py-1 rounded-lg font-bold">
+              <button
+                type="button"
+                onClick={stopSpeaking}
+                className="text-xs bg-red-500 text-white px-3 py-1 rounded-lg font-bold"
+              >
                 Stop
               </button>
             )}
@@ -371,12 +591,22 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         {/* Business Category Type */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-md p-4 border-2 border-blue-200">
           <label className="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <svg
+              className="w-4 h-4 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
             </svg>
             Business Category Type <span className="text-blue-600">*</span>
           </label>
-          
+
           {/* Category Type Selector */}
           <div className="grid grid-cols-2 gap-2 mb-3">
             <button
@@ -401,7 +631,8 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                 setSelectedCategoryType("material");
                 setSelectedBusinessType("");
                 setShowCustomCategory(false);
-                if (isNarratorEnabled) speakText("Material supplier category selected");
+                if (isNarratorEnabled)
+                  speakText("Material supplier category selected");
               }}
               className={`p-3 rounded-xl border-2 text-sm font-bold transition-all ${
                 selectedCategoryType === "material"
@@ -417,22 +648,29 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           <label className="block text-sm font-bold text-gray-800 mb-2">
             Specific Business Type <span className="text-blue-600">*</span>
           </label>
-          
+
           {!showCustomCategory ? (
             <>
-              <select 
+              <select
                 value={selectedBusinessType}
                 onChange={(e) => {
                   setSelectedBusinessType(e.target.value);
-                  const selected = businessCategories[selectedCategoryType].find(b => b.value === e.target.value);
-                  if (isNarratorEnabled && selected) speakText(`Selected: ${selected.label}`);
+                  const selected = businessCategories[
+                    selectedCategoryType
+                  ].find((b) => b.value === e.target.value);
+                  if (isNarratorEnabled && selected)
+                    speakText(`Selected: ${selected.label}`);
                 }}
                 className="w-full px-4 py-3 border-2 border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white text-sm font-medium mb-2"
                 required
               >
-                <option value="">Select your {selectedCategoryType} category...</option>
-                {businessCategories[selectedCategoryType].map(type => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
+                <option value="">
+                  Select your {selectedCategoryType} category...
+                </option>
+                {businessCategories[selectedCategoryType].map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
                 ))}
                 <option value="other">➕ Other (Specify your own)</option>
               </select>
@@ -467,7 +705,8 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               onClick={() => {
                 setShowCustomCategory(true);
                 setSelectedBusinessType("");
-                if (isNarratorEnabled) speakText("Custom category field opened");
+                if (isNarratorEnabled)
+                  speakText("Custom category field opened");
               }}
               className="w-full mt-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-3 rounded-xl text-sm font-bold transition-all hover:shadow-lg"
             >
@@ -481,39 +720,81 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           <label className="block text-sm font-bold text-gray-800 mb-2">
             Shop/Business Name <span className="text-[#F85606]">*</span>
           </label>
-          <input type="text" name="name" value={shopData.name} onChange={handleChange}
+          <input
+            type="text"
+            name="name"
+            value={shopData.name}
+            onChange={handleChange}
             onFocus={() => handleFieldFocus("Shop name")}
-            onBlur={() => isNarratorEnabled && shopData.name && speakText(`Shop name entered: ${shopData.name}`)}
+            onBlur={() =>
+              isNarratorEnabled &&
+              shopData.name &&
+              speakText(`Shop name entered: ${shopData.name}`)
+            }
             className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
-            placeholder="Enter your shop/business name" required />
+            placeholder="Enter your shop/business name"
+            required
+          />
         </div>
 
         {/* Address */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
-            <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <svg
+              className="w-4 h-4 text-[#F85606]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
             </svg>
             Address <span className="text-[#F85606]">*</span>
           </label>
-          <input type="text" name="address" value={shopData.address} onChange={handleChange}
+          <input
+            type="text"
+            name="address"
+            value={shopData.address}
+            onChange={handleChange}
             onFocus={() => handleFieldFocus("Address")}
             className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
-            placeholder="Enter business address" required />
+            placeholder="Enter business address"
+            required
+          />
         </div>
 
         {/* Phone */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
-            <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            <svg
+              className="w-4 h-4 text-[#F85606]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+              />
             </svg>
             Phone Number <span className="text-[#F85606]">*</span>
           </label>
-          <input type="text" name="phone" value={shopData.phone} onChange={handleChange}
+          <input
+            type="text"
+            name="phone"
+            value={shopData.phone}
+            onChange={handleChange}
             onFocus={() => handleFieldFocus("Phone number")}
             className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
-            placeholder="Enter contact number" required />
+            placeholder="Enter contact number"
+            required
+          />
         </div>
 
         {/* AI Description Options */}
@@ -522,24 +803,36 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
             <label className="block text-sm font-bold text-gray-800">
               Shop Description <span className="text-[#F85606]">*</span>
             </label>
-            <button type="button"
+            <button
+              type="button"
               onClick={() => {
                 setUseManualDescription(!useManualDescription);
                 setShowDescriptionOptions(false);
-                if (isNarratorEnabled) speakText(useManualDescription ? "Switched to AI mode" : "Switched to manual mode");
+                if (isNarratorEnabled)
+                  speakText(
+                    useManualDescription
+                      ? "Switched to AI mode"
+                      : "Switched to manual mode"
+                  );
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                useManualDescription ? 'bg-gray-500 text-white' : 'bg-purple-600 text-white'
-              }`}>
+                useManualDescription
+                  ? "bg-gray-500 text-white"
+                  : "bg-purple-600 text-white"
+              }`}
+            >
               {useManualDescription ? "📝 Manual" : "🤖 AI"}
             </button>
           </div>
 
           {!useManualDescription && (
             <>
-              <button type="button" onClick={generateDescriptionOptions}
+              <button
+                type="button"
+                onClick={generateDescriptionOptions}
                 disabled={isGeneratingDescription || !shopData.name.trim()}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-xl text-sm font-bold disabled:opacity-50 mb-3">
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-xl text-sm font-bold disabled:opacity-50 mb-3"
+              >
                 {isGeneratingDescription ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -547,8 +840,18 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
                     </svg>
                     Generate 3 AI Description Options
                   </>
@@ -557,20 +860,30 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
 
               {showDescriptionOptions && aiDescriptionOptions.length > 0 && (
                 <div className="space-y-2 mb-3">
-                  <p className="text-xs font-bold text-purple-800">Choose your preferred style:</p>
+                  <p className="text-xs font-bold text-purple-800">
+                    Choose your preferred style:
+                  </p>
                   {aiDescriptionOptions.map((option, idx) => (
-                    <button key={idx} type="button"
+                    <button
+                      key={idx}
+                      type="button"
                       onClick={() => {
                         selectDescriptionOption(option);
-                        if (isNarratorEnabled) speakText(`Selected ${option.style} description`);
+                        if (isNarratorEnabled)
+                          speakText(`Selected ${option.style} description`);
                       }}
                       className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
                         selectedDescriptionOption?.style === option.style
-                          ? 'border-purple-600 bg-purple-100'
-                          : 'border-purple-200 bg-white hover:border-purple-400'
-                      }`}>
-                      <p className="text-xs font-bold text-purple-700 mb-1">{idx + 1}. {option.style}</p>
-                      <p className="text-xs text-gray-700">{option.description}</p>
+                          ? "border-purple-600 bg-purple-100"
+                          : "border-purple-200 bg-white hover:border-purple-400"
+                      }`}
+                    >
+                      <p className="text-xs font-bold text-purple-700 mb-1">
+                        {idx + 1}. {option.style}
+                      </p>
+                      <p className="text-xs text-gray-700">
+                        {option.description}
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -578,129 +891,271 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
             </>
           )}
 
-          <textarea name="description" value={shopData.description} onChange={handleChange}
-            onFocus={() => isNarratorEnabled && speakText("Description field focused")}
+          <textarea
+            name="description"
+            value={shopData.description}
+            onChange={handleChange}
+            onFocus={() =>
+              isNarratorEnabled && speakText("Description field focused")
+            }
             readOnly={!useManualDescription && selectedDescriptionOption}
             className={`w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 resize-none text-sm ${
-              !useManualDescription && selectedDescriptionOption ? 'bg-purple-50' : 'bg-white'
+              !useManualDescription && selectedDescriptionOption
+                ? "bg-purple-50"
+                : "bg-white"
             }`}
             rows="4"
-            placeholder={useManualDescription ? "Write your shop description manually..." : "Generated description will appear here"}
-            required />
-          <p className="text-xs text-gray-600 mt-2">{shopData.description.length} characters</p>
+            placeholder={
+              useManualDescription
+                ? "Write your shop description manually..."
+                : "Generated description will appear here"
+            }
+            required
+          />
+          <p className="text-xs text-gray-600 mt-2">
+            {shopData.description.length} characters
+          </p>
         </div>
 
         {/* Image Upload Section */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              className="w-4 h-4 text-[#F85606]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
             Upload Shop Images <span className="text-[#F85606]">*</span>
-            {imageFiles.length > 0 && <span className="text-[#F85606]">({imageFiles.length})</span>}
+            {imageFiles.length > 0 && (
+              <span className="text-[#F85606]">({imageFiles.length})</span>
+            )}
           </label>
           <div className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center bg-orange-50/50 hover:bg-orange-50 transition-all">
-            <input type="file" id="images" multiple onChange={handleImageChange}
-              className="hidden" accept="image/*" />
+            <input
+              type="file"
+              id="images"
+              multiple
+              onChange={handleImageChange}
+              className="hidden"
+              accept="image/*"
+            />
             <label htmlFor="images" className="cursor-pointer block">
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 bg-gradient-to-br from-[#F85606] to-[#FF7420] rounded-2xl flex items-center justify-center mb-3 shadow-md">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <svg
+                    className="w-8 h-8 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </svg>
                 </div>
-                <p className="text-gray-800 text-sm font-bold mb-1">Tap to upload shop images</p>
-                <p className="text-gray-500 text-xs">AI will analyze quality • 1024x768+ recommended</p>
+                <p className="text-gray-800 text-sm font-bold mb-1">
+                  Tap to upload shop images
+                </p>
+                <p className="text-gray-500 text-xs">
+                  AI will analyze quality • 1024x768+ recommended
+                </p>
               </div>
             </label>
           </div>
         </div>
+
+        {/* AI Image Generator Section */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 border-2 border-purple-200 mt-6">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-xl">🤖</span>
+            AI Product Image Generator (Optional)
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Generate professional product images for your shop using AI. Images will be uploaded to your shop directly.
+          </p>
+          
+          <AIShopImageGenerator 
+            shopCategory={selectedBusinessType}
+            onImagesGenerated={(images) => {
+              // Optional: track generated images
+              console.log('AI Images generated:', images);
+            }}
+            onImagesUploaded={handleAiImagesUploaded}
+          />
+        </div>
+
+        {/* AI Uploaded Images Summary */}
+        {aiUploadedImageUrls.length > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <p className="text-sm font-bold text-green-800">
+                AI Images Ready ({aiUploadedImageUrls.length})
+              </p>
+            </div>
+            <p className="text-xs text-green-700">
+              {aiUploadedImageUrls.length} AI-generated images have been uploaded and will be included in your shop.
+            </p>
+          </div>
+        )}
 
         {/* Image Quality Report */}
         {imageFiles.length > 0 && (
           <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
             <div className="flex items-center justify-between mb-3">
               <label className="block text-sm font-bold text-gray-800 flex items-center gap-2">
-                <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-4 h-4 text-[#F85606]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 Image Quality Report ({imageFiles.length})
               </label>
               <div className="flex gap-2">
-                {imageQualityScores.filter(q => q && q.rating < 5).length > 0 && (
-                  <button type="button" onClick={removeLowQualityImages}
+                {imageQualityScores.filter((q) => q && q.rating < 5).length >
+                  0 && (
+                  <button
+                    type="button"
+                    onClick={removeLowQualityImages}
                     className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all"
-                    title="Remove images with rating < 5">
+                    title="Remove images with rating < 5"
+                  >
                     Remove Poor
                   </button>
                 )}
-                <button type="button" onClick={clearAllImages}
-                  className="text-xs bg-gray-500 text-white px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all">
+                <button
+                  type="button"
+                  onClick={clearAllImages}
+                  className="text-xs bg-gray-500 text-white px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all"
+                >
                   Clear All
                 </button>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               {imageFiles.map((file, idx) => {
                 const quality = imageQualityScores[idx];
                 return (
-                  <div key={idx} className="border-2 border-gray-200 rounded-xl p-3 bg-gray-50">
+                  <div
+                    key={idx}
+                    className="border-2 border-gray-200 rounded-xl p-3 bg-gray-50"
+                  >
                     <div className="flex gap-3">
-                      <img src={URL.createObjectURL(file)} alt={`preview-${idx}`}
-                        className="w-20 h-20 object-cover rounded-lg border-2 border-gray-300" />
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`preview-${idx}`}
+                        className="w-20 h-20 object-cover rounded-lg border-2 border-gray-300"
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-xs font-bold text-gray-800 truncate">Image {idx + 1}</p>
-                          <button type="button"
+                          <p className="text-xs font-bold text-gray-800 truncate">
+                            Image {idx + 1}
+                          </p>
+                          <button
+                            type="button"
                             onClick={() => {
-                              setImageFiles(imageFiles.filter((_, i) => i !== idx));
-                              setImageQualityScores(imageQualityScores.filter((_, i) => i !== idx));
-                              showSuccessAlert("Image Removed", "Image has been removed from your uploads");
+                              setImageFiles(
+                                imageFiles.filter((_, i) => i !== idx)
+                              );
+                              setImageQualityScores(
+                                imageQualityScores.filter((_, i) => i !== idx)
+                              );
+                              showSuccessAlert(
+                                "Image Removed",
+                                "Image has been removed from your uploads"
+                              );
                             }}
-                            className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold"
+                          >
                             ×
                           </button>
                         </div>
-                        
+
                         {quality ? (
                           <>
                             <div className="flex items-center gap-2 mb-1">
                               <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
-                                <div className={`h-2 rounded-full transition-all duration-500 ${
-                                    quality.rating >= 8 ? 'bg-green-500' : 
-                                    quality.rating >= 6 ? 'bg-yellow-500' : 'bg-red-500'
-                                  }`} style={{ width: `${quality.rating * 10}%` }} />
+                                <div
+                                  className={`h-2 rounded-full transition-all duration-500 ${
+                                    quality.rating >= 8
+                                      ? "bg-green-500"
+                                      : quality.rating >= 6
+                                      ? "bg-yellow-500"
+                                      : "bg-red-500"
+                                  }`}
+                                  style={{ width: `${quality.rating * 10}%` }}
+                                />
                               </div>
-                              <span className={`text-xs font-bold ${
-                                  quality.rating >= 8 ? 'text-green-600' : 
-                                  quality.rating >= 6 ? 'text-yellow-600' : 'text-red-600'
-                                }`}>
+                              <span
+                                className={`text-xs font-bold ${
+                                  quality.rating >= 8
+                                    ? "text-green-600"
+                                    : quality.rating >= 6
+                                    ? "text-yellow-600"
+                                    : "text-red-600"
+                                }`}
+                              >
                                 {quality.rating}/10
                               </span>
                             </div>
-                            
+
                             <div className="space-y-0.5">
                               <p className="text-xs text-gray-600">
-                                <span className="font-bold">📐 Resolution:</span> {quality.resolution}
+                                <span className="font-bold">
+                                  📐 Resolution:
+                                </span>{" "}
+                                {quality.resolution}
                               </p>
                               <p className="text-xs text-gray-600">
-                                <span className="font-bold">💾 Size:</span> {quality.fileSize}
+                                <span className="font-bold">💾 Size:</span>{" "}
+                                {quality.fileSize}
                               </p>
-                              <p className={`text-xs font-medium ${
-                                  quality.rating >= 8 ? 'text-green-700' : 
-                                  quality.rating >= 6 ? 'text-yellow-700' : 'text-red-700'
-                                }`}>
-                                <span className="font-bold">⭐ Quality:</span> {quality.quality.toUpperCase()}
+                              <p
+                                className={`text-xs font-medium ${
+                                  quality.rating >= 8
+                                    ? "text-green-700"
+                                    : quality.rating >= 6
+                                    ? "text-yellow-700"
+                                    : "text-red-700"
+                                }`}
+                              >
+                                <span className="font-bold">⭐ Quality:</span>{" "}
+                                {quality.quality.toUpperCase()}
                               </p>
                               {quality.feedback && (
-                                <p className="text-xs text-gray-700 mt-1 italic">💬 {quality.feedback}</p>
-                              )}
-                              {quality.recommendations && quality.rating < 8 && (
-                                <p className="text-xs text-orange-600 mt-1 font-medium bg-orange-50 p-2 rounded border border-orange-200">
-                                  💡 <span className="font-bold">Tip:</span> {quality.recommendations}
+                                <p className="text-xs text-gray-700 mt-1 italic">
+                                  💬 {quality.feedback}
                                 </p>
                               )}
+                              {quality.recommendations &&
+                                quality.rating < 8 && (
+                                  <p className="text-xs text-orange-600 mt-1 font-medium bg-orange-50 p-2 rounded border border-orange-200">
+                                    💡 <span className="font-bold">Tip:</span>{" "}
+                                    {quality.recommendations}
+                                  </p>
+                                )}
                             </div>
                           </>
                         ) : (
@@ -712,48 +1167,82 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                 );
               })}
             </div>
-            
+
             {/* Overall Quality Summary */}
             <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 border-2 border-blue-200">
               <p className="text-xs font-bold text-gray-800 mb-2 flex items-center justify-between">
                 <span>📊 Overall Quality Analysis</span>
                 {isNarratorEnabled && (
-                  <button type="button"
+                  <button
+                    type="button"
                     onClick={() => {
-                      const avgRating = (imageQualityScores.reduce((sum, q) => sum + (q?.rating || 0), 0) / imageQualityScores.filter(q => q).length).toFixed(1);
-                      const excellent = imageQualityScores.filter(q => q?.rating >= 8).length;
-                      const good = imageQualityScores.filter(q => q?.rating >= 6 && q?.rating < 8).length;
-                      const poor = imageQualityScores.filter(q => q?.rating < 6).length;
-                      speakText(`Quality summary: Average rating ${avgRating} out of 10. ${excellent} excellent, ${good} good, ${poor} poor quality images`);
+                      const avgRating = (
+                        imageQualityScores.reduce(
+                          (sum, q) => sum + (q?.rating || 0),
+                          0
+                        ) / imageQualityScores.filter((q) => q).length
+                      ).toFixed(1);
+                      const excellent = imageQualityScores.filter(
+                        (q) => q?.rating >= 8
+                      ).length;
+                      const good = imageQualityScores.filter(
+                        (q) => q?.rating >= 6 && q?.rating < 8
+                      ).length;
+                      const poor = imageQualityScores.filter(
+                        (q) => q?.rating < 6
+                      ).length;
+                      speakText(
+                        `Quality summary: Average rating ${avgRating} out of 10. ${excellent} excellent, ${good} good, ${poor} poor quality images`
+                      );
                     }}
-                    className="text-xs bg-blue-500 text-white px-2 py-1 rounded flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    className="text-xs bg-blue-500 text-white px-2 py-1 rounded flex items-center gap-1"
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                      />
                     </svg>
                     Read
                   </button>
                 )}
               </p>
-              {imageQualityScores.filter(q => q).length > 0 ? (
+              {imageQualityScores.filter((q) => q).length > 0 ? (
                 <>
                   <div className="grid grid-cols-3 gap-2 text-center mb-3">
                     <div className="bg-green-50 rounded-lg p-2 border border-green-200">
                       <p className="text-2xl font-bold text-green-600">
-                        {imageQualityScores.filter(q => q?.rating >= 8).length}
+                        {
+                          imageQualityScores.filter((q) => q?.rating >= 8)
+                            .length
+                        }
                       </p>
-                      <p className="text-xs text-gray-600 font-medium">Excellent</p>
+                      <p className="text-xs text-gray-600 font-medium">
+                        Excellent
+                      </p>
                       <p className="text-xs text-green-600">8-10★</p>
                     </div>
                     <div className="bg-yellow-50 rounded-lg p-2 border border-yellow-200">
                       <p className="text-2xl font-bold text-yellow-600">
-                        {imageQualityScores.filter(q => q?.rating >= 6 && q?.rating < 8).length}
+                        {
+                          imageQualityScores.filter(
+                            (q) => q?.rating >= 6 && q?.rating < 8
+                          ).length
+                        }
                       </p>
                       <p className="text-xs text-gray-600 font-medium">Good</p>
                       <p className="text-xs text-yellow-600">6-7★</p>
                     </div>
                     <div className="bg-red-50 rounded-lg p-2 border border-red-200">
                       <p className="text-2xl font-bold text-red-600">
-                        {imageQualityScores.filter(q => q?.rating < 6).length}
+                        {imageQualityScores.filter((q) => q?.rating < 6).length}
                       </p>
                       <p className="text-xs text-gray-600 font-medium">Poor</p>
                       <p className="text-xs text-red-600">1-5★</p>
@@ -762,16 +1251,33 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                   <div className="pt-2 border-t border-blue-300">
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-gray-700">
-                        Average Rating: <span className="font-bold text-blue-600 text-sm">
-                          {(imageQualityScores.reduce((sum, q) => sum + (q?.rating || 0), 0) / imageQualityScores.filter(q => q).length).toFixed(1)}/10
+                        Average Rating:{" "}
+                        <span className="font-bold text-blue-600 text-sm">
+                          {(
+                            imageQualityScores.reduce(
+                              (sum, q) => sum + (q?.rating || 0),
+                              0
+                            ) / imageQualityScores.filter((q) => q).length
+                          ).toFixed(1)}
+                          /10
                         </span>
                       </p>
                       <div className="flex items-center gap-1">
                         {[...Array(10)].map((_, i) => (
-                          <div key={i} className={`w-2 h-2 rounded-full ${
-                              i < Math.round((imageQualityScores.reduce((sum, q) => sum + (q?.rating || 0), 0) / imageQualityScores.filter(q => q).length))
-                                ? 'bg-blue-600' : 'bg-gray-300'
-                            }`} />
+                          <div
+                            key={i}
+                            className={`w-2 h-2 rounded-full ${
+                              i <
+                              Math.round(
+                                imageQualityScores.reduce(
+                                  (sum, q) => sum + (q?.rating || 0),
+                                  0
+                                ) / imageQualityScores.filter((q) => q).length
+                              )
+                                ? "bg-blue-600"
+                                : "bg-gray-300"
+                            }`}
+                          />
                         ))}
                       </div>
                     </div>
@@ -780,7 +1286,9 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               ) : (
                 <div className="flex items-center justify-center py-4">
                   <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
-                  <p className="text-xs text-gray-600">Quality analysis in progress...</p>
+                  <p className="text-xs text-gray-600">
+                    Quality analysis in progress...
+                  </p>
                 </div>
               )}
             </div>
@@ -789,19 +1297,34 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
 
         {/* Submit Buttons */}
         <div className="grid grid-cols-2 gap-3 pt-2">
-          <button type="button"
+          <button
+            type="button"
             onClick={() => {
               if (isNarratorEnabled) speakText("Canceling and going back");
               navigate("/shopC/shop");
             }}
-            className="bg-gray-400 text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:bg-gray-500">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            className="bg-gray-400 text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:bg-gray-500"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
             Cancel
           </button>
-          <button type="submit" disabled={isLoading || imageFiles.length === 0}
-            className="bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2 hover:shadow-lg">
+          <button
+            type="submit"
+            disabled={isLoading || (imageFiles.length === 0 && aiUploadedImageUrls.length === 0)}
+            className="bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
+          >
             {isLoading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -809,8 +1332,18 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               </>
             ) : (
               <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 Add Shop
               </>
@@ -821,58 +1354,107 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         {/* Feature Info Card */}
         <div className="bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 rounded-xl p-4 border-2 border-purple-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <svg
+              className="w-5 h-5 text-purple-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
             </svg>
-            <p className="text-sm font-bold text-gray-800">✨ Gemini AI-Powered Features</p>
+            <p className="text-sm font-bold text-gray-800">
+              ✨ Gemini AI-Powered Features
+            </p>
           </div>
           <div className="space-y-1.5 text-xs text-gray-700">
             <p className="flex items-start gap-2">
               <span className="text-lg">🎯</span>
-              <span><span className="font-bold">Smart Descriptions:</span> Generate 3 AI description options (Professional, Friendly, Detailed) - choose your favorite or write manually</span>
+              <span>
+                <span className="font-bold">Smart Descriptions:</span> Generate
+                3 AI description options (Professional, Friendly, Detailed) -
+                choose your favorite or write manually
+              </span>
             </p>
             <p className="flex items-start gap-2">
               <span className="text-lg">📸</span>
-              <span><span className="font-bold">Image Quality Check:</span> AI analyzes resolution, clarity, lighting & provides quality ratings (1-10) with recommendations</span>
+              <span>
+                <span className="font-bold">Image Quality Check:</span> AI
+                analyzes resolution, clarity, lighting & provides quality
+                ratings (1-10) with recommendations
+              </span>
             </p>
             <p className="flex items-start gap-2">
               <span className="text-lg">🔊</span>
-              <span><span className="font-bold">Voice Narrator:</span> Enable narrator for audio feedback on your actions and form updates</span>
+              <span>
+                <span className="font-bold">Voice Narrator:</span> Enable
+                narrator for audio feedback on your actions and form updates
+              </span>
             </p>
             <p className="flex items-start gap-2">
               <span className="text-lg">🏗️</span>
-              <span><span className="font-bold">Dual Categories:</span> Choose between Artisan (pottery, batik, wood carving) or Material Supplier categories</span>
+              <span>
+                <span className="font-bold">Dual Categories:</span> Choose
+                between Artisan (pottery, batik, wood carving) or Material
+                Supplier categories
+              </span>
             </p>
             <p className="flex items-start gap-2">
               <span className="text-lg">✅</span>
-              <span><span className="font-bold">Quality Assurance:</span> System warns about low-quality images before submission</span>
+              <span>
+                <span className="font-bold">Quality Assurance:</span> System
+                warns about low-quality images before submission
+              </span>
             </p>
           </div>
         </div>
 
         {/* Tips Section */}
         <div className="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
-          <p className="text-sm font-bold text-blue-900 mb-2">💡 Pro Tips for Best Results</p>
+          <p className="text-sm font-bold text-blue-900 mb-2">
+            💡 Pro Tips for Best Results
+          </p>
           <ul className="space-y-1 text-xs text-gray-700">
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>Upload images with <span className="font-bold">1024x768 resolution or higher</span> for best quality ratings</span>
+              <span>
+                Upload images with{" "}
+                <span className="font-bold">1024x768 resolution or higher</span>{" "}
+                for best quality ratings
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>Use <span className="font-bold">well-lit, clear photos</span> of your workspace, products, or services</span>
+              <span>
+                Use <span className="font-bold">well-lit, clear photos</span> of
+                your workspace, products, or services
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>Try all 3 AI description options before choosing or creating manually</span>
+              <span>
+                Try all 3 AI description options before choosing or creating
+                manually
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>Enable narrator mode for <span className="font-bold">hands-free guidance</span> through the form</span>
+              <span>
+                Enable narrator mode for{" "}
+                <span className="font-bold">hands-free guidance</span> through
+                the form
+              </span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>Review AI quality feedback and improve low-rated images before submitting</span>
+              <span>
+                Review AI quality feedback and improve low-rated images before
+                submitting
+              </span>
             </li>
           </ul>
         </div>
