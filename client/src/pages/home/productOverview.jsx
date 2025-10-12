@@ -27,14 +27,20 @@ export default function ArtisanItemOverview() {
 
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/collection/getOne/${key}`)
+      .get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/collection/getOne/${key}`
+      )
       .then((res) => {
         setArtisanItem(res.data);
         setLoadingStatus("Loaded");
 
         if (res.data.shopId) {
           axios
-            .get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/owner/getOne/${res.data.shopId}`)
+            .get(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/owner/getOne/${
+                res.data.shopId
+              }`
+            )
             .then((shopRes) => setShop(shopRes.data))
             .catch((err) => console.error("Failed to load shop", err));
         }
@@ -122,13 +128,84 @@ export default function ArtisanItemOverview() {
   return (
     <div className="min-h-screen bg-[#F5F5F5] pb-32">
       {/* Header */}
-      
-
       {/* Image Slider */}
       <div className="bg-white">
         <ImageSlider images={artisanItem.images} />
       </div>
+      // Add this section AFTER the Image Slider section and BEFORE Product Info
+      (around line 150)
+      {/* Story Video Section */}
+      {artisanItem.storyVideo && (
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b-2 border-purple-200">
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 w-8 h-8 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-800">
+                  📱 Story Video
+                </h3>
+                <p className="text-xs text-gray-600">
+                  Watch product demonstration
+                </p>
+              </div>
+            </div>
 
+            <div className="relative rounded-xl overflow-hidden shadow-lg border-2 border-purple-300 bg-black">
+              <video
+                src={artisanItem.storyVideo}
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full max-h-96 object-contain"
+                poster={artisanItem.images?.[0]}
+              >
+                Your browser does not support the video tag.
+              </video>
+
+              {/* Video Overlay Badge */}
+              <div className="absolute top-2 right-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                <svg
+                  className="w-3 h-3"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                  <path
+                    fillRule="evenodd"
+                    d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Story
+              </div>
+            </div>
+
+            <p className="text-xs text-center text-purple-700 mt-2 font-medium">
+              🎬 See this product in action
+            </p>
+          </div>
+        </div>
+      )}
       {/* Product Info */}
       <div className="bg-white px-4 py-4 mb-2">
         <div className="flex items-start justify-between mb-3">
@@ -184,7 +261,6 @@ export default function ArtisanItemOverview() {
           </div>
         )}
       </div>
-
       {/* Vouchers Section with Add to Cart */}
       <div className="bg-white px-4 py-3 mb-2">
         <div className="flex items-center justify-between mb-3">
@@ -217,7 +293,6 @@ export default function ArtisanItemOverview() {
           {artisanItem.available ? "Add to Cart" : "Out of Stock"}
         </button>
       </div>
-
       {/* Product Details */}
       <div className="bg-white px-4 py-4 mb-2">
         <h3 className="text-base font-bold text-[#212121] mb-3">
@@ -246,7 +321,6 @@ export default function ArtisanItemOverview() {
           </div>
         </div>
       </div>
-
       {/* Description */}
       <div className="bg-white px-4 py-4 mb-2">
         <h3 className="text-base font-bold text-[#212121] mb-2">Description</h3>
@@ -254,7 +328,6 @@ export default function ArtisanItemOverview() {
           {artisanItem.description}
         </p>
       </div>
-
       {/* Shop Information */}
       {shop && (
         <div className="bg-white px-4 py-4 mb-2">
@@ -305,7 +378,6 @@ export default function ArtisanItemOverview() {
           </div>
         </div>
       )}
-
       {/* Ratings & Reviews */}
       <div className="bg-white px-4 py-4 mb-2">
         <div className="flex items-center justify-between mb-4">
@@ -377,7 +449,6 @@ export default function ArtisanItemOverview() {
           </button>
         )}
       </div>
-
       {/* Write Review */}
       <div className="bg-white px-4 py-4 mb-2">
         <h3 className="text-base font-bold text-[#212121] mb-3">
@@ -408,9 +479,6 @@ export default function ArtisanItemOverview() {
           Submit Review
         </button>
       </div>
-
-      
-      
     </div>
   );
 }
