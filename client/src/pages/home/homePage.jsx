@@ -399,6 +399,20 @@ export default function HomePage() {
     setShowSplash(false);
   };
 
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (user.role === "admin") {
+          window.location.href = "/admin/";
+        } else if (user.role === "artisan") {
+          window.location.href = "/shopC/";
+        } else if (user.role === "supplier") {
+          window.location.href = "/shopC/";
+        } else if (user.role === "delivery") {
+          window.location.href = "/driver/";
+        } else {
+          window.location.href = "/";
+        }
+
   return (
     <>
       {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
