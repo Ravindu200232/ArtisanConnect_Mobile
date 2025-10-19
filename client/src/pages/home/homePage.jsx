@@ -15,9 +15,6 @@ import Messages from "./messages";
 import CustomerMessages from "./CustomerMessages";
 import CustomerConversation from "./CustomerConversation";
 
-
-
-
 // Splash Screen Component
 export function SplashScreen({ onFinish }) {
   const [fadeOut, setFadeOut] = useState(false);
@@ -38,93 +35,92 @@ export function SplashScreen({ onFinish }) {
   }, [onFinish]);
 
   return (
-    <div 
+    <div
       className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-1000 ${
-        fadeOut ? 'opacity-0' : 'opacity-100'
+        fadeOut ? "opacity-0" : "opacity-100"
       }`}
       style={{
-        background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
+        background: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)",
       }}
     >
       {/* Background Image - Full opacity */}
-      <div 
+      <div
         className="absolute inset-0"
         style={{
           backgroundImage: "url('/screenspalch.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          animation: 'zoomIn 5s ease-out'
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          animation: "zoomIn 5s ease-out",
         }}
       />
-      
+
       {/* Dark Overlay for better text readability */}
       <div className="absolute inset-0 bg-black/40" />
-      
+
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center justify-center px-8">
         {/* Logo with Animation */}
-        <div 
+        <div
           className="mb-8"
           style={{
-            animation: 'fadeInScale 1.5s ease-out'
+            animation: "fadeInScale 1.5s ease-out",
           }}
         >
-          <img 
-            src="/logo3r.png" 
-            alt="ArtisanConnect Logo" 
+          <img
+            src="/logo3r.png"
+            alt="ArtisanConnect Logo"
             className="w-32 h-32 object-contain drop-shadow-2xl"
           />
         </div>
-        
+
         {/* App Name */}
-        <h1 
+        <h1
           className="text-4xl font-bold text-white mb-3 tracking-wide"
           style={{
-            animation: 'fadeInUp 1.5s ease-out 0.3s both',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            animation: "fadeInUp 1.5s ease-out 0.3s both",
+            textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
           }}
         >
           ArtisanConnect
         </h1>
-        
       </div>
 
       {/* Bottom Section - Tagline and Loading */}
       <div className="absolute bottom-16 left-0 right-0 flex flex-col items-center px-8">
         {/* Tagline */}
-        <p 
+        <p
           className="text-lg text-white/95 text-center font-medium mb-6"
           style={{
-            animation: 'fadeInUp 1.5s ease-out 0.6s both',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+            animation: "fadeInUp 1.5s ease-out 0.6s both",
+            textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
           }}
         >
           Empowering Artisans. Enriching Culture
         </p>
-        
+
         {/* Loading Spinner */}
-        <div 
+        <div
           style={{
-            animation: 'fadeIn 1s ease-out 1s both'
+            animation: "fadeIn 1s ease-out 1s both",
           }}
         >
           <div className="flex space-x-2">
-            <div 
+            <div
               className="w-3 h-3 bg-white rounded-full"
               style={{
-                animation: 'bounce 1.4s infinite ease-in-out'
+                animation: "bounce 1.4s infinite ease-in-out",
               }}
             />
-            <div 
+            <div
               className="w-3 h-3 bg-white rounded-full"
               style={{
-                animation: 'bounce 1.4s infinite ease-in-out 0.2s'
+                animation: "bounce 1.4s infinite ease-in-out 0.2s",
               }}
             />
-            <div 
+            <div
               className="w-3 h-3 bg-white rounded-full"
               style={{
-                animation: 'bounce 1.4s infinite ease-in-out 0.4s'
+                animation: "bounce 1.4s infinite ease-in-out 0.4s",
               }}
             />
           </div>
@@ -400,23 +396,26 @@ export default function HomePage() {
   };
 
   const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token");
 
-  if (user.role === "admin") {
-          window.location.href = "/admin/";
-        } else if (user.role === "artisan") {
-          window.location.href = "/shopC/";
-        } else if (user.role === "supplier") {
-          window.location.href = "/shopC/";
-        } else if (user.role === "delivery") {
-          window.location.href = "/driver/";
-        } else {
-          window.location.href = "/";
-        }
+  if (!user) {
+
+  } else if (user.role === "admin") {
+    window.location.href = "/admin/";
+  } else if (user.role === "artisan") {
+    window.location.href = "/shopC/";
+  } else if (user.role === "supplier") {
+    window.location.href = "/shopC/";
+  } else if (user.role === "delivery") {
+    window.location.href = "/driver/";
+  } else {
+    window.location.href = "/";
+  }
 
   return (
     <>
       {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
-      
+
       <div className="w-screen h-screen flex flex-col bg-[#F5F5F5]">
         {/* Main Content Area */}
         <div className="flex-grow overflow-auto pb-20">
@@ -432,7 +431,10 @@ export default function HomePage() {
             <Route path="/messages" element={<Messages />} />
             <Route path="/*" element={<ErrorNotFound />} />
             <Route path="/my-messages" element={<CustomerMessages />} />
-            <Route path="/messages/customer/:customerId/shop/:shopId" element={<CustomerConversation />} />
+            <Route
+              path="/messages/customer/:customerId/shop/:shopId"
+              element={<CustomerConversation />}
+            />
           </Routes>
         </div>
 
