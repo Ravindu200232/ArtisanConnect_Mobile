@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Main() {
   const [state, setState] = useState("loading");
@@ -8,6 +9,7 @@ export default function Main() {
   const [categoryFilters, setCategoryFilters] = useState([]);
   const [shops, setShops] = useState([]);
   const [categories, setCategories] = useState([]);
+  const navigate = useNavigate();
   
   // Search Modal States
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -200,11 +202,13 @@ export default function Main() {
   };
 
   const handleItemClick = (item) => {
-    window.location.href = `/product/${item._id}`;
+    navigate(`/product/${item._id}`);
+
   };
 
   const handleShopClick = (shop) => {
-    window.location.href = `/shop/${shop._id}`;
+    navigate(`/shop/${shop._id}`);
+
   };
 
   return (
