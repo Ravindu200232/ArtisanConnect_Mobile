@@ -132,8 +132,8 @@ export default function ArtisanItemOverview() {
       <div className="bg-white">
         <ImageSlider images={artisanItem.images} />
       </div>
-      // Add this section AFTER the Image Slider section and BEFORE Product Info
-      (around line 150)
+      {/* // Add this section AFTER the Image Slider section and BEFORE Product Info
+      (around line 150) */}
       {/* Story Video Section */}
       {artisanItem.storyVideo && (
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b-2 border-purple-200">
