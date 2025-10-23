@@ -399,7 +399,9 @@ export default function HomePage() {
   const token = localStorage.getItem("token");
 
   if (user) {
-    if (user.role === "admin") {
+    if (user.role === "customer") {
+      
+    } else if (user.role === "admin") {
       window.location.href = "/admin/";
     } else if (user.role === "artisan") {
       window.location.href = "/shopC/";
