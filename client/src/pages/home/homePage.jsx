@@ -398,18 +398,18 @@ export default function HomePage() {
   const user = JSON.parse(localStorage.getItem("user"));
   const token = localStorage.getItem("token");
 
-  if (!user) {
-
-  } else if (user.role === "admin") {
-    window.location.href = "/admin/";
-  } else if (user.role === "artisan") {
-    window.location.href = "/shopC/";
-  } else if (user.role === "supplier") {
-    window.location.href = "/shopC/";
-  } else if (user.role === "delivery") {
-    window.location.href = "/driver/";
-  } else {
-    window.location.href = "/";
+  if (user) {
+    if (user.role === "admin") {
+      window.location.href = "/admin/";
+    } else if (user.role === "artisan") {
+      window.location.href = "/shopC/";
+    } else if (user.role === "supplier") {
+      window.location.href = "/shopC/";
+    } else if (user.role === "delivery") {
+      window.location.href = "/driver/";
+    } else {
+      window.location.href = "/";
+    }
   }
 
   return (
