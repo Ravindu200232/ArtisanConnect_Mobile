@@ -310,11 +310,11 @@ export function Profile() {
         }
       );
 
-      Swal.fire("Success", "Your inquiry has been submitted.", "success");
+      Swal.fire("Success", "Your inquiry or feedback has been submitted.", "success");
       setInquiryMessage("");
       fetchInquiries();
     } catch (error) {
-      console.error("Inquiry submission failed", error);
+      console.error("Inquiry or feedback submission failed", error);
       Swal.fire("Error", "Please login first.", "error");
     } finally {
       setInquiryLoading(false);
@@ -339,7 +339,7 @@ export function Profile() {
           },
         }
       );
-      Swal.fire("Success", "Inquiry updated successfully.", "success");
+      Swal.fire("Success", "Inquiry or feedback updated successfully.", "success");
       fetchInquiries();
     } catch (err) {
       console.error("Failed to update inquiry", err);
@@ -367,7 +367,7 @@ export function Profile() {
             },
           }
         );
-        Swal.fire("Deleted!", "Your inquiry has been removed.", "success");
+        Swal.fire("Deleted!", "Your inquiry or feedback updated has been removed.", "success");
         fetchInquiries();
       } catch (err) {
         console.error("Failed to delete inquiry", err);
@@ -992,7 +992,7 @@ export function Profile() {
             <div className="bg-white rounded-xl shadow-sm p-4">
               <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center">
                 <span className="w-1 h-5 bg-[#F85606] rounded mr-2"></span>
-                Send Inquiry
+                Send Inquiry or feedback
               </h3>
               <form className="space-y-3" onSubmit={handleInquirySubmit}>
                 <textarea
