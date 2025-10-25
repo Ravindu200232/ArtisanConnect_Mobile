@@ -64,6 +64,7 @@ const productCategories = [
   },
   { value: "spices", label: "Spices", descPrompt: "premium spices" },
   { value: "tea", label: "Ceylon Tea", descPrompt: "Ceylon tea" },
+  { value: "leather", label: "Leather", descPrompt: "Leather item" },
   { value: "gems", label: "Gems & Stones", descPrompt: "natural gemstones" },
 ];
 
