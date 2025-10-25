@@ -68,7 +68,7 @@ export default function AdminItemPage() {
     // Apply status filter
     if (statusFilter !== "all") {
       results = results.filter(item => 
-        statusFilter === "approved" ? item.approve : !item.approve
+        statusFilter === "approved" ? item.isApprove : !item.isApprove
       );
     }
 
@@ -187,7 +187,7 @@ export default function AdminItemPage() {
 
   const getItemStats = () => {
     const total = items.length;
-    const approved = items.filter(item => item.approve).length;
+    const approved = items.filter(item => item.isApprove).length;
     const pending = total - approved;
     const inStock = items.filter(item => item.available).length;
     const outOfStock = total - inStock;
@@ -196,6 +196,7 @@ export default function AdminItemPage() {
   };
 
   const itemStats = getItemStats();
+
 
   if (!itemsLoaded) {
     return (
@@ -386,7 +387,7 @@ export default function AdminItemPage() {
                         e.target.src = "https://via.placeholder.com/80x80/f97316/white?text=No+Image";
                       }}
                     />
-                    {product.approve && (
+                    {product.isApprove && (
                       <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
                         <FiCheckCircle className="text-white text-sm" />
                       </div>
@@ -425,9 +426,9 @@ export default function AdminItemPage() {
                   </div>
                   <div className="w-px h-4 bg-gray-300"></div>
                   <span className={`text-xs font-bold ${
-                    product.approve ? "text-green-600" : "text-amber-600"
+                    product.isApprove ? "text-green-600" : "text-amber-600"
                   }`}>
-                    {product.approve ? "✓ Approved" : "⏳ Pending"}
+                    {product.isApprove ? "✓ Approved" : "⏳ Pending"}
                   </span>
                 </div>
               </div>
@@ -461,9 +462,9 @@ export default function AdminItemPage() {
                       <div className="bg-white p-3 rounded-xl border border-orange-200 text-center">
                         <p className="text-xs text-gray-600 mb-1">Approval</p>
                         <p className={`font-bold text-sm ${
-                          product.approve ? "text-green-600" : "text-amber-600"
+                          product.isApprove ? "text-green-600" : "text-amber-600"
                         }`}>
-                          {product.approve ? "Approved" : "Pending"}
+                          {product.isApprove ? "Approved" : "Pending"}
                         </p>
                       </div>
                     </div>
@@ -477,7 +478,7 @@ export default function AdminItemPage() {
 
                   {/* Action Buttons */}
                   <div className="p-4 bg-white space-y-2">
-                    {!product.approve && (
+                    {!product.isApprove && (
                       <button
                         onClick={() => handleApprove(product._id, product.name)}
                         className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:shadow-lg"

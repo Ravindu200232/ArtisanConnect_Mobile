@@ -158,6 +158,12 @@ export default function AddCollection() {
   const location = useLocation();
   const shopId = location.state;
 
+  const user = localStorage.getItem('user');
+const userRole = JSON.parse(user).role;
+
+console.log(userRole);
+//if user role ="supplier" not show to tourism related form input sections
+
   // Main state - organized like AddShop
   const [collectionData, setCollectionData] = useState({
     name: "",
