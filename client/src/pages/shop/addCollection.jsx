@@ -1,10 +1,15 @@
 import axios from "axios";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
 import mediaUpload from "../../utils/mediaUpload";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import Swal from "sweetalert2";
+import AIShopImageGenerator from "../../components/AIShopImageGenerator";
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showConfirmationAlert,
+  showLoadingAlert,
+} from "../../components/showSuccessAlert";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 const geminiApiKey = "AIzaSyAVgz2HPFXDfUQLLOaiGVvwbtuqJDisLbA";
@@ -148,161 +153,43 @@ const tourismCategories = [
   },
 ];
 
-// Notification Utilities
-const showSuccessNotification = (title, message, timer = 3000) => {
-  return Swal.fire({
-    title,
-    text: message,
-    icon: "success",
-    timer,
-    showConfirmButton: false,
-    position: "top-end",
-    toast: true,
-    background: "#f0fdf4",
-    color: "#065f46",
-    iconColor: "#10b981",
-    customClass: {
-      popup: "rounded-2xl shadow-2xl border-2 border-green-200",
-      title: "text-green-800 font-bold text-sm",
-      htmlContainer: "text-green-700 text-xs",
-    },
-  });
-};
-
-const showErrorNotification = (title, message, timer = 4000) => {
-  return Swal.fire({
-    title,
-    text: message,
-    icon: "error",
-    timer,
-    showConfirmButton: false,
-    position: "top-end",
-    toast: true,
-    background: "#fef2f2",
-    color: "#7f1d1d",
-    iconColor: "#ef4444",
-    customClass: {
-      popup: "rounded-2xl shadow-2xl border-2 border-red-200",
-      title: "text-red-800 font-bold text-sm",
-      htmlContainer: "text-red-700 text-xs",
-    },
-  });
-};
-
-const showWarningNotification = (title, message, timer = 3500) => {
-  return Swal.fire({
-    title,
-    text: message,
-    icon: "warning",
-    timer,
-    showConfirmButton: false,
-    position: "top-end",
-    toast: true,
-    background: "#fffbeb",
-    color: "#92400e",
-    iconColor: "#f59e0b",
-    customClass: {
-      popup: "rounded-2xl shadow-2xl border-2 border-amber-200",
-      title: "text-amber-800 font-bold text-sm",
-      htmlContainer: "text-amber-700 text-xs",
-    },
-  });
-};
-
-const showInfoNotification = (title, message, timer = 3000) => {
-  return Swal.fire({
-    title,
-    text: message,
-    icon: "info",
-    timer,
-    showConfirmButton: false,
-    position: "top-end",
-    toast: true,
-    background: "#f0f9ff",
-    color: "#0c4a6e",
-    iconColor: "#3b82f6",
-    customClass: {
-      popup: "rounded-2xl shadow-2xl border-2 border-blue-200",
-      title: "text-blue-800 font-bold text-sm",
-      htmlContainer: "text-blue-700 text-xs",
-    },
-  });
-};
-
-const showConfirmationDialog = (
-  title,
-  text,
-  confirmText = "Yes",
-  cancelText = "Cancel"
-) => {
-  return Swal.fire({
-    title,
-    text,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: confirmText,
-    cancelButtonText: cancelText,
-    confirmButtonColor: "#f97316",
-    cancelButtonColor: "#6b7280",
-    background: "#fffbeb",
-    color: "#92400e",
-    iconColor: "#f59e0b",
-    customClass: {
-      popup: "rounded-2xl shadow-2xl border-2 border-amber-200",
-      title: "text-amber-800 font-bold text-lg",
-      htmlContainer: "text-amber-700",
-      confirmButton: "rounded-xl font-bold px-6 py-2",
-      cancelButton: "rounded-xl font-bold px-6 py-2",
-    },
-  });
-};
-
-const showLoadingNotification = (title, text) => {
-  return Swal.fire({
-    title,
-    text,
-    allowOutsideClick: false,
-    allowEscapeKey: false,
-    allowEnterKey: false,
-    showConfirmButton: false,
-    willOpen: () => {
-      Swal.showLoading();
-    },
-    background: "#f0f9ff",
-    color: "#0c4a6e",
-    customClass: {
-      popup: "rounded-2xl shadow-2xl border-2 border-blue-200",
-      title: "text-blue-800 font-bold text-sm",
-      htmlContainer: "text-blue-700 text-xs",
-    },
-  });
-};
-
 export default function AddCollection() {
   const navigate = useNavigate();
   const location = useLocation();
   const shopId = location.state;
 
-  const [itemName, setItemName] = useState("");
-  const [itemPrice, setItemPrice] = useState("");
-  const [itemCategory, setItemCategory] = useState("bathics");
-  const [itemDescription, setItemDescription] = useState("");
-  const [itemImages, setItemImages] = useState([]);
+  // Main state - organized like AddShop
+  const [collectionData, setCollectionData] = useState({
+    name: "",
+    price: "",
+    category: "bathics",
+    description: "",
+    available: true,
+    sellerType: "product",
+  });
+
+  // Image and media states
+  const [imageFiles, setImageFiles] = useState([]);
   const [imageQualityScores, setImageQualityScores] = useState([]);
-  const [itemAvailable, setItemAvailable] = useState(true);
-  const [sellerType, setSellerType] = useState("product");
+  const [aiUploadedImageUrls, setAiUploadedImageUrls] = useState([]);
+
+  // Loading states
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
-  const [isNarratorEnabled, setIsNarratorEnabled] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isGeneratingPackage, setIsGeneratingPackage] = useState(false);
+
+  // AI Description states
   const [aiDescriptionOptions, setAiDescriptionOptions] = useState([]);
-  const [selectedDescriptionOption, setSelectedDescriptionOption] =
-    useState(null);
+  const [selectedDescriptionOption, setSelectedDescriptionOption] = useState(null);
   const [showDescriptionOptions, setShowDescriptionOptions] = useState(false);
   const [useManualDescription, setUseManualDescription] = useState(false);
 
-  // Tourism Package Specific Fields
+  // Narrator states
+  const [isNarratorEnabled, setIsNarratorEnabled] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  // Tourism Package states
   const [packageDuration, setPackageDuration] = useState("");
   const [packageInclusions, setPackageInclusions] = useState("");
   const [packageExclusions, setPackageExclusions] = useState("");
@@ -314,10 +201,231 @@ export default function AddCollection() {
   const [packageGroupSize, setPackageGroupSize] = useState("");
   const [packageDifficulty, setPackageDifficulty] = useState("easy");
 
-  const [isGeneratingPackage, setIsGeneratingPackage] = useState(false);
+  // Video states
+  const [storyVideo, setStoryVideo] = useState(null);
+  const [videoPreview, setVideoPreview] = useState(null);
+  const [isAnalyzingVideo, setIsAnalyzingVideo] = useState(false);
+  const [videoQuality, setVideoQuality] = useState(null);
 
   const speechSynthesis = window.speechSynthesis;
 
+  // === INTEGRATED FROM ADDSHOP ===
+
+  // Handle AI images uploaded to Supabase
+  const handleAiImagesUploaded = (supabaseUrls) => {
+    try {
+      setAiUploadedImageUrls(prev => [...prev, ...supabaseUrls]);
+      showSuccessAlert('✅ AI Images Added!', `${supabaseUrls.length} AI images uploaded and ready for your collection`);
+      
+      if (isNarratorEnabled) {
+        speakText(`${supabaseUrls.length} AI images uploaded to your collection`);
+      }
+    } catch (error) {
+      console.error('Error handling AI uploaded images:', error);
+      showErrorAlert('Add Failed', 'Could not add AI images to collection data');
+    }
+  };
+
+  // Enhanced image quality analysis from AddShop
+  const analyzeImageQuality = async (file) => {
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+      const reader = new FileReader();
+      const base64Promise = new Promise((resolve) => {
+        reader.onload = (e) => resolve(e.target.result.split(",")[1]);
+        reader.readAsDataURL(file);
+      });
+      const base64Data = await base64Promise;
+
+      const img = new Image();
+      const dimensionsPromise = new Promise((resolve) => {
+        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.src = URL.createObjectURL(file);
+      });
+      const dimensions = await dimensionsPromise;
+
+      const prompt = `Analyze this ${collectionData.sellerType === "tourism" ? "tourism destination" : "product"} image for quality. Rate 1-10.
+Consider: resolution (${dimensions.width}x${dimensions.height}), lighting, professional appearance, focus, sharpness.
+Respond in JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${dimensions.height}", "fileSize": "${(file.size / 1024).toFixed(1)}KB", "quality": "<excellent/good/fair/poor>", "feedback": "<brief assessment>", "recommendations": "<suggestions>"}`;
+
+      const result = await model.generateContent([
+        prompt,
+        { inlineData: { mimeType: file.type, data: base64Data } },
+      ]);
+
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) return JSON.parse(jsonMatch[0]);
+
+      return {
+        rating: dimensions.width >= 1024 && dimensions.height >= 768 ? 8 : 6,
+        resolution: `${dimensions.width}x${dimensions.height}`,
+        fileSize: `${(file.size / 1024).toFixed(1)}KB`,
+        quality: dimensions.width >= 1024 ? "good" : "fair",
+        feedback: "Image uploaded successfully",
+        recommendations: dimensions.width < 1024 ? "Use higher resolution (1024x768+)" : "Good quality",
+      };
+    } catch (error) {
+      console.error("Image analysis error:", error);
+      return null;
+    }
+  };
+
+  // Enhanced image change handler from AddShop
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setIsAnalyzingImage(true);
+    if (isNarratorEnabled) speakText(`Analyzing ${files.length} image${files.length > 1 ? "s" : ""}`);
+
+    const qualities = await Promise.all(files.map((f) => analyzeImageQuality(f)));
+    setImageFiles((prev) => [...prev, ...files]);
+    setImageQualityScores((prev) => [...prev, ...qualities]);
+
+    const avgRating = qualities.reduce((sum, q) => sum + (q?.rating || 0), 0) / qualities.length;
+    const excellentCount = qualities.filter((q) => q?.rating >= 8).length;
+    const poorCount = qualities.filter((q) => q?.rating < 6).length;
+
+    if (avgRating >= 8) {
+      showSuccessAlert(`✨ Excellent Image Quality!`, `${excellentCount} image${excellentCount > 1 ? "s" : ""} rated 8+ out of 10`);
+      if (isNarratorEnabled) speakText(`Excellent image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
+    } else if (avgRating >= 6) {
+      showSuccessAlert("✓ Good Quality Images", "Your images meet the recommended standards");
+      if (isNarratorEnabled) speakText(`Good image quality. Average rating ${avgRating.toFixed(1)} out of 10`);
+    } else {
+      showErrorAlert(`⚠️ Low Quality Images Detected`, `${poorCount} image${poorCount > 1 ? "s" : ""} need improvement for better presentation`);
+      if (isNarratorEnabled) speakText(`Warning: Low quality images. Average rating ${avgRating.toFixed(1)} out of 10`);
+    }
+    setIsAnalyzingImage(false);
+  };
+
+  // Enhanced description generation from AddShop
+  const generateDescriptionOptions = async () => {
+    if (!collectionData.name.trim()) {
+      showErrorAlert("Item Name Required", "Please enter item name first to generate descriptions");
+      return;
+    }
+
+    setIsGeneratingDescription(true);
+    setShowDescriptionOptions(true);
+
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+      const categories = collectionData.sellerType === "product" ? productCategories : 
+                        collectionData.sellerType === "material" ? materialCategories : tourismCategories;
+      const categoryInfo = categories.find((c) => c.value === collectionData.category);
+
+      const prompt = `Create 3 professional ${collectionData.sellerType} descriptions for "${collectionData.name}". ${
+        categoryInfo ? `Category: ${categoryInfo.label}. ${categoryInfo.descPrompt}` : ""
+      }
+${collectionData.price ? `Price: Rs. ${collectionData.price}` : ""}
+
+Generate: 1. Professional (150-180 chars), 2. Friendly (150-180 chars), 3. Detailed (150-180 chars)
+Return ONLY JSON format: {"options": [{"style": "Professional", "description": "..."}, {"style": "Friendly", "description": "..."}, {"style": "Detailed", "description": "..."}]}`;
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        setAiDescriptionOptions(parsed.options);
+        showSuccessAlert("✨ AI Descriptions Generated!", "3 professional description options ready for you!");
+      } else {
+        const descriptions = [
+          {
+            style: "Professional",
+            description: `Professional ${collectionData.name} offering quality ${collectionData.sellerType}.`,
+          },
+          {
+            style: "Friendly",
+            description: `Welcome to ${collectionData.name}! We offer excellent ${collectionData.sellerType} with great service.`,
+          },
+          {
+            style: "Detailed",
+            description: `${collectionData.name} provides comprehensive ${collectionData.sellerType} services with attention to detail and quality.`,
+          },
+        ];
+        setAiDescriptionOptions(descriptions);
+        showSuccessAlert("✨ AI Descriptions Generated!", "3 professional description options ready for you!");
+      }
+    } catch (error) {
+      console.error("Description generation error:", error);
+      const fallbackDescriptions = [
+        {
+          style: "Professional",
+          description: `${collectionData.name} offers professional ${collectionData.sellerType} services and quality products.`,
+        },
+        {
+          style: "Friendly",
+          description: `Welcome to ${collectionData.name}! We're your friendly ${collectionData.sellerType} provider.`,
+        },
+        {
+          style: "Detailed",
+          description: `${collectionData.name} provides comprehensive ${collectionData.sellerType} services with commitment to excellence.`,
+        },
+      ];
+      setAiDescriptionOptions(fallbackDescriptions);
+      showSuccessAlert("✨ Descriptions Generated!", "3 professional description options created!");
+    } finally {
+      setIsGeneratingDescription(false);
+    }
+  };
+
+  const selectDescriptionOption = (option) => {
+    setSelectedDescriptionOption(option);
+    setCollectionData((prev) => ({ ...prev, description: option.description }));
+    showSuccessAlert("✓ Description Selected!", `${option.style} description applied successfully!`);
+  };
+
+  // Enhanced image management from AddShop
+  const removeLowQualityImages = async () => {
+    const lowIndices = imageQualityScores
+      .map((q, idx) => (q && q.rating < 5 ? idx : -1))
+      .filter((idx) => idx !== -1);
+
+    if (lowIndices.length === 0) {
+      showSuccessAlert("No Low Quality Images", "All your images meet the quality standards!");
+      return;
+    }
+
+    const result = await showConfirmationAlert(
+      "Remove Low Quality Images?",
+      `Remove ${lowIndices.length} image${lowIndices.length > 1 ? "s" : ""} with quality rating below 5?`,
+      "Yes, Remove",
+      "Keep Them"
+    );
+
+    if (result.isConfirmed) {
+      setImageFiles(imageFiles.filter((_, idx) => !lowIndices.includes(idx)));
+      setImageQualityScores(imageQualityScores.filter((_, idx) => !lowIndices.includes(idx)));
+      showSuccessAlert("✓ Images Removed", `${lowIndices.length} low quality image${lowIndices.length > 1 ? "s" : ""} removed successfully`);
+      if (isNarratorEnabled) speakText(`Removed ${lowIndices.length} low quality images`);
+    }
+  };
+
+  const clearAllImages = async () => {
+    if (imageFiles.length === 0) return;
+
+    const result = await showConfirmationAlert(
+      "Clear All Images?",
+      `Remove all ${imageFiles.length} uploaded image${imageFiles.length > 1 ? "s" : ""}?`,
+      "Yes, Clear All",
+      "Cancel"
+    );
+
+    if (result.isConfirmed) {
+      setImageFiles([]);
+      setImageQualityScores([]);
+      showSuccessAlert("✓ Images Cleared", "All images have been removed successfully");
+      if (isNarratorEnabled) speakText("All images cleared");
+    }
+  };
+
+  // Narrator functions from AddShop
   const speakText = (text) => {
     if (!isNarratorEnabled || !text?.trim()) return;
     speechSynthesis.cancel();
@@ -341,32 +449,22 @@ export default function AddCollection() {
     if (isNarratorEnabled) speakText(`${fieldName} field focused`);
   };
 
-  // Generate Complete Tourism Package with AI
+  // Tourism Package Generation
   const generateTourismPackage = async () => {
-    if (!itemName.trim()) {
-      showErrorNotification(
-        "Package Name Required",
-        "Please enter package name first"
-      );
+    if (!collectionData.name.trim()) {
+      showErrorAlert("Package Name Required", "Please enter package name first");
       return;
     }
 
     setIsGeneratingPackage(true);
-    const loadingNotification = showLoadingNotification(
-      "Generating Package",
-      "AI is creating your complete tourism package..."
-    );
+    const loadingAlert = showLoadingAlert("Generating Package", "AI is creating your complete tourism package...");
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-      const categoryInfo = tourismCategories.find(
-        (c) => c.value === itemCategory
-      );
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const categoryInfo = tourismCategories.find((c) => c.value === collectionData.category);
 
-      const prompt = `Create a comprehensive tourism package for "${itemName}" in Sri Lanka. Category: ${
-        categoryInfo?.label || "General Tour"
-      }.
-Price: ${itemPrice ? `Rs. ${itemPrice}` : "Not specified"}
+      const prompt = `Create a comprehensive tourism package for "${collectionData.name}" in Sri Lanka. Category: ${categoryInfo?.label || "General Tour"}.
+Price: ${collectionData.price ? `Rs. ${collectionData.price}` : "Not specified"}
 
 Generate a complete package with:
 1. Package Description (200-250 chars)
@@ -403,8 +501,7 @@ Respond in JSON format:
       if (jsonMatch) {
         const packageData = JSON.parse(jsonMatch[0]);
 
-        // Set all package fields
-        setItemDescription(packageData.description);
+        setCollectionData(prev => ({ ...prev, description: packageData.description }));
         setPackageDuration(packageData.duration);
         setPackageHighlights(packageData.highlights?.join("\n• ") || "");
         setPackageItinerary(packageData.itinerary);
@@ -416,296 +513,24 @@ Respond in JSON format:
         setPackageGroupSize(packageData.groupSize);
         setPackageDifficulty(packageData.difficulty || "easy");
 
-        Swal.close();
-        showSuccessNotification(
-          "Package Generated!",
-          "Complete tourism package created successfully!"
-        );
-        if (isNarratorEnabled)
-          speakText(
-            "AI has generated a complete tourism package with itinerary, inclusions, and all details"
-          );
+        loadingAlert.close();
+        showSuccessAlert("Package Generated!", "Complete tourism package created successfully!");
+        if (isNarratorEnabled) speakText("AI has generated a complete tourism package with itinerary, inclusions, and all details");
       }
     } catch (error) {
       console.error("Package generation error:", error);
-      Swal.close();
-      showErrorNotification(
-        "Generation Failed",
-        "Failed to generate package. Please fill manually."
-      );
+      loadingAlert.close();
+      showErrorAlert("Generation Failed", "Failed to generate package. Please fill manually.");
     } finally {
       setIsGeneratingPackage(false);
     }
   };
 
-  // Image quality analysis
-  const analyzeImageQuality = async (file) => {
-    try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-
-      const reader = new FileReader();
-      const base64Promise = new Promise((resolve) => {
-        reader.onload = (e) => resolve(e.target.result.split(",")[1]);
-        reader.readAsDataURL(file);
-      });
-      const base64Data = await base64Promise;
-
-      const img = new Image();
-      const dimensionsPromise = new Promise((resolve) => {
-        img.onload = () => resolve({ width: img.width, height: img.height });
-        img.src = URL.createObjectURL(file);
-      });
-      const dimensions = await dimensionsPromise;
-
-      const prompt = `Analyze this ${
-        sellerType === "tourism" ? "tourism destination" : "product"
-      } image for quality. Rate 1-10.
-Consider: resolution (${dimensions.width}x${
-        dimensions.height
-      }), lighting, clarity, professional appearance.
-Respond JSON: {"rating": <1-10>, "resolution": "${dimensions.width}x${
-        dimensions.height
-      }", "fileSize": "${(file.size / 1024).toFixed(
-        1
-      )}KB", "quality": "<excellent/good/fair/poor>", "feedback": "<brief assessment>", "recommendations": "<suggestions>"}`;
-
-      const result = await model.generateContent([
-        prompt,
-        { inlineData: { mimeType: file.type, data: base64Data } },
-      ]);
-
-      const text = result.response.text();
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) return JSON.parse(jsonMatch[0]);
-
-      return {
-        rating: dimensions.width >= 800 && dimensions.height >= 600 ? 8 : 6,
-        resolution: `${dimensions.width}x${dimensions.height}`,
-        fileSize: `${(file.size / 1024).toFixed(1)}KB`,
-        quality: dimensions.width >= 800 ? "good" : "fair",
-        feedback: "Image uploaded",
-        recommendations:
-          dimensions.width < 800
-            ? "Use 800x600+ for better quality"
-            : "Good quality",
-      };
-    } catch (error) {
-      console.error("Image analysis error:", error);
-      return null;
-    }
-  };
-
-  const handleImageChange = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-
-    setIsAnalyzingImage(true);
-    const loadingNotification = showLoadingNotification(
-      "Analyzing Images",
-      `AI is analyzing ${files.length} image${
-        files.length > 1 ? "s" : ""
-      } for quality...`
-    );
-    if (isNarratorEnabled)
-      speakText(
-        `Analyzing ${files.length} image${files.length > 1 ? "s" : ""}`
-      );
-
-    const qualities = await Promise.all(
-      files.map((f) => analyzeImageQuality(f))
-    );
-    setItemImages((prev) => [...prev, ...files]);
-    setImageQualityScores((prev) => [...prev, ...qualities]);
-
-    Swal.close();
-
-    const avgRating =
-      qualities.reduce((sum, q) => sum + (q?.rating || 0), 0) /
-      qualities.length;
-    const excellentCount = qualities.filter((q) => q?.rating >= 8).length;
-    const poorCount = qualities.filter((q) => q?.rating < 6).length;
-
-    if (avgRating >= 8) {
-      showSuccessNotification(
-        "Excellent Quality!",
-        `${excellentCount} image${excellentCount > 1 ? "s" : ""} rated 8+`
-      );
-      if (isNarratorEnabled)
-        speakText(
-          `Excellent image quality. Average rating ${avgRating.toFixed(
-            1
-          )} out of 10`
-        );
-    } else if (avgRating >= 6) {
-      showInfoNotification("Good Quality", "Images meet quality standards");
-      if (isNarratorEnabled)
-        speakText(
-          `Good image quality. Average rating ${avgRating.toFixed(1)} out of 10`
-        );
-    } else {
-      showWarningNotification(
-        "Quality Warning",
-        `${poorCount} low quality image${poorCount > 1 ? "s" : ""} detected`
-      );
-      if (isNarratorEnabled)
-        speakText(
-          `Warning: Low quality images. Average rating ${avgRating.toFixed(
-            1
-          )} out of 10`
-        );
-    }
-    setIsAnalyzingImage(false);
-  };
-
-  // Generate 3 AI description options
-  const generateDescriptionOptions = async () => {
-    if (!itemName.trim()) {
-      showErrorNotification(
-        "Item Name Required",
-        "Please enter item name first"
-      );
-      return;
-    }
-
-    setIsGeneratingDescription(true);
-    setShowDescriptionOptions(true);
-    const loadingNotification = showLoadingNotification(
-      "Generating Descriptions",
-      "AI is creating 3 description options for you..."
-    );
-
-    try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-      const categories =
-        sellerType === "product"
-          ? productCategories
-          : sellerType === "material"
-          ? materialCategories
-          : tourismCategories;
-      const categoryInfo = categories.find((c) => c.value === itemCategory);
-
-      const prompt = `Create 3 professional ${sellerType} descriptions for "${itemName}". ${
-        categoryInfo
-          ? `Category: ${categoryInfo.label}. ${categoryInfo.descPrompt}`
-          : ""
-      }
-${itemPrice ? `Price: Rs. ${itemPrice}` : ""}
-
-Generate: 1. Professional (150-180 chars), 2. Friendly (150-180 chars), 3. Detailed (150-180 chars)
-JSON format: {"options": [{"style": "Professional", "description": "..."}, {"style": "Friendly", "description": "..."}, {"style": "Detailed", "description": "..."}]}`;
-
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        setAiDescriptionOptions(parsed.options);
-        Swal.close();
-        showSuccessNotification(
-          "Descriptions Ready!",
-          "3 AI description options generated successfully!"
-        );
-        if (isNarratorEnabled)
-          speakText("Three AI description options generated successfully");
-      }
-    } catch (error) {
-      console.error("Description generation error:", error);
-      Swal.close();
-      showErrorNotification(
-        "Generation Failed",
-        "Failed to generate options. Try manual."
-      );
-    } finally {
-      setIsGeneratingDescription(false);
-    }
-  };
-
-  const selectDescriptionOption = (option) => {
-    setSelectedDescriptionOption(option);
-    setItemDescription(option.description);
-    showSuccessNotification(
-      "Description Selected!",
-      `${option.style} description applied`
-    );
-    if (isNarratorEnabled) speakText(`${option.style} description selected`);
-  };
-
-  const removeLowQualityImages = async () => {
-    const lowIndices = imageQualityScores
-      .map((q, idx) => (q && q.rating < 5 ? idx : -1))
-      .filter((idx) => idx !== -1);
-
-    if (lowIndices.length === 0) {
-      showInfoNotification(
-        "No Action Needed",
-        "No low quality images to remove"
-      );
-      return;
-    }
-
-    const result = await showConfirmationDialog(
-      "Remove Low Quality Images",
-      `Remove ${lowIndices.length} low quality image${
-        lowIndices.length > 1 ? "s" : ""
-      }?`,
-      "Remove Now",
-      "Keep Them"
-    );
-
-    if (result.isConfirmed) {
-      setItemImages(itemImages.filter((_, idx) => !lowIndices.includes(idx)));
-      setImageQualityScores(
-        imageQualityScores.filter((_, idx) => !lowIndices.includes(idx))
-      );
-      showSuccessNotification(
-        "Images Removed",
-        `${lowIndices.length} low quality image${
-          lowIndices.length > 1 ? "s" : ""
-        } removed`
-      );
-      if (isNarratorEnabled)
-        speakText(`Removed ${lowIndices.length} low quality images`);
-    }
-  };
-
-  const clearAllImages = async () => {
-    if (itemImages.length === 0) {
-      showInfoNotification("No Images", "No images to clear");
-      return;
-    }
-
-    const result = await showConfirmationDialog(
-      "Clear All Images",
-      `Remove all ${itemImages.length} image${
-        itemImages.length > 1 ? "s" : ""
-      }?`,
-      "Clear All",
-      "Cancel"
-    );
-
-    if (result.isConfirmed) {
-      setItemImages([]);
-      setImageQualityScores([]);
-      showSuccessNotification("Cleared All", "All images removed successfully");
-      if (isNarratorEnabled) speakText("All images cleared");
-    }
-  };
-
-  // Add these new state variables after the existing useState declarations (around line 155)
-
-  const [storyVideo, setStoryVideo] = useState(null);
-  const [videoPreview, setVideoPreview] = useState(null);
-  const [isAnalyzingVideo, setIsAnalyzingVideo] = useState(false);
-  const [videoQuality, setVideoQuality] = useState(null);
-
-  // Add this video validation and analysis function after analyzeImageQuality function
-
+  // Video analysis function
   const analyzeVideoQuality = async (file) => {
     try {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
 
-      // Check file size (max 50MB)
       if (file.size > 50 * 1024 * 1024) {
         return {
           valid: false,
@@ -714,7 +539,6 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         };
       }
 
-      // Get video duration and dimensions
       const video = document.createElement("video");
       const videoURL = URL.createObjectURL(file);
 
@@ -731,13 +555,11 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           let feedback = "Video meets requirements";
           let recommendations = "";
 
-          // Quality assessment
           if (duration > 60) {
             quality = "warning";
             rating = 6;
             feedback = "Video is quite long";
-            recommendations =
-              "Consider shorter videos (30-60s) for better engagement";
+            recommendations = "Consider shorter videos (30-60s) for better engagement";
           }
 
           if (width < 720 || height < 720) {
@@ -748,9 +570,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           }
 
           if (fileSizeMB > 40) {
-            recommendations +=
-              (recommendations ? " • " : "") +
-              "Consider compressing to reduce file size";
+            recommendations += (recommendations ? " • " : "") + "Consider compressing to reduce file size";
           }
 
           resolve({
@@ -785,31 +605,25 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
     }
   };
 
-  // Add this video upload handler
-
+  // Video upload handler
   const handleVideoChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("video/")) {
-      showErrorNotification("Invalid File", "Please upload a video file");
+      showErrorAlert("Invalid File", "Please upload a video file");
       return;
     }
 
     setIsAnalyzingVideo(true);
-    const loadingNotification = showLoadingNotification(
-      "Analyzing Video",
-      "AI is analyzing your story video..."
-    );
+    const loadingAlert = showLoadingAlert("Analyzing Video", "AI is analyzing your story video...");
     if (isNarratorEnabled) speakText("Analyzing video");
 
     const quality = await analyzeVideoQuality(file);
-
-    Swal.close();
+    loadingAlert.close();
 
     if (!quality.valid) {
-      showErrorNotification("Video Error", quality.error);
+      showErrorAlert("Video Error", quality.error);
       if (isNarratorEnabled) speakText("Video upload failed: " + quality.error);
       setIsAnalyzingVideo(false);
       return;
@@ -820,25 +634,18 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
     setVideoQuality(quality);
 
     if (quality.rating >= 7) {
-      showSuccessNotification(
-        "Great Video!",
-        `Duration: ${quality.duration}, Quality: ${quality.quality}`
-      );
-      if (isNarratorEnabled)
-        speakText(
-          `Excellent video quality. Rating ${quality.rating} out of 10`
-        );
+      showSuccessNotification("Great Video!", `Duration: ${quality.duration}, Quality: ${quality.quality}`);
+      if (isNarratorEnabled) speakText(`Excellent video quality. Rating ${quality.rating} out of 10`);
     } else {
       showWarningNotification("Video Accepted", quality.recommendations);
-      if (isNarratorEnabled)
-        speakText(`Video accepted with rating ${quality.rating} out of 10`);
+      if (isNarratorEnabled) speakText(`Video accepted with rating ${quality.rating} out of 10`);
     }
 
     setIsAnalyzingVideo(false);
   };
 
   const removeVideo = async () => {
-    const result = await showConfirmationDialog(
+    const result = await showConfirmationAlert(
       "Remove Video",
       "Remove the story video?",
       "Remove",
@@ -850,167 +657,18 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
       setStoryVideo(null);
       setVideoPreview(null);
       setVideoQuality(null);
-      showSuccessNotification("Video Removed", "Story video removed");
+      showSuccessAlert("Video Removed", "Story video removed");
       if (isNarratorEnabled) speakText("Video removed");
     }
   };
 
-  // Update the handleAddItem function to include video upload (replace the existing function around line 600)
-
-  async function handleAddItem() {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      showErrorNotification("Authentication Required", "Please login first");
-      return;
-    }
-
-    if (!itemName || !itemPrice || !itemDescription) {
-      showErrorNotification(
-        "Missing Information",
-        "Please fill all required fields"
-      );
-      return;
-    }
-
-    if (itemImages.length === 0) {
-      showErrorNotification("Images Required", "Please add at least one image");
-      return;
-    }
-
-    // Tourism package validation
-    if (sellerType === "tourism") {
-      if (!packageDuration || !packageInclusions || !packageItinerary) {
-        showErrorNotification(
-          "Package Details Required",
-          "Please fill all tourism package required fields"
-        );
-        return;
-      }
-    }
-
-    const lowQuality = imageQualityScores.filter((q) => q && q.rating < 5);
-    if (lowQuality.length > 0) {
-      const result = await showConfirmationDialog(
-        "Low Quality Images",
-        `${lowQuality.length} image${
-          lowQuality.length > 1 ? "s" : ""
-        } have low quality. Continue anyway?`,
-        "Continue Anyway",
-        "Cancel"
-      );
-      if (!result.isConfirmed) return;
-    }
-
-    setIsLoading(true);
-    const loadingNotification = showLoadingNotification(
-      "Adding Item",
-      `${
-        sellerType === "tourism" ? "Package" : "Item"
-      } is being added to your collection...`
-    );
-
-    if (isNarratorEnabled) speakText("Submitting your item. Please wait.");
-
-    try {
-      // Upload images
-      const uploadPromises = itemImages.map((img) => mediaUpload(img));
-      const imageUrls = await Promise.all(uploadPromises);
-
-      // Upload video if present
-      let videoUrl = null;
-      if (storyVideo) {
-        try {
-          Swal.update({
-            title: "Uploading Video",
-            text: "Uploading story video... This may take a moment.",
-          });
-          videoUrl = await mediaUpload(storyVideo);
-          if (isNarratorEnabled) speakText("Video uploaded successfully");
-        } catch (videoError) {
-          console.error("Video upload error:", videoError);
-          showWarningNotification(
-            "Video Upload Failed",
-            "Item will be added without story video"
-          );
-        }
-      }
-
-      const payload = {
-        shopId,
-        name: itemName,
-        price: itemPrice,
-        category: itemCategory,
-        description: itemDescription,
-        available: itemAvailable,
-        images: imageUrls,
-        sellerType: sellerType,
-        storyVideo: videoUrl,
-      };
-
-      // Add tourism package specific fields
-      if (sellerType === "tourism") {
-        payload.tourismPackage = {
-          duration: packageDuration,
-          inclusions: packageInclusions,
-          exclusions: packageExclusions,
-          itinerary: packageItinerary,
-          highlights: packageHighlights,
-          accommodation: packageAccommodation,
-          transport: packageTransport,
-          meals: packageMeals,
-          groupSize: packageGroupSize,
-          difficulty: packageDifficulty,
-        };
-      }
-
-      const result = await axios.post(
-        `${backendUrl}/api/v1/collection`,
-        payload,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      Swal.close();
-      showSuccessNotification(
-        "Success!",
-        `${sellerType === "tourism" ? "Package" : "Item"} added successfully!`,
-        2000
-      );
-
-      if (isNarratorEnabled) speakText("Item added successfully! Redirecting.");
-
-      // Show success confirmation before redirecting
-      setTimeout(() => {
-        showSuccessNotification(
-          "Redirecting...",
-          `Taking you back to your ${sellerType} collection`,
-          1000
-        );
-        setTimeout(() => navigate("/shopC/shop"), 1200);
-      }, 1500);
-    } catch (err) {
-      Swal.close();
-      const errorMessage =
-        err.response?.data?.error || "Failed to add item. Please try again.";
-      showErrorNotification("Failed to Add", errorMessage);
-      if (isNarratorEnabled) speakText("Failed to add item. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // Reset form when seller type changes
+  // Seller type change handler
   const handleSellerTypeChange = (type) => {
-    setSellerType(type);
-    if (type === "product") {
-      setItemCategory("bathics");
-    } else if (type === "material") {
-      setItemCategory("fabric");
-    } else if (type === "tourism") {
-      setItemCategory("cultural");
-    }
+    setCollectionData(prev => ({ 
+      ...prev, 
+      sellerType: type,
+      category: type === "product" ? "bathics" : type === "material" ? "fabric" : "cultural"
+    }));
 
     // Clear tourism specific fields when switching away from tourism
     if (type !== "tourism") {
@@ -1026,30 +684,165 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
       setPackageDifficulty("easy");
     }
 
-    showInfoNotification(
-      "Mode Changed",
-      `${type.charAt(0).toUpperCase() + type.slice(1)} seller mode activated`
-    );
+    showSuccessAlert("Mode Changed", `${type.charAt(0).toUpperCase() + type.slice(1)} seller mode activated`);
     if (isNarratorEnabled) speakText(`${type} seller selected`);
   };
 
-  // Handle narrator toggle with notification
+  // Handle narrator toggle
   const handleNarratorToggle = () => {
     const newState = !isNarratorEnabled;
     setIsNarratorEnabled(newState);
 
     if (newState) {
-      showSuccessNotification(
-        "Narrator Enabled",
-        "Voice guidance is now active"
-      );
-      speakText(
-        "Narrator enabled. You will now receive audio feedback for your actions."
-      );
+      showSuccessAlert("Narrator Enabled", "Voice guidance is now active");
+      speakText("Narrator enabled. You will now receive audio feedback for your actions.");
     } else {
       stopSpeaking();
-      showInfoNotification("Narrator Disabled", "Voice guidance turned off");
+      showSuccessAlert("Narrator Disabled", "Voice guidance turned off");
     }
+  };
+
+  // Main form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showErrorAlert("Authentication Required", "Please login first");
+      return;
+    }
+
+    if (!collectionData.name || !collectionData.price || !collectionData.description) {
+      showErrorAlert("Missing Information", "Please fill all required fields");
+      return;
+    }
+
+    if (imageFiles.length === 0 && aiUploadedImageUrls.length === 0) {
+      showErrorAlert("Images Required", "Please add at least one image or use AI image generator");
+      return;
+    }
+
+    // Tourism package validation
+    if (collectionData.sellerType === "tourism") {
+      if (!packageDuration || !packageInclusions || !packageItinerary) {
+        showErrorAlert("Package Details Required", "Please fill all tourism package required fields");
+        return;
+      }
+    }
+
+    const lowQuality = imageQualityScores.filter((q) => q && q.rating < 5);
+    if (lowQuality.length > 0) {
+      const result = await showConfirmationAlert(
+        "Low Quality Images Detected",
+        `${lowQuality.length} image${lowQuality.length > 1 ? "s" : ""} have quality rating below 5. Continue with submission?`,
+        "Yes, Continue",
+        "Improve Images"
+      );
+      if (!result.isConfirmed) return;
+    }
+
+    setIsLoading(true);
+    if (isNarratorEnabled) speakText("Submitting your item. Please wait.");
+
+    const loadingAlert = showLoadingAlert(
+      "Adding Your Item",
+      `Setting up your ${collectionData.sellerType}...`
+    );
+
+    try {
+      // Upload manual images
+      const uploadedUrls = await Promise.all(imageFiles.map((f) => mediaUpload(f)));
+
+      // Combine manual uploaded URLs with AI uploaded URLs
+      const allImageUrls = [...uploadedUrls, ...aiUploadedImageUrls];
+
+      // Upload video if present
+      let videoUrl = null;
+      if (storyVideo) {
+        try {
+          loadingAlert.update({
+            title: "Uploading Video",
+            text: "Uploading story video... This may take a moment.",
+          });
+          videoUrl = await mediaUpload(storyVideo);
+          if (isNarratorEnabled) speakText("Video uploaded successfully");
+        } catch (videoError) {
+          console.error("Video upload error:", videoError);
+          showErrorAlert("Video Upload Failed", "Item will be added without story video");
+        }
+      }
+
+      const payload = {
+        shopId,
+        ...collectionData,
+        images: allImageUrls,
+        storyVideo: videoUrl,
+      };
+
+      // Add tourism package specific fields
+      if (collectionData.sellerType === "tourism") {
+        payload.tourismPackage = {
+          duration: packageDuration,
+          inclusions: packageInclusions,
+          exclusions: packageExclusions,
+          itinerary: packageItinerary,
+          highlights: packageHighlights,
+          accommodation: packageAccommodation,
+          transport: packageTransport,
+          meals: packageMeals,
+          groupSize: packageGroupSize,
+          difficulty: packageDifficulty,
+        };
+      }
+
+      await axios.post(`${backendUrl}/api/v1/collection`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      loadingAlert.close();
+      showSuccessAlert("🎉 Item Added Successfully!", `Your ${collectionData.sellerType} is now live and ready for customers!`);
+
+      if (isNarratorEnabled) speakText("Item added successfully! Redirecting to your shop.");
+      setTimeout(() => navigate("/shopC/shop"), 2000);
+    } catch (error) {
+      console.error("Error:", error);
+      loadingAlert.close();
+      showErrorAlert("Failed to Add Item", "Please check your connection and try again.");
+      if (isNarratorEnabled) speakText("Failed to add item. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCollectionData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Notification utilities for compatibility
+  const showSuccessNotification = (title, message, timer = 3000) => {
+    return showSuccessAlert(title, message);
+  };
+
+  const showErrorNotification = (title, message, timer = 4000) => {
+    return showErrorAlert(title, message);
+  };
+
+  const showWarningNotification = (title, message, timer = 3500) => {
+    return showErrorAlert(title, message);
+  };
+
+  const showInfoNotification = (title, message, timer = 3000) => {
+    return showSuccessAlert(title, message);
+  };
+
+  const showConfirmationDialog = (title, text, confirmText = "Yes", cancelText = "Cancel") => {
+    return showConfirmationAlert(title, text, confirmText, cancelText);
+  };
+
+  const showLoadingNotification = (title, text) => {
+    return showLoadingAlert(title, text);
   };
 
   return (
@@ -1059,31 +852,16 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
         <div className="p-4 pb-5">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => {
-                if (isNarratorEnabled) speakText("Returning to shop");
-                navigate("/shopC/shop");
-              }}
+              onClick={() => navigate("/shopC/shop")}
               className="w-9 h-9 bg-white bg-opacity-20 backdrop-blur-sm rounded-full flex items-center justify-center active:scale-95 transition-transform"
             >
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div className="text-center flex-1">
               <h1 className="text-xl font-bold text-white">Add New Item</h1>
-              <p className="text-orange-100 text-xs mt-0.5">
-                ✨ AI Quality Check
-              </p>
+              <p className="text-orange-100 text-xs mt-0.5">✨ AI-Powered Quality Check</p>
             </div>
             <button
               onClick={handleNarratorToggle}
@@ -1091,59 +869,34 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                 isNarratorEnabled ? "bg-green-500" : "bg-white bg-opacity-20"
               }`}
             >
-              <svg
-                className="w-5 h-5 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                />
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
               </svg>
             </button>
           </div>
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
+      <form onSubmit={handleSubmit} className="p-4 space-y-3">
         {/* Narrator Status */}
         {isNarratorEnabled && (
           <div className="bg-green-50 border-2 border-green-300 rounded-xl p-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <svg
-                className={`w-5 h-5 text-green-600 ${
-                  isSpeaking ? "animate-pulse" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                />
+              <svg className={`w-5 h-5 text-green-600 ${isSpeaking ? "animate-pulse" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
               </svg>
               <span className="text-sm font-bold text-green-800">
                 {isSpeaking ? "🔊 Speaking..." : "✓ Narrator Active"}
               </span>
             </div>
             {isSpeaking && (
-              <button
-                type="button"
-                onClick={stopSpeaking}
-                className="text-xs bg-red-500 text-white px-3 py-1 rounded-lg font-bold"
-              >
+              <button type="button" onClick={stopSpeaking} className="text-xs bg-red-500 text-white px-3 py-1 rounded-lg font-bold">
                 Stop
               </button>
             )}
           </div>
         )}
+
         {/* Seller Type */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-3">
@@ -1154,26 +907,14 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               type="button"
               onClick={() => handleSellerTypeChange("product")}
               className={`p-3 rounded-xl border-2 transition-all active:scale-95 ${
-                sellerType === "product"
-                  ? "border-[#F85606] bg-orange-50"
-                  : "border-gray-200 bg-gray-50"
+                collectionData.sellerType === "product" ? "border-[#F85606] bg-orange-50" : "border-gray-200 bg-gray-50"
               }`}
             >
               <div className="text-center">
-                <div
-                  className={`w-10 h-10 mx-auto mb-1 rounded-full flex items-center justify-center ${
-                    sellerType === "product" ? "bg-[#F85606]" : "bg-gray-300"
-                  }`}
-                >
+                <div className={`w-10 h-10 mx-auto mb-1 rounded-full flex items-center justify-center ${collectionData.sellerType === "product" ? "bg-[#F85606]" : "bg-gray-300"}`}>
                   <span className="text-white text-lg">🛍️</span>
                 </div>
-                <span
-                  className={`text-xs font-bold block ${
-                    sellerType === "product"
-                      ? "text-[#F85606]"
-                      : "text-gray-600"
-                  }`}
-                >
+                <span className={`text-xs font-bold block ${collectionData.sellerType === "product" ? "text-[#F85606]" : "text-gray-600"}`}>
                   Products
                 </span>
               </div>
@@ -1183,26 +924,14 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               type="button"
               onClick={() => handleSellerTypeChange("material")}
               className={`p-3 rounded-xl border-2 transition-all active:scale-95 ${
-                sellerType === "material"
-                  ? "border-[#F85606] bg-orange-50"
-                  : "border-gray-200 bg-gray-50"
+                collectionData.sellerType === "material" ? "border-[#F85606] bg-orange-50" : "border-gray-200 bg-gray-50"
               }`}
             >
               <div className="text-center">
-                <div
-                  className={`w-10 h-10 mx-auto mb-1 rounded-full flex items-center justify-center ${
-                    sellerType === "material" ? "bg-[#F85606]" : "bg-gray-300"
-                  }`}
-                >
+                <div className={`w-10 h-10 mx-auto mb-1 rounded-full flex items-center justify-center ${collectionData.sellerType === "material" ? "bg-[#F85606]" : "bg-gray-300"}`}>
                   <span className="text-white text-lg">⚒️</span>
                 </div>
-                <span
-                  className={`text-xs font-bold block ${
-                    sellerType === "material"
-                      ? "text-[#F85606]"
-                      : "text-gray-600"
-                  }`}
-                >
+                <span className={`text-xs font-bold block ${collectionData.sellerType === "material" ? "text-[#F85606]" : "text-gray-600"}`}>
                   Materials
                 </span>
               </div>
@@ -1212,107 +941,79 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               type="button"
               onClick={() => handleSellerTypeChange("tourism")}
               className={`p-3 rounded-xl border-2 transition-all active:scale-95 ${
-                sellerType === "tourism"
-                  ? "border-[#F85606] bg-orange-50"
-                  : "border-gray-200 bg-gray-50"
+                collectionData.sellerType === "tourism" ? "border-[#F85606] bg-orange-50" : "border-gray-200 bg-gray-50"
               }`}
             >
               <div className="text-center">
-                <div
-                  className={`w-10 h-10 mx-auto mb-1 rounded-full flex items-center justify-center ${
-                    sellerType === "tourism" ? "bg-[#F85606]" : "bg-gray-300"
-                  }`}
-                >
+                <div className={`w-10 h-10 mx-auto mb-1 rounded-full flex items-center justify-center ${collectionData.sellerType === "tourism" ? "bg-[#F85606]" : "bg-gray-300"}`}>
                   <span className="text-white text-lg">✈️</span>
                 </div>
-                <span
-                  className={`text-xs font-bold block ${
-                    sellerType === "tourism"
-                      ? "text-[#F85606]"
-                      : "text-gray-600"
-                  }`}
-                >
+                <span className={`text-xs font-bold block ${collectionData.sellerType === "tourism" ? "text-[#F85606]" : "text-gray-600"}`}>
                   Tourism
                 </span>
               </div>
             </button>
           </div>
         </div>
+
         {/* Item Name */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-2">
-            {sellerType === "tourism" ? "Package Name" : "Item Name"}{" "}
-            <span className="text-[#F85606]">*</span>
+            {collectionData.sellerType === "tourism" ? "Package Name" : "Item Name"} <span className="text-[#F85606]">*</span>
           </label>
           <input
             type="text"
-            placeholder={
-              sellerType === "tourism"
-                ? "Enter tour package name"
-                : `Enter ${sellerType} name`
-            }
-            value={itemName}
-            onChange={(e) => setItemName(e.target.value)}
-            onFocus={() =>
-              handleFieldFocus(
-                sellerType === "tourism" ? "Package name" : "Item name"
-              )
-            }
-            onBlur={() =>
-              isNarratorEnabled &&
-              itemName &&
-              speakText(
-                `${
-                  sellerType === "tourism" ? "Package" : "Item"
-                } name entered: ${itemName}`
-              )
-            }
+            name="name"
+            value={collectionData.name}
+            onChange={handleChange}
+            onFocus={() => handleFieldFocus(collectionData.sellerType === "tourism" ? "Package name" : "Item name")}
             className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+            placeholder={collectionData.sellerType === "tourism" ? "Enter tour package name" : `Enter ${collectionData.sellerType} name`}
+            required
           />
         </div>
+
         {/* Price */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-2">
             Price (Rs.) <span className="text-[#F85606]">*</span>
           </label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">
-              Rs.
-            </span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Rs.</span>
             <input
               type="number"
-              placeholder="0.00"
-              value={itemPrice}
-              onChange={(e) => setItemPrice(e.target.value)}
+              name="price"
+              value={collectionData.price}
+              onChange={handleChange}
               onFocus={() => handleFieldFocus("Price")}
               className="w-full pl-12 pr-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+              placeholder="0.00"
+              required
             />
           </div>
         </div>
+
         {/* Category */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-2">
             Category <span className="text-[#F85606]">*</span>
           </label>
           <select
-            value={itemCategory}
-            onChange={(e) => setItemCategory(e.target.value)}
+            name="category"
+            value={collectionData.category}
+            onChange={handleChange}
+            onFocus={() => handleFieldFocus("Category")}
             className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm appearance-none"
           >
-            {(sellerType === "product"
-              ? productCategories
-              : sellerType === "material"
-              ? materialCategories
-              : tourismCategories
-            ).map((cat) => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
-              </option>
+            {(collectionData.sellerType === "product" ? productCategories : 
+              collectionData.sellerType === "material" ? materialCategories : tourismCategories).map((cat) => (
+              <option key={cat.value} value={cat.value}>{cat.label}</option>
             ))}
           </select>
         </div>
+
         {/* Tourism Package Generator */}
-        {sellerType === "tourism" && (
+        {collectionData.sellerType === "tourism" && (
           <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl shadow-md p-4 border-2 border-blue-200">
             <div className="flex items-center justify-between mb-3">
               <label className="block text-sm font-bold text-gray-800 flex items-center gap-2">
@@ -1322,7 +1023,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               <button
                 type="button"
                 onClick={generateTourismPackage}
-                disabled={isGeneratingPackage || !itemName.trim()}
+                disabled={isGeneratingPackage || !collectionData.name.trim()}
                 className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 rounded-lg text-xs font-bold disabled:opacity-50 flex items-center gap-2"
               >
                 {isGeneratingPackage ? (
@@ -1339,13 +1040,13 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               </button>
             </div>
             <p className="text-xs text-gray-600 mb-3">
-              AI will create complete package with itinerary, inclusions,
-              accommodation, and all details automatically.
+              AI will create complete package with itinerary, inclusions, accommodation, and all details automatically.
             </p>
           </div>
         )}
+
         {/* Tourism Package Specific Fields */}
-        {sellerType === "tourism" && (
+        {collectionData.sellerType === "tourism" && (
           <div className="space-y-3">
             {/* Package Duration */}
             <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
@@ -1354,26 +1055,25 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               </label>
               <input
                 type="text"
-                placeholder="e.g., 3 days 2 nights"
                 value={packageDuration}
                 onChange={(e) => setPackageDuration(e.target.value)}
                 onFocus={() => handleFieldFocus("Package duration")}
                 className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+                placeholder="e.g., 3 days 2 nights"
+                required
               />
             </div>
 
             {/* Package Highlights */}
             <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-              <label className="block text-sm font-bold text-gray-800 mb-2">
-                Key Highlights
-              </label>
+              <label className="block text-sm font-bold text-gray-800 mb-2">Key Highlights</label>
               <textarea
-                placeholder="• Visit ancient temples&#10;• Wildlife safari experience&#10;• Beach relaxation"
                 value={packageHighlights}
                 onChange={(e) => setPackageHighlights(e.target.value)}
                 onFocus={() => handleFieldFocus("Package highlights")}
                 className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm resize-none"
                 rows="3"
+                placeholder="• Visit ancient temples&#10;• Wildlife safari experience&#10;• Beach relaxation"
               />
             </div>
 
@@ -1383,12 +1083,13 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                 Detailed Itinerary <span className="text-[#F85606]">*</span>
               </label>
               <textarea
-                placeholder="Day 1: Arrival and city tour...&#10;Day 2: Cultural sites visit...&#10;Day 3: Departure..."
                 value={packageItinerary}
                 onChange={(e) => setPackageItinerary(e.target.value)}
                 onFocus={() => handleFieldFocus("Package itinerary")}
                 className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm resize-none"
                 rows="4"
+                placeholder="Day 1: Arrival and city tour...&#10;Day 2: Cultural sites visit...&#10;Day 3: Departure..."
+                required
               />
             </div>
 
@@ -1399,26 +1100,25 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                   Inclusions <span className="text-[#F85606]">*</span>
                 </label>
                 <textarea
-                  placeholder="• Accommodation&#10;• Meals&#10;• Transport"
                   value={packageInclusions}
                   onChange={(e) => setPackageInclusions(e.target.value)}
                   onFocus={() => handleFieldFocus("Package inclusions")}
                   className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm resize-none"
                   rows="3"
+                  placeholder="• Accommodation&#10;• Meals&#10;• Transport"
+                  required
                 />
               </div>
 
               <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-                <label className="block text-sm font-bold text-gray-800 mb-2">
-                  Exclusions
-                </label>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Exclusions</label>
                 <textarea
-                  placeholder="• Airfare&#10;• Personal expenses&#10;• Travel insurance"
                   value={packageExclusions}
                   onChange={(e) => setPackageExclusions(e.target.value)}
                   onFocus={() => handleFieldFocus("Package exclusions")}
                   className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm resize-none"
                   rows="3"
+                  placeholder="• Airfare&#10;• Personal expenses&#10;• Travel insurance"
                 />
               </div>
             </div>
@@ -1426,67 +1126,57 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
             {/* Additional Package Details */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-                <label className="block text-sm font-bold text-gray-800 mb-2">
-                  Accommodation
-                </label>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Accommodation</label>
                 <input
                   type="text"
-                  placeholder="3-star hotels, resorts"
                   value={packageAccommodation}
                   onChange={(e) => setPackageAccommodation(e.target.value)}
                   onFocus={() => handleFieldFocus("Accommodation")}
                   className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+                  placeholder="3-star hotels, resorts"
                 />
               </div>
 
               <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-                <label className="block text-sm font-bold text-gray-800 mb-2">
-                  Transport
-                </label>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Transport</label>
                 <input
                   type="text"
-                  placeholder="Private AC vehicle"
                   value={packageTransport}
                   onChange={(e) => setPackageTransport(e.target.value)}
                   onFocus={() => handleFieldFocus("Transport")}
                   className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+                  placeholder="Private AC vehicle"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-                <label className="block text-sm font-bold text-gray-800 mb-2">
-                  Meals
-                </label>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Meals</label>
                 <input
                   type="text"
-                  placeholder="Breakfast & dinner"
                   value={packageMeals}
                   onChange={(e) => setPackageMeals(e.target.value)}
                   onFocus={() => handleFieldFocus("Meals")}
                   className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+                  placeholder="Breakfast & dinner"
                 />
               </div>
 
               <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-                <label className="block text-sm font-bold text-gray-800 mb-2">
-                  Group Size
-                </label>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Group Size</label>
                 <input
                   type="text"
-                  placeholder="2-15 people"
                   value={packageGroupSize}
                   onChange={(e) => setPackageGroupSize(e.target.value)}
                   onFocus={() => handleFieldFocus("Group size")}
                   className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F85606] bg-white text-sm"
+                  placeholder="2-15 people"
                 />
               </div>
 
               <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
-                <label className="block text-sm font-bold text-gray-800 mb-2">
-                  Difficulty
-                </label>
+                <label className="block text-sm font-bold text-gray-800 mb-2">Difficulty</label>
                 <select
                   value={packageDifficulty}
                   onChange={(e) => setPackageDifficulty(e.target.value)}
@@ -1500,6 +1190,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
             </div>
           </div>
         )}
+
         {/* AI Description Options */}
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl shadow-md p-4 border-2 border-purple-200">
           <div className="flex items-center justify-between mb-3">
@@ -1511,23 +1202,10 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               onClick={() => {
                 setUseManualDescription(!useManualDescription);
                 setShowDescriptionOptions(false);
-                showInfoNotification(
-                  "Mode Changed",
-                  useManualDescription
-                    ? "Switched to AI description mode"
-                    : "Switched to manual description mode"
-                );
-                if (isNarratorEnabled)
-                  speakText(
-                    useManualDescription
-                      ? "Switched to AI mode"
-                      : "Switched to manual mode"
-                  );
+                if (isNarratorEnabled) speakText(useManualDescription ? "Switched to AI mode" : "Switched to manual mode");
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                useManualDescription
-                  ? "bg-gray-500 text-white"
-                  : "bg-purple-600 text-white"
+                useManualDescription ? "bg-gray-500 text-white" : "bg-purple-600 text-white"
               }`}
             >
               {useManualDescription ? "📝 Manual" : "🤖 AI"}
@@ -1539,7 +1217,7 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               <button
                 type="button"
                 onClick={generateDescriptionOptions}
-                disabled={isGeneratingDescription || !itemName.trim()}
+                disabled={isGeneratingDescription || !collectionData.name.trim()}
                 className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-xl text-sm font-bold disabled:opacity-50 mb-3"
               >
                 {isGeneratingDescription ? (
@@ -1549,46 +1227,30 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                   </>
                 ) : (
                   <>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    Generate 3 AI Options
+                    Generate 3 AI Description Options
                   </>
                 )}
               </button>
 
               {showDescriptionOptions && aiDescriptionOptions.length > 0 && (
                 <div className="space-y-2 mb-3">
-                  <p className="text-xs font-bold text-purple-800">
-                    Choose your preferred style:
-                  </p>
+                  <p className="text-xs font-bold text-purple-800">Choose your preferred style:</p>
                   {aiDescriptionOptions.map((option, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => selectDescriptionOption(option)}
                       className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
-                        selectedDescriptionOption?.style === option.style
-                          ? "border-purple-600 bg-purple-100"
-                          : "border-purple-200 bg-white hover:border-purple-400"
+                        selectedDescriptionOption?.style === option.style ? "border-purple-600 bg-purple-100" : "border-purple-200 bg-white hover:border-purple-400"
                       }`}
                     >
                       <p className="text-xs font-bold text-purple-700 mb-1">
                         {idx + 1}. {option.style}
                       </p>
-                      <p className="text-xs text-gray-700">
-                        {option.description}
-                      </p>
+                      <p className="text-xs text-gray-700">{option.description}</p>
                     </button>
                   ))}
                 </div>
@@ -1597,167 +1259,120 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
           )}
 
           <textarea
-            placeholder={
-              sellerType === "tourism"
-                ? "Describe this tour package..."
-                : `Describe this ${sellerType}...`
-            }
-            value={itemDescription}
-            onChange={(e) => setItemDescription(e.target.value)}
-            onFocus={() =>
-              isNarratorEnabled && speakText("Description field focused")
-            }
+            name="description"
+            value={collectionData.description}
+            onChange={handleChange}
+            onFocus={() => isNarratorEnabled && speakText("Description field focused")}
             readOnly={!useManualDescription && selectedDescriptionOption}
             className={`w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 resize-none text-sm ${
-              !useManualDescription && selectedDescriptionOption
-                ? "bg-purple-50"
-                : "bg-white"
+              !useManualDescription && selectedDescriptionOption ? "bg-purple-50" : "bg-white"
             }`}
             rows="4"
+            placeholder={useManualDescription ? "Write your description manually..." : "Generated description will appear here"}
+            required
           />
-          <p className="text-xs text-gray-600 mt-2">
-            {itemDescription.length} characters
-          </p>
+          <p className="text-xs text-gray-600 mt-2">{collectionData.description.length} characters</p>
         </div>
+
         {/* Manual Image Upload */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <svg
-              className="w-4 h-4 text-[#F85606]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
+            <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            Upload {sellerType === "tourism" ? "Tour" : "Product"} Images{" "}
-            <span className="text-[#F85606]">*</span>
-            {itemImages.length > 0 && (
-              <span className="text-[#F85606]">({itemImages.length})</span>
-            )}
+            Upload {collectionData.sellerType === "tourism" ? "Tour" : "Product"} Images <span className="text-[#F85606]">*</span>
+            {imageFiles.length > 0 && <span className="text-[#F85606]">({imageFiles.length})</span>}
           </label>
-          <div className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center bg-orange-50/50">
-            <input
-              type="file"
-              multiple
-              onChange={handleImageChange}
-              className="hidden"
-              id="image-upload"
-              accept="image/*"
-            />
-            <label htmlFor="image-upload" className="cursor-pointer block">
+          <div className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center bg-orange-50/50 hover:bg-orange-50 transition-all">
+            <input type="file" id="images" multiple onChange={handleImageChange} className="hidden" accept="image/*" />
+            <label htmlFor="images" className="cursor-pointer block">
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 bg-gradient-to-br from-[#F85606] to-[#FF7420] rounded-2xl flex items-center justify-center mb-3 shadow-md">
-                  <svg
-                    className="w-8 h-8 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <p className="text-gray-800 text-sm font-bold mb-1">
-                  Tap to upload images
-                </p>
-                <p className="text-gray-500 text-xs">
-                  AI will analyze quality • 800x600+ recommended
-                </p>
+                <p className="text-gray-800 text-sm font-bold mb-1">Tap to upload images</p>
+                <p className="text-gray-500 text-xs">AI will analyze quality • 1024x768+ recommended</p>
               </div>
             </label>
           </div>
         </div>
+
+        {/* AI Image Generator Section */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 border-2 border-purple-200 mt-6">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span className="text-xl">🤖</span>
+            AI Product Image Generator (Optional)
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Generate professional product images for your collection using AI. Images will be uploaded to your item directly.
+          </p>
+          
+          <AIShopImageGenerator 
+            shopCategory={collectionData.category}
+            onImagesGenerated={(images) => {
+              console.log('AI Images generated:', images);
+            }}
+            onImagesUploaded={handleAiImagesUploaded}
+          />
+        </div>
+
+        {/* AI Uploaded Images Summary */}
+        {aiUploadedImageUrls.length > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <p className="text-sm font-bold text-green-800">
+                AI Images Ready ({aiUploadedImageUrls.length})
+              </p>
+            </div>
+            <p className="text-xs text-green-700">
+              {aiUploadedImageUrls.length} AI-generated images have been uploaded and will be included in your item.
+            </p>
+          </div>
+        )}
+
         {/* Image Quality Report */}
-        {itemImages.length > 0 && (
+        {imageFiles.length > 0 && (
           <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
             <div className="flex items-center justify-between mb-3">
               <label className="block text-sm font-bold text-gray-800 flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-[#F85606]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+                <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Image Quality Report ({itemImages.length})
+                Image Quality Report ({imageFiles.length})
               </label>
               <div className="flex gap-2">
-                {imageQualityScores.filter((q) => q && q.rating < 5).length >
-                  0 && (
-                  <button
-                    type="button"
-                    onClick={removeLowQualityImages}
-                    className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg font-bold active:scale-95"
-                  >
+                {imageQualityScores.filter((q) => q && q.rating < 5).length > 0 && (
+                  <button type="button" onClick={removeLowQualityImages} className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all">
                     Remove Poor
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={clearAllImages}
-                  className="text-xs bg-gray-500 text-white px-3 py-1.5 rounded-lg font-bold active:scale-95"
-                >
+                <button type="button" onClick={clearAllImages} className="text-xs bg-gray-500 text-white px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all">
                   Clear All
                 </button>
               </div>
             </div>
 
             <div className="space-y-2">
-              {itemImages.map((file, idx) => {
+              {imageFiles.map((file, idx) => {
                 const quality = imageQualityScores[idx];
                 return (
-                  <div
-                    key={idx}
-                    className="border-2 border-gray-200 rounded-xl p-3 bg-gray-50"
-                  >
+                  <div key={idx} className="border-2 border-gray-200 rounded-xl p-3 bg-gray-50">
                     <div className="flex gap-3">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`preview-${idx}`}
-                        className="w-20 h-20 object-cover rounded-lg border-2 border-gray-300"
-                      />
+                      <img src={URL.createObjectURL(file)} alt={`preview-${idx}`} className="w-20 h-20 object-cover rounded-lg border-2 border-gray-300" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-xs font-bold text-gray-800 truncate">
-                            Image {idx + 1}
-                          </p>
+                          <p className="text-xs font-bold text-gray-800 truncate">Image {idx + 1}</p>
                           <button
                             type="button"
-                            onClick={async () => {
-                              const result = await showConfirmationDialog(
-                                "Remove Image",
-                                "Remove this image from your uploads?",
-                                "Remove",
-                                "Keep"
-                              );
-                              if (result.isConfirmed) {
-                                setItemImages(
-                                  itemImages.filter((_, i) => i !== idx)
-                                );
-                                setImageQualityScores(
-                                  imageQualityScores.filter((_, i) => i !== idx)
-                                );
-                                showSuccessNotification(
-                                  "Image Removed",
-                                  "Image removed from uploads"
-                                );
-                              }
+                            onClick={() => {
+                              setImageFiles(imageFiles.filter((_, i) => i !== idx));
+                              setImageQualityScores(imageQualityScores.filter((_, i) => i !== idx));
+                              showSuccessAlert("Image Removed", "Image has been removed from your uploads");
                             }}
                             className="w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold"
                           >
@@ -1771,60 +1386,38 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                               <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
                                 <div
                                   className={`h-2 rounded-full transition-all duration-500 ${
-                                    quality.rating >= 8
-                                      ? "bg-green-500"
-                                      : quality.rating >= 6
-                                      ? "bg-yellow-500"
-                                      : "bg-red-500"
+                                    quality.rating >= 8 ? "bg-green-500" : quality.rating >= 6 ? "bg-yellow-500" : "bg-red-500"
                                   }`}
                                   style={{ width: `${quality.rating * 10}%` }}
                                 />
                               </div>
-                              <span
-                                className={`text-xs font-bold ${
-                                  quality.rating >= 8
-                                    ? "text-green-600"
-                                    : quality.rating >= 6
-                                    ? "text-yellow-600"
-                                    : "text-red-600"
-                                }`}
-                              >
+                              <span className={`text-xs font-bold ${
+                                quality.rating >= 8 ? "text-green-600" : quality.rating >= 6 ? "text-yellow-600" : "text-red-600"
+                              }`}>
                                 {quality.rating}/10
                               </span>
                             </div>
 
                             <div className="space-y-0.5">
                               <p className="text-xs text-gray-600">
-                                <span className="font-bold">📐</span>{" "}
-                                {quality.resolution}
+                                <span className="font-bold">📐 Resolution:</span> {quality.resolution}
                               </p>
                               <p className="text-xs text-gray-600">
-                                <span className="font-bold">💾</span>{" "}
-                                {quality.fileSize}
+                                <span className="font-bold">💾 Size:</span> {quality.fileSize}
                               </p>
-                              <p
-                                className={`text-xs font-medium ${
-                                  quality.rating >= 8
-                                    ? "text-green-700"
-                                    : quality.rating >= 6
-                                    ? "text-yellow-700"
-                                    : "text-red-700"
-                                }`}
-                              >
-                                <span className="font-bold">⭐</span>{" "}
-                                {quality.quality.toUpperCase()}
+                              <p className={`text-xs font-medium ${
+                                quality.rating >= 8 ? "text-green-700" : quality.rating >= 6 ? "text-yellow-700" : "text-red-700"
+                              }`}>
+                                <span className="font-bold">⭐ Quality:</span> {quality.quality.toUpperCase()}
                               </p>
                               {quality.feedback && (
-                                <p className="text-xs text-gray-700 mt-1 italic">
-                                  💬 {quality.feedback}
+                                <p className="text-xs text-gray-700 mt-1 italic">💬 {quality.feedback}</p>
+                              )}
+                              {quality.recommendations && quality.rating < 8 && (
+                                <p className="text-xs text-orange-600 mt-1 font-medium bg-orange-50 p-2 rounded border border-orange-200">
+                                  💡 <span className="font-bold">Tip:</span> {quality.recommendations}
                                 </p>
                               )}
-                              {quality.recommendations &&
-                                quality.rating < 8 && (
-                                  <p className="text-xs text-orange-600 mt-1 font-medium bg-orange-50 p-2 rounded border border-orange-200">
-                                    💡 {quality.recommendations}
-                                  </p>
-                                )}
                             </div>
                           </>
                         ) : (
@@ -1840,124 +1433,82 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
             {/* Overall Quality Summary */}
             <div className="mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 border-2 border-blue-200">
               <p className="text-xs font-bold text-gray-800 mb-2 flex items-center justify-between">
-                <span>📊 Overall Quality</span>
-                {isNarratorEnabled &&
-                  imageQualityScores.filter((q) => q).length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const avgRating = (
-                          imageQualityScores.reduce(
-                            (sum, q) => sum + (q?.rating || 0),
-                            0
-                          ) / imageQualityScores.filter((q) => q).length
-                        ).toFixed(1);
-                        const excellent = imageQualityScores.filter(
-                          (q) => q?.rating >= 8
-                        ).length;
-                        const good = imageQualityScores.filter(
-                          (q) => q?.rating >= 6 && q?.rating < 8
-                        ).length;
-                        const poor = imageQualityScores.filter(
-                          (q) => q?.rating < 6
-                        ).length;
-                        speakText(
-                          `Quality summary: Average rating ${avgRating} out of 10. ${excellent} excellent, ${good} good, ${poor} poor images`
-                        );
-                      }}
-                      className="text-xs bg-blue-500 text-white px-2 py-1 rounded flex items-center gap-1"
-                    >
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                        />
-                      </svg>
-                      Read
-                    </button>
-                  )}
+                <span>📊 Overall Quality Analysis</span>
+                {isNarratorEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const avgRating = (imageQualityScores.reduce((sum, q) => sum + (q?.rating || 0), 0) / imageQualityScores.filter((q) => q).length).toFixed(1);
+                      const excellent = imageQualityScores.filter((q) => q?.rating >= 8).length;
+                      const good = imageQualityScores.filter((q) => q?.rating >= 6 && q?.rating < 8).length;
+                      const poor = imageQualityScores.filter((q) => q?.rating < 6).length;
+                      speakText(`Quality summary: Average rating ${avgRating} out of 10. ${excellent} excellent, ${good} good, ${poor} poor quality images`);
+                    }}
+                    className="text-xs bg-blue-500 text-white px-2 py-1 rounded flex items-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                    Read
+                  </button>
+                )}
               </p>
               {imageQualityScores.filter((q) => q).length > 0 ? (
                 <>
-                  <div className="grid grid-cols-3 gap-2 text-center mb-2">
+                  <div className="grid grid-cols-3 gap-2 text-center mb-3">
                     <div className="bg-green-50 rounded-lg p-2 border border-green-200">
-                      <p className="text-xl font-bold text-green-600">
-                        {
-                          imageQualityScores.filter((q) => q?.rating >= 8)
-                            .length
-                        }
-                      </p>
-                      <p className="text-xs text-gray-600 font-medium">
-                        Excellent
-                      </p>
+                      <p className="text-2xl font-bold text-green-600">{imageQualityScores.filter((q) => q?.rating >= 8).length}</p>
+                      <p className="text-xs text-gray-600 font-medium">Excellent</p>
                       <p className="text-xs text-green-600">8-10★</p>
                     </div>
                     <div className="bg-yellow-50 rounded-lg p-2 border border-yellow-200">
-                      <p className="text-xl font-bold text-yellow-600">
-                        {
-                          imageQualityScores.filter(
-                            (q) => q?.rating >= 6 && q?.rating < 8
-                          ).length
-                        }
-                      </p>
+                      <p className="text-2xl font-bold text-yellow-600">{imageQualityScores.filter((q) => q?.rating >= 6 && q?.rating < 8).length}</p>
                       <p className="text-xs text-gray-600 font-medium">Good</p>
                       <p className="text-xs text-yellow-600">6-7★</p>
                     </div>
                     <div className="bg-red-50 rounded-lg p-2 border border-red-200">
-                      <p className="text-xl font-bold text-red-600">
-                        {imageQualityScores.filter((q) => q?.rating < 6).length}
-                      </p>
+                      <p className="text-2xl font-bold text-red-600">{imageQualityScores.filter((q) => q?.rating < 6).length}</p>
                       <p className="text-xs text-gray-600 font-medium">Poor</p>
                       <p className="text-xs text-red-600">1-5★</p>
                     </div>
                   </div>
                   <div className="pt-2 border-t border-blue-300">
-                    <p className="text-xs text-gray-700 text-center">
-                      Average:{" "}
-                      <span className="font-bold text-blue-600">
-                        {(
-                          imageQualityScores.reduce(
-                            (sum, q) => sum + (q?.rating || 0),
-                            0
-                          ) / imageQualityScores.filter((q) => q).length
-                        ).toFixed(1)}
-                        /10
-                      </span>
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-700">
+                        Average Rating: <span className="font-bold text-blue-600 text-sm">
+                          {(imageQualityScores.reduce((sum, q) => sum + (q?.rating || 0), 0) / imageQualityScores.filter((q) => q).length).toFixed(1)}/10
+                        </span>
+                      </p>
+                      <div className="flex items-center gap-1">
+                        {[...Array(10)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`w-2 h-2 rounded-full ${
+                              i < Math.round(imageQualityScores.reduce((sum, q) => sum + (q?.rating || 0), 0) / imageQualityScores.filter((q) => q).length)
+                                ? "bg-blue-600"
+                                : "bg-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </>
               ) : (
-                <div className="flex items-center justify-center py-3">
-                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
-                  <p className="text-xs text-gray-600">Analyzing...</p>
+                <div className="flex items-center justify-center py-4">
+                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
+                  <p className="text-xs text-gray-600">Quality analysis in progress...</p>
                 </div>
               )}
             </div>
           </div>
         )}
-        
+
         {/* Story Video Upload */}
         <div className="bg-white rounded-2xl shadow-md p-4 border border-orange-100">
           <label className="block text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <svg
-              className="w-4 h-4 text-[#F85606]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
+            <svg className="w-4 h-4 text-[#F85606]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
             Story Video (Optional)
             <span className="text-xs font-normal text-gray-500">Max 50MB</span>
@@ -1965,39 +1516,17 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
 
           {!storyVideo ? (
             <div className="border-2 border-dashed border-purple-300 rounded-xl p-6 text-center bg-purple-50/50">
-              <input
-                type="file"
-                onChange={handleVideoChange}
-                className="hidden"
-                id="video-upload"
-                accept="video/*"
-              />
+              <input type="file" onChange={handleVideoChange} className="hidden" id="video-upload" accept="video/*" />
               <label htmlFor="video-upload" className="cursor-pointer block">
                 <div className="flex flex-col items-center">
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mb-3 shadow-md">
-                    <svg
-                      className="w-8 h-8 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                   </div>
-                  <p className="text-gray-800 text-sm font-bold mb-1">
-                    Tap to upload story video
-                  </p>
-                  <p className="text-gray-500 text-xs">
-                    Max 50MB • MP4, MOV, AVI supported
-                  </p>
-                  <p className="text-purple-600 text-xs mt-2">
-                    📱 Perfect for product demos & tours!
-                  </p>
+                  <p className="text-gray-800 text-sm font-bold mb-1">Tap to upload story video</p>
+                  <p className="text-gray-500 text-xs">Max 50MB • MP4, MOV, AVI supported</p>
+                  <p className="text-purple-600 text-xs mt-2">📱 Perfect for product demos & tours!</p>
                 </div>
               </label>
             </div>
@@ -2005,17 +1534,8 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
             <div className="space-y-3">
               {/* Video Preview */}
               <div className="relative rounded-xl overflow-hidden bg-black">
-                <video
-                  src={videoPreview}
-                  controls
-                  className="w-full max-h-80 object-contain"
-                  onFocus={() => handleFieldFocus("Story video preview")}
-                />
-                <button
-                  type="button"
-                  onClick={removeVideo}
-                  className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg hover:bg-red-600 active:scale-95 transition-transform"
-                >
+                <video src={videoPreview} controls className="w-full max-h-80 object-contain" onFocus={() => handleFieldFocus("Story video preview")} />
+                <button type="button" onClick={removeVideo} className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center font-bold shadow-lg hover:bg-red-600 active:scale-95 transition-transform">
                   ×
                 </button>
               </div>
@@ -2025,43 +1545,19 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                 <div className="border-2 border-purple-200 rounded-xl p-3 bg-purple-50">
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-bold text-gray-800 flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4 text-purple-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
+                      <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       Video Quality Report
                     </label>
                     {isNarratorEnabled && (
                       <button
                         type="button"
-                        onClick={() =>
-                          speakText(
-                            `Video quality: ${videoQuality.feedback}. Duration ${videoQuality.duration}, resolution ${videoQuality.resolution}, file size ${videoQuality.fileSize}`
-                          )
-                        }
+                        onClick={() => speakText(`Video quality: ${videoQuality.feedback}. Duration ${videoQuality.duration}, resolution ${videoQuality.resolution}, file size ${videoQuality.fileSize}`)}
                         className="text-xs bg-purple-500 text-white px-2 py-1 rounded flex items-center gap-1"
                       >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                          />
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                         </svg>
                         Read
                       </button>
@@ -2073,24 +1569,14 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                     <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
                       <div
                         className={`h-2 rounded-full transition-all duration-500 ${
-                          videoQuality.rating >= 7
-                            ? "bg-green-500"
-                            : videoQuality.rating >= 5
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
+                          videoQuality.rating >= 7 ? "bg-green-500" : videoQuality.rating >= 5 ? "bg-yellow-500" : "bg-red-500"
                         }`}
                         style={{ width: `${videoQuality.rating * 10}%` }}
                       />
                     </div>
-                    <span
-                      className={`text-xs font-bold ${
-                        videoQuality.rating >= 7
-                          ? "text-green-600"
-                          : videoQuality.rating >= 5
-                          ? "text-yellow-600"
-                          : "text-red-600"
-                      }`}
-                    >
+                    <span className={`text-xs font-bold ${
+                      videoQuality.rating >= 7 ? "text-green-600" : videoQuality.rating >= 5 ? "text-yellow-600" : "text-red-600"
+                    }`}>
                       {videoQuality.rating}/10
                     </span>
                   </div>
@@ -2099,46 +1585,29 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
                   <div className="grid grid-cols-3 gap-2 mb-2">
                     <div className="bg-white rounded-lg p-2 text-center border border-purple-200">
                       <p className="text-xs text-gray-600 mb-1">Duration</p>
-                      <p className="text-sm font-bold text-purple-700">
-                        {videoQuality.duration}
-                      </p>
+                      <p className="text-sm font-bold text-purple-700">{videoQuality.duration}</p>
                     </div>
                     <div className="bg-white rounded-lg p-2 text-center border border-purple-200">
                       <p className="text-xs text-gray-600 mb-1">Resolution</p>
-                      <p className="text-sm font-bold text-purple-700">
-                        {videoQuality.resolution}
-                      </p>
+                      <p className="text-sm font-bold text-purple-700">{videoQuality.resolution}</p>
                     </div>
                     <div className="bg-white rounded-lg p-2 text-center border border-purple-200">
                       <p className="text-xs text-gray-600 mb-1">File Size</p>
-                      <p className="text-sm font-bold text-purple-700">
-                        {videoQuality.fileSize}
-                      </p>
+                      <p className="text-sm font-bold text-purple-700">{videoQuality.fileSize}</p>
                     </div>
                   </div>
 
                   {/* Quality Badge */}
-                  <div
-                    className={`text-center py-2 rounded-lg mb-2 ${
-                      videoQuality.rating >= 7
-                        ? "bg-green-100 text-green-800"
-                        : videoQuality.rating >= 5
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    <p className="text-xs font-bold">
-                      ⭐ {videoQuality.quality.toUpperCase()} QUALITY
-                    </p>
+                  <div className={`text-center py-2 rounded-lg mb-2 ${
+                    videoQuality.rating >= 7 ? "bg-green-100 text-green-800" : videoQuality.rating >= 5 ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
+                  }`}>
+                    <p className="text-xs font-bold">⭐ {videoQuality.quality.toUpperCase()} QUALITY</p>
                   </div>
 
                   {/* Feedback */}
                   {videoQuality.feedback && (
                     <p className="text-xs text-gray-700 mb-2 bg-white p-2 rounded border border-purple-200">
-                      💬{" "}
-                      <span className="font-medium">
-                        {videoQuality.feedback}
-                      </span>
+                      💬 <span className="font-medium">{videoQuality.feedback}</span>
                     </p>
                   )}
 
@@ -2154,130 +1623,71 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               {/* Replace Video Button */}
               <button
                 type="button"
-                onClick={() =>
-                  document.getElementById("video-upload-replace").click()
-                }
+                onClick={() => document.getElementById("video-upload-replace").click()}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 Replace Video
               </button>
-              <input
-                type="file"
-                onChange={handleVideoChange}
-                className="hidden"
-                id="video-upload-replace"
-                accept="video/*"
-              />
+              <input type="file" onChange={handleVideoChange} className="hidden" id="video-upload-replace" accept="video/*" />
             </div>
           )}
 
           {isAnalyzingVideo && (
             <div className="flex items-center justify-center py-4 mt-3 bg-purple-50 rounded-xl">
               <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mr-2" />
-              <p className="text-sm text-purple-700 font-medium">
-                Analyzing video...
-              </p>
+              <p className="text-sm text-purple-700 font-medium">Analyzing video...</p>
             </div>
           )}
         </div>
+
         {/* Video Features Info */}
         {storyVideo && (
           <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4 border-2 border-purple-200">
             <div className="flex items-center gap-2 mb-2">
-              <svg
-                className="w-5 h-5 text-purple-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p className="text-sm font-bold text-gray-800">
-                📱 Story Video Benefits
-              </p>
+              <p className="text-sm font-bold text-gray-800">📱 Story Video Benefits</p>
             </div>
             <div className="space-y-1 text-xs text-gray-700">
               <p className="flex items-start gap-2">
                 <span className="text-purple-600 font-bold">•</span>
-                <span>
-                  <span className="font-bold">3x More Engagement:</span> Videos
-                  attract more customers
-                </span>
+                <span><span className="font-bold">3x More Engagement:</span> Videos attract more customers</span>
               </p>
               <p className="flex items-start gap-2">
                 <span className="text-purple-600 font-bold">•</span>
-                <span>
-                  <span className="font-bold">Product Showcase:</span>{" "}
-                  Demonstrate features & quality
-                </span>
+                <span><span className="font-bold">Product Showcase:</span> Demonstrate features & quality</span>
               </p>
               <p className="flex items-start gap-2">
                 <span className="text-purple-600 font-bold">•</span>
-                <span>
-                  <span className="font-bold">Build Trust:</span> Show authentic
-                  product experience
-                </span>
+                <span><span className="font-bold">Build Trust:</span> Show authentic product experience</span>
               </p>
             </div>
           </div>
         )}
-        {/* Action Buttons */}
+
+        {/* Submit Buttons */}
         <div className="grid grid-cols-2 gap-3 pt-2">
           <button
             type="button"
-            onClick={async () => {
-              if (isNarratorEnabled) speakText("Canceling");
-              const result = await showConfirmationDialog(
-                "Cancel Creation",
-                "Are you sure you want to cancel? All unsaved changes will be lost.",
-                "Yes, Cancel",
-                "Continue Editing"
-              );
-              if (result.isConfirmed) {
-                showInfoNotification("Cancelled", "Item creation cancelled");
-                navigate("/shopC/shop");
-              }
+            onClick={() => {
+              if (isNarratorEnabled) speakText("Canceling and going back");
+              navigate("/shopC/shop");
             }}
-            className="bg-gray-400 text-white py-4 px-6 rounded-xl font-bold transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
+            className="bg-gray-400 text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2 hover:bg-gray-500"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
             Cancel
           </button>
           <button
-            type="button"
-            onClick={handleAddItem}
-            disabled={isLoading || itemImages.length === 0}
-            className="bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-4 px-6 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50 shadow-md flex items-center justify-center gap-2"
+            type="submit"
+            disabled={isLoading || (imageFiles.length === 0 && aiUploadedImageUrls.length === 0)}
+            className="bg-gradient-to-r from-[#F85606] to-[#FF7420] text-white py-4 px-6 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2 hover:shadow-lg"
           >
             {isLoading ? (
               <>
@@ -2286,170 +1696,90 @@ JSON format: {"options": [{"style": "Professional", "description": "..."}, {"sty
               </>
             ) : (
               <>
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                Add {sellerType === "tourism" ? "Package" : "Item"}
+                Add {collectionData.sellerType === "tourism" ? "Package" : "Item"}
               </>
             )}
           </button>
         </div>
+
         {/* Feature Info Card */}
         <div className="bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 rounded-xl p-4 border-2 border-purple-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <svg
-              className="w-5 h-5 text-purple-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
+            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            <p className="text-sm font-bold text-gray-800">
-              ✨ Gemini AI Features
-            </p>
+            <p className="text-sm font-bold text-gray-800">✨ Gemini AI-Powered Features</p>
           </div>
           <div className="space-y-1.5 text-xs text-gray-700">
             <p className="flex items-start gap-2">
-              <span className="text-lg">🎯</span>
-              <span>
-                <span className="font-bold">Smart Descriptions:</span> Generate
-                3 AI styles - choose best or write manually
-              </span>
+              <span className="text-lg">🎨</span>
+              <span><span className="font-bold">AI Image Generator:</span> Create professional product images automatically using AI technology</span>
             </p>
-            {sellerType === "tourism" && (
+            <p className="flex items-start gap-2">
+              <span className="text-lg">🎯</span>
+              <span><span className="font-bold">Smart Descriptions:</span> Generate 3 AI description options - choose your favorite or write manually</span>
+            </p>
+            {collectionData.sellerType === "tourism" && (
               <p className="flex items-start gap-2">
                 <span className="text-lg">✈️</span>
-                <span>
-                  <span className="font-bold">Tourism Package AI:</span>{" "}
-                  Complete package generation with itinerary, inclusions &
-                  details
-                </span>
+                <span><span className="font-bold">Tourism Package AI:</span> Complete package generation with itinerary, inclusions & details</span>
               </p>
             )}
             <p className="flex items-start gap-2">
               <span className="text-lg">📸</span>
-              <span>
-                <span className="font-bold">Image Quality Check:</span> AI
-                analyzes resolution, clarity & provides ratings with tips
-              </span>
+              <span><span className="font-bold">Image Quality Check:</span> AI analyzes resolution, clarity, lighting & provides quality ratings with recommendations</span>
             </p>
             <p className="flex items-start gap-2">
               <span className="text-lg">🔊</span>
-              <span>
-                <span className="font-bold">Voice Narrator:</span> Audio
-                feedback for form updates & quality reports
-              </span>
+              <span><span className="font-bold">Voice Narrator:</span> Enable narrator for audio feedback on your actions and form updates</span>
             </p>
             <p className="flex items-start gap-2">
               <span className="text-lg">🛍️</span>
-              <span>
-                <span className="font-bold">Triple Mode:</span> Product seller,
-                material supplier, or tourism package provider
-              </span>
+              <span><span className="font-bold">Triple Mode:</span> Product seller, material supplier, or tourism package provider</span>
             </p>
             <p className="flex items-start gap-2">
               <span className="text-lg">✅</span>
-              <span>
-                <span className="font-bold">Quality Control:</span> Remove poor
-                images & get warnings before submit
-              </span>
+              <span><span className="font-bold">Quality Assurance:</span> System warns about low-quality images before submission</span>
             </p>
           </div>
         </div>
+
         {/* Tips Section */}
         <div className="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
-          <p className="text-sm font-bold text-blue-900 mb-2">💡 Pro Tips</p>
+          <p className="text-sm font-bold text-blue-900 mb-2">💡 Pro Tips for Best Results</p>
           <ul className="space-y-1 text-xs text-gray-700">
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>
-                Upload <span className="font-bold">800x600+ resolution</span>{" "}
-                photos for best ratings
-              </span>
+              <span>Upload images with <span className="font-bold">1024x768 resolution or higher</span> for best quality ratings</span>
             </li>
-            {sellerType === "tourism" && (
+            <li className="flex items-start gap-2">
+              <span className="text-blue-600 font-bold">•</span>
+              <span>Use <span className="font-bold">well-lit, clear photos</span> with neutral backgrounds</span>
+            </li>
+            {collectionData.sellerType === "tourism" && (
               <li className="flex items-start gap-2">
                 <span className="text-blue-600 font-bold">•</span>
-                <span>
-                  Use <span className="font-bold">AI Package Generator</span>{" "}
-                  for complete tourism packages with itinerary
-                </span>
+                <span>Use <span className="font-bold">AI Package Generator</span> for complete tourism packages with itinerary</span>
               </li>
             )}
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>
-                Use <span className="font-bold">well-lit, clear images</span>{" "}
-                with neutral backgrounds
-              </span>
+              <span>Try all 3 AI description options before choosing or creating manually</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>
-                Try all 3 AI description styles before choosing or writing
-                manually
-              </span>
+              <span>Enable narrator mode for <span className="font-bold">hands-free guidance</span> through the form</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 font-bold">•</span>
-              <span>
-                Enable narrator for{" "}
-                <span className="font-bold">hands-free guidance</span>
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-blue-600 font-bold">•</span>
-              <span>
-                Review quality feedback & improve low-rated images before
-                submitting
-              </span>
+              <span>Review AI quality feedback and improve low-rated images before submitting</span>
             </li>
           </ul>
         </div>
-      </div>
-
-      <style>{`
-        .Toastify__toast-container,
-        .go2072408551 {
-          bottom: 20px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          width: calc(100% - 2rem) !important;
-          max-width: 400px !important;
-        }
-        .Toastify__toast,
-        .go685806154 {
-          border-radius: 12px !important;
-          font-weight: 600 !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        }
-        
-        .bg-green-500 { background-color: #10b981; }
-        .bg-yellow-500 { background-color: #f59e0b; }
-        .bg-red-500 { background-color: #ef4444; }
-        .text-green-600 { color: #059669; }
-        .text-yellow-600 { color: #d97706; }
-        .text-red-600 { color: #dc2626; }
-        .text-green-700 { color: #047857; }
-        .text-yellow-700 { color: #b45309; }
-        .text-red-700 { color: #b91c1c; }
-      `}</style>
+      </form>
     </div>
   );
 }
