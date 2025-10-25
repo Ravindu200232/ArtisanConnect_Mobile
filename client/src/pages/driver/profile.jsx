@@ -75,6 +75,24 @@ export function Profile() {
     }
   };
 
+  const handleLogout = () => {
+    Swal.fire({
+      title: "Logout?",
+      text: "Are you sure you want to logout?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#F85606",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, logout!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.clear();
+        Swal.fire("Logged Out", "You have been successfully logged out.", "success");
+        window.location.href = "/";
+      }
+    });
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -333,6 +351,21 @@ export function Profile() {
               🔑 Change Password
             </button>
           </div>
+        </div>
+
+        {/* Logout Button */}
+        <div className="bg-white rounded-2xl shadow-md p-5 border border-orange-100">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+            <span className="text-[#F85606] mr-2">🚪</span>
+            Session
+          </h3>
+          <button
+            onClick={handleLogout}
+            className="w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+          >
+            <span>🚪</span>
+            Logout
+          </button>
         </div>
 
         {/* Info Card */}
