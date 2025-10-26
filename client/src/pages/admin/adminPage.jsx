@@ -146,7 +146,7 @@ export default function AdminPage() {
     },
     {
       icon: <FaQuestionCircle className="text-2xl text-white" />,
-      label: "Inquiries",
+      label: "Inquiries and feedback",
       description: "Customer questions",
       to: "/admin/inquiry",
       gradient: "from-red-500 to-red-600"
